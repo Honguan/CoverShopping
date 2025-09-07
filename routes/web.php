@@ -1,4 +1,5 @@
 <?php
+
 // ===================== AdminController 路由分發 =====================
 // product      : 商品管理頁面（AdminController::showProductPage）
 // order        : 訂單管理頁面（AdminController::showOrderPage）
