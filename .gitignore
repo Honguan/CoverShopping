@@ -1,0 +1,5 @@
+config/dump-shopping-202509050009.sql
+config/.env
+config/banned_ip.php
+public/fonts
+.htaccess

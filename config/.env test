@@ -1,0 +1,12 @@
+## MariaDB資料庫設定
+DB_HOST=
+DB_USER=
+DB_PASS=
+DB_PORT=
+
+## mailgun STMP 設定
+SMTP_HOST=
+SMTP_USER=
+SMTP_PASS=
+SMTP_PORT=
+SMTP_SECURE=

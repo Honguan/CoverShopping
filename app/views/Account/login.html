@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>登入頁面</title>
+    <style>
+      @import url("/CoverShopping/public/css/Account.css");
+    </style>
+    <script src="/CoverShopping/public/js/jquery.js"></script>
+    <script src="/CoverShopping/public/js/Account.js"></script>
+  </head>
+
+  <body>
+    <h1 align="center">登入頁面</h1>
+    <form
+      name="myForm"
+      action="../../CoverShopping/routes/web.php?page=login"
+      method="post"
+      class="fh5co-form myForm"
+      align="center"
+    >
+      <table align="center" id="login_frame" border="0">
+        <table border="0">
+          <tr>
+            <td>
+              <h1>帳號:</h1>
+            </td>
+            <td>
+              <input
+                class="form-control"
+                type="text"
+                name="account"
+                title="請輸入帳號"
+                placeholder="請輸入帳號"
+                autocomplete="username"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <h1>密碼:</h1>
+            </td>
+            <td>
+              <div>
+                <input
+                  class="form-control"
+                  type="password"
+                  name="password"
+                  title="請輸入密碼"
+                  placeholder="請輸入密碼"
+                  autocomplete="current-password"
+                />
+                <span class="password-eye">
+                  <img
+                    src="/CoverShopping/public/images/special_chart/eye-slash-solid.png"
+                    alt="顯示/隱藏密碼"
+                    width="24"
+                  />
+                </span>
+              </div>
+            </td>
+          </tr>
+        </table>
+        <div class="form-group" align="center">
+          <input
+            type="submit"
+            value="登入"
+            class="btn btn-primary"
+            name="btn_submit"
+          />
+          <input type="reset" value="重新輸入" class="btn btn-primary" />
+          <input
+            type="button"
+            value="註冊"
+            class="btn btn-primary"
+            onclick="window.open('/CoverShopping/routes/web.php?page=registerPage','_self')"
+          />
+        </div>
+        <div>
+          <br />
+          <input
+            type="button"
+            value="返回購物網頁"
+            class="btn btn-primary"
+            onclick="window.open('/CoverShopping/routes/web.php?page=index','_self')"
+          />
+        </div>
+      </table>
+    </form>
+  </body>
+</html>

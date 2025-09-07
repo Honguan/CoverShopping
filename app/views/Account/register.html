@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>註冊資料</title>
+    <style>
+      @import url("/CoverShopping/public/css/Account.css");
+    </style>
+    <script src="/CoverShopping/public/js/jquery.js"></script>
+    <script src="/CoverShopping/public/js/Account.js"></script>
+  </head>
+
+  <body>
+    <br /><br />
+    <h1 align="center">註冊資料</h1>
+    <form
+      name="myForm"
+      action="../../CoverShopping/routes/web.php?page=register"
+      method="post"
+      class="fh5co-form"
+      align="center"
+    >
+      <table align="center" id="login_frame" border="0">
+        <tbody>
+          <tr>
+            <td>
+              <h1>姓名</h1>
+            </td>
+            <td>
+              <input
+                class="form-control"
+                type="text"
+                name="name"
+                title="請輸入姓名"
+                placeholder="請輸入姓名"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <h1>帳號</h1>
+            </td>
+            <td>
+              <input
+                class="form-control"
+                type="text"
+                name="account"
+                title="請輸入帳號"
+                placeholder="請輸入帳號"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <h1>密碼</h1>
+            </td>
+            <td>
+              <input
+                class="form-control"
+                type="password"
+                name="password"
+                title="請輸入密碼"
+                placeholder="請輸入密碼"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <h1>生日</h1>
+            </td>
+            <td>
+              <input
+                class="form-control"
+                type="date"
+                name="Birthday"
+                value="2001-01-01"
+                title="請選擇生日"
+                placeholder="請選擇生日"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <h1>E-mail</h1>
+            </td>
+            <td>
+              <input
+                class="form-control"
+                type="email"
+                name="mail"
+                title="請輸入 E-mail"
+                placeholder="請輸入 E-mail"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <input
+        value="註冊"
+        type="submit"
+        class="btn btn-primary"
+        name="btn_submit"
+      />
+      <input type="reset" value="重新輸入" class="btn btn-primary" />
+      <input
+        value="登入"
+        type="button"
+        class="btn btn-primary"
+        onclick="window.open('/CoverShopping/routes/web.php?page=loginPage','_self')"
+      />
+      <div>
+        <br />
+        <input
+          type="button"
+          value="返回購物網頁"
+          class="btn btn-primary"
+          onclick="window.open('/CoverShopping/routes/web.php?page=index','_self')"
+        />
+      </div>
+    </form>
+  </body>
+</html>
