@@ -15,7 +15,7 @@ class AdminController
     public function showProductPage()
     {
         $products = AdminModel::getAllProducts();
-        require __DIR__ . '/../views/admin/product.php';
+        require __DIR__ . '/../views/Admin/product.php';
     }
 
     /**
@@ -26,7 +26,7 @@ class AdminController
     public function showOrderPage()
     {
         $orders = AdminModel::getAllOrders();
-        require __DIR__ . '/../views/admin/order.php';
+        require __DIR__ . '/../views/Admin/order.php';
     }
 
     /**
@@ -37,7 +37,7 @@ class AdminController
     public function showMemberPage()
     {
         $members = AdminModel::getAllMembers();
-        require __DIR__ . '/../views/admin/member.php';
+        require __DIR__ . '/../views/Admin/member.php';
     }
 
     /**
@@ -48,7 +48,7 @@ class AdminController
     public function showMessagePage()
     {
         $messages = AdminModel::getAllMessages();
-        require __DIR__ . '/../views/admin/message.php';
+        require __DIR__ . '/../views/Admin/message.php';
     }
 
     /**
@@ -60,7 +60,7 @@ class AdminController
     {
         $account = htmlspecialchars(trim($_GET["account"] ?? ''));
         $member = AdminModel::getMember($account);
-        require __DIR__ . '/../views/admin/change.php';
+        require __DIR__ . '/../views/Admin/change.php';
     }
 
     public function deleteMember()

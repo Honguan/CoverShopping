@@ -11,7 +11,7 @@ class indexController
 
     public function products()
     {
-        require_once(__DIR__ . '/../models/IndexModel.php');
+        require_once(dirname(__DIR__) . '/models/indexModel.php');
         $products = IndexModel::getAllProducts();
         return $products;
     }
