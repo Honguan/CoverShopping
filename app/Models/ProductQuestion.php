@@ -15,16 +15,19 @@ class ProductQuestion extends Model
         'status',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Product, $this> */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
+    /** @return HasMany<ProductQuestionAnswer, $this> */
     public function answers(): HasMany
     {
         return $this->hasMany(ProductQuestionAnswer::class)->latest();

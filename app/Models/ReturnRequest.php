@@ -14,6 +14,7 @@ class ReturnRequest extends Model
         'status',
     ];
 
+    /** @return BelongsTo<Order, $this> */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

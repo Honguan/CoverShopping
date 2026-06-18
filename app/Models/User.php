@@ -40,26 +40,31 @@ class User extends Authenticatable
         ];
     }
 
+    /** @return HasMany<Product, $this> */
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'seller_id');
     }
 
+    /** @return HasMany<CartItem, $this> */
     public function cartItems(): HasMany
     {
         return $this->hasMany(CartItem::class);
     }
 
+    /** @return HasMany<Order, $this> */
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
     }
 
+    /** @return HasMany<Address, $this> */
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
     }
 
+    /** @return HasOne<BusinessProfile, $this> */
     public function businessProfile(): HasOne
     {
         return $this->hasOne(BusinessProfile::class);

@@ -35,36 +35,43 @@ class Product extends Model
         ];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id');
     }
 
+    /** @return BelongsTo<Category, $this> */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
+    /** @return HasMany<ProductImage, $this> */
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderByDesc('is_primary')->orderBy('sort_order');
     }
 
+    /** @return HasMany<ProductVariant, $this> */
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class)->where('is_active', true)->orderBy('option_name')->orderBy('option_value');
     }
 
+    /** @return HasOne<ProductImage, $this> */
     public function primaryImage(): HasOne
     {
         return $this->hasOne(ProductImage::class)->where('is_primary', true);
     }
 
+    /** @return HasMany<ProductReview, $this> */
     public function reviews(): HasMany
     {
         return $this->hasMany(ProductReview::class)->where('status', 'published')->latest();
     }
 
+    /** @return HasMany<ProductQuestion, $this> */
     public function questions(): HasMany
     {
         return $this->hasMany(ProductQuestion::class)->where('status', '!=', 'hidden')->latest();
