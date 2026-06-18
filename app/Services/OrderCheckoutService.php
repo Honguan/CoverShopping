@@ -32,7 +32,7 @@ class OrderCheckoutService
                 ->get();
 
             if ($cartItems->isEmpty()) {
-                throw new RuntimeException('購物車沒有商品');
+                throw new RuntimeException('Cart is empty.');
             }
 
             $products = Product::whereKey($cartItems->pluck('product_id')->unique())
@@ -53,16 +53,16 @@ class OrderCheckoutService
                 $variant = $cartItem->product_variant_id ? $variants->get($cartItem->product_variant_id) : null;
 
                 if (!$product || $product->status !== 'active') {
-                    throw new RuntimeException('商品目前無法購買');
+                    throw new RuntimeException('Product is inactive. Remove it before checkout.');
                 }
 
                 if ($cartItem->product_variant_id && (!$variant || !$variant->is_active || $variant->product_id !== $product->id)) {
-                    throw new RuntimeException("商品 {$product->name} 規格無法購買");
+                    throw new RuntimeException('Product variant is unavailable. Remove it and choose again.');
                 }
 
                 $availableInventory = $variant ? $variant->inventory : $product->inventory;
                 if ($availableInventory < $cartItem->quantity) {
-                    throw new RuntimeException("商品 {$product->name} 庫存不足");
+                    throw new RuntimeException('Only ' . $availableInventory . ' in stock. Please update quantity.');
                 }
 
                 $unitPrice = $this->productPricingService->calculateUnitPrice($product, $variant, $user, $cartItem->quantity, true);

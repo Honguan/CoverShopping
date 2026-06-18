@@ -21,18 +21,39 @@ class ShoppingCartService
 
     public function addProduct(?User $user, string $sessionId, Product $product, int $quantity, ?ProductVariant $variant = null): CartItem
     {
+        $this->addAvailableQuantity($user, $sessionId, $product, $quantity, $variant);
+
+        return CartItem::query()
+            ->where($this->cartIdentity($user, $sessionId))
+            ->where('product_id', $product->id)
+            ->where('product_variant_id', $variant?->id)
+            ->firstOrFail();
+    }
+
+    public function addAvailableQuantity(?User $user, string $sessionId, Product $product, int $quantity, ?ProductVariant $variant = null): int
+    {
         $quantity = max(1, $quantity);
-        $identity = $user ? ['user_id' => $user->id] : ['session_id' => $sessionId];
         $availableInventory = $this->availableInventory($product, $variant);
 
-        $item = CartItem::firstOrNew($identity + [
+        if ($availableInventory < 1) {
+            return 0;
+        }
+
+        $item = CartItem::firstOrNew($this->cartIdentity($user, $sessionId) + [
             'product_id' => $product->id,
             'product_variant_id' => $variant?->id,
         ]);
-        $item->quantity = min($availableInventory, ($item->exists ? $item->quantity : 0) + $quantity);
-        $item->save();
 
-        return $item;
+        $currentQuantity = $item->exists ? $item->quantity : 0;
+        $nextQuantity = min($availableInventory, $currentQuantity + $quantity);
+        $addedQuantity = max(0, $nextQuantity - $currentQuantity);
+
+        if ($addedQuantity > 0) {
+            $item->quantity = $nextQuantity;
+            $item->save();
+        }
+
+        return $addedQuantity;
     }
 
     public function updateQuantity(CartItem $cartItem, int $quantity): CartItem
@@ -72,6 +93,55 @@ class ShoppingCartService
             $existing->save();
             $guestItem->delete();
         });
+    }
+
+    public function clearItemsForUserOrSession(?User $user, string $sessionId): int
+    {
+        return CartItem::query()
+            ->when($user, fn ($query) => $query->where('user_id', $user->id))
+            ->when(!$user, fn ($query) => $query->where('session_id', $sessionId))
+            ->delete();
+    }
+
+    public function statusMessagesForItem(CartItem $cartItem, ?User $user): array
+    {
+        $product = $cartItem->product;
+        $variant = $cartItem->variant;
+        $messages = [];
+
+        if (!$product || $product->status !== 'active') {
+            return ['Product is inactive. Remove it before checkout.'];
+        }
+
+        if ($cartItem->product_variant_id && (!$variant || !$variant->is_active || $variant->product_id !== $product->id)) {
+            return ['Product variant is unavailable. Remove it and choose again.'];
+        }
+
+        $availableInventory = $this->availableInventory($product, $variant);
+
+        if ($availableInventory < 1) {
+            $messages[] = 'Out of stock. Remove it before checkout.';
+        } elseif ($availableInventory < $cartItem->quantity) {
+            $messages[] = 'Only ' . $availableInventory . ' in stock. Please update quantity.';
+        }
+
+        if ($user?->canUseBusinessPricing() && $product->business_price !== null && $cartItem->quantity < $product->business_min_quantity) {
+            $messages[] = 'Business minimum quantity: ' . $product->business_min_quantity;
+        }
+
+        return $messages;
+    }
+
+    public function statusMessagesForItems(Collection $cartItems, ?User $user): array
+    {
+        return $cartItems
+            ->mapWithKeys(fn (CartItem $cartItem) => [$cartItem->id => $this->statusMessagesForItem($cartItem, $user)])
+            ->all();
+    }
+
+    private function cartIdentity(?User $user, string $sessionId): array
+    {
+        return $user ? ['user_id' => $user->id] : ['session_id' => $sessionId];
     }
 
     private function availableInventory(Product $product, ?ProductVariant $variant): int

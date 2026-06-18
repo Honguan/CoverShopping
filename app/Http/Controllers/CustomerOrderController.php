@@ -19,24 +19,42 @@ class CustomerOrderController extends Controller
     {
         abort_unless($order->user_id === $request->user()->id, 403);
 
-        $added = 0;
+        $addedQuantity = 0;
+        $skippedItems = 0;
         $order->load('items.product', 'items.variant');
 
         foreach ($order->items as $item) {
-            if (!$item->product || $item->product->status !== 'active') {
+            $product = $item->product;
+            $variant = $item->variant;
+
+            if (!$product || $product->status !== 'active') {
+                $skippedItems++;
                 continue;
             }
 
-            $shoppingCartService->addProduct(
+            if ($item->product_variant_id && (!$variant || !$variant->is_active || $variant->product_id !== $product->id)) {
+                $skippedItems++;
+                continue;
+            }
+
+            $added = $shoppingCartService->addAvailableQuantity(
                 $request->user(),
                 $request->session()->getId(),
-                $item->product,
+                $product,
                 $item->quantity,
-                $item->variant
+                $variant
             );
-            $added++;
+
+            if ($added < 1) {
+                $skippedItems++;
+                continue;
+            }
+
+            $addedQuantity += $added;
         }
 
-        return redirect()->route('cart.index')->with('status', $added > 0 ? '已加入購物車' : '訂單商品目前無法再次購買');
+        return redirect()
+            ->route('cart.index')
+            ->with('status', 'Added ' . $addedQuantity . ' item(s), skipped ' . $skippedItems . ' item(s).');
     }
 }

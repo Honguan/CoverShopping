@@ -15,7 +15,7 @@ class ProductPricingService
 
         if ($product->business_price !== null && $user && $user->canUseBusinessPricing()) {
             if ($enforceMinimum && $quantity < $product->business_min_quantity) {
-                throw new RuntimeException("企業價最低數量為 {$product->business_min_quantity}");
+                throw new RuntimeException('Business minimum quantity is ' . $product->business_min_quantity . '.');
             }
 
             $basePrice = $product->business_price;

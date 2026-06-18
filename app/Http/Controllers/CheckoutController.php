@@ -26,6 +26,6 @@ class CheckoutController extends Controller
 
         $auditLogService->writeLog('order.created', $order, ['number' => $order->number], $request);
 
-        return redirect()->route('orders.index')->with('status', '訂單已建立');
+        return redirect()->route('orders.index')->with('status', 'Order created.');
     }
 }

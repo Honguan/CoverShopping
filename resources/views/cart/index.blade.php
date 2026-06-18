@@ -1,9 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
-    <h1>購物車</h1>
+    <h1>Shopping cart</h1>
+
+    @if(session('status'))
+        <p class="notice">{{ session('status') }}</p>
+    @endif
+
+    @error('checkout')
+        <p class="error">{{ $message }}</p>
+    @enderror
+
     <section class="list">
         @forelse($items as $item)
+            @php
+                $messages = $itemStatusMessages[$item->id] ?? [];
+                $maxQuantity = $item->variant ? $item->variant->inventory : $item->product->inventory;
+            @endphp
             <article class="row">
                 <div>
                     <strong>{{ $item->product->name }}</strong>
@@ -11,69 +24,83 @@
                         <p>{{ $item->variant->displayName() }}</p>
                     @endif
                     <p>${{ number_format($pricingService->calculateUnitPrice($item->product, $item->variant, auth()->user(), $item->quantity)) }}</p>
-                    @if(auth()->user()?->canUseBusinessPricing() && $item->product->business_price !== null)
-                        <p>企業價最低採購量 {{ $item->product->business_min_quantity }}</p>
+                    @if($messages)
+                        <ul>
+                            @foreach($messages as $message)
+                                <li>{{ $message }}</li>
+                            @endforeach
+                        </ul>
                     @endif
                 </div>
                 <form action="{{ route('cart.items.update', $item) }}" method="post">
                     @csrf
                     @method('PATCH')
-                    <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" max="{{ max(1, $item->product->inventory) }}">
-                    <button type="submit">更新</button>
+                    <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" max="{{ max(1, $maxQuantity) }}">
+                    <button type="submit">Update</button>
                 </form>
                 <form action="{{ route('cart.items.destroy', $item) }}" method="post">
                     @csrf
                     @method('DELETE')
-                    <button type="submit">刪除</button>
+                    <button type="submit">Remove</button>
                 </form>
             </article>
         @empty
-            <p>購物車目前沒有商品。</p>
+            <p>Your cart is empty.</p>
         @endforelse
     </section>
 
     @if($items->isNotEmpty())
+        <form action="{{ route('cart.items.clear') }}" method="post">
+            @csrf
+            @method('DELETE')
+            <button type="submit">Clear cart</button>
+        </form>
+
         <section class="summary">
-            <p>商品小計：${{ number_format($subtotal) }}</p>
+            <p>Subtotal: ${{ number_format($subtotal) }}</p>
             @php
                 $promotionDiscount = $promotionService->calculateOrderDiscount($subtotal);
                 $freeShippingRemaining = $promotionService->freeShippingRemaining($subtotal);
             @endphp
             @if($promotionDiscount > 0)
-                <p>滿額折扣：-${{ number_format($promotionDiscount) }}</p>
+                <p>Promotion discount: ${{ number_format($promotionDiscount) }}</p>
             @endif
             @if($freeShippingRemaining > 0)
-                <p>再買 ${{ number_format($freeShippingRemaining) }} 即可免運。</p>
+                <p>Add ${{ number_format($freeShippingRemaining) }} for free shipping.</p>
             @else
-                <p>本訂單已達免運門檻。</p>
+                <p>Free shipping unlocked.</p>
             @endif
             @auth
                 <form class="stack" action="{{ route('checkout.store') }}" method="post">
                     @csrf
-                    <label>收件地址
+                    <label>Shipping address
                         <select name="address_id">
-                            <option value="">不指定地址</option>
+                            <option value="">No address selected</option>
                             @foreach($addresses as $address)
-                                <option value="{{ $address->id }}" @selected($address->is_default)>
+                                <option value="{{ $address->id }}" @selected($defaultAddress?->id === $address->id)>
                                     {{ $address->recipient_name }} / {{ $address->city }}{{ $address->district }}{{ $address->address_line }}
                                 </option>
                             @endforeach
                         </select>
                     </label>
-                    <a href="{{ route('addresses.index') }}">管理地址簿</a>
-                    <label>配送方式
+                    <a href="{{ route('addresses.index') }}">Manage addresses</a>
+                    <label>Shipping method
                         <select name="shipping_method_id">
-                            <option value="">自取或免運</option>
+                            <option value="">No shipping method selected</option>
                             @foreach($shippingMethods as $shippingMethod)
-                                <option value="{{ $shippingMethod->id }}">{{ $shippingMethod->name }} ${{ number_format($shippingMethod->fee) }}</option>
+                                <option value="{{ $shippingMethod->id }}" @selected($defaultShippingMethod?->id === $shippingMethod->id)>
+                                    {{ $shippingMethod->name }} ${{ number_format($shippingMethod->fee) }}
+                                </option>
                             @endforeach
                         </select>
                     </label>
-                    <label>優惠券<input name="coupon_code" placeholder="輸入優惠券代碼"></label>
-                    <button type="submit">建立訂單</button>
+                    <label>Coupon
+                        <input name="coupon_code" placeholder="Enter coupon code">
+                    </label>
+                    <button type="submit">Checkout</button>
                 </form>
             @else
-                <a class="button" href="{{ route('login') }}">登入後結帳</a>
+                <a class="button" href="{{ route('login') }}">Login to checkout</a>
             @endauth
         </section>
     @endif

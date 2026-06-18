@@ -20,12 +20,17 @@ class ShoppingCartController extends Controller
         $user = $request->user();
         $user?->loadMissing('businessProfile');
         $items = $shoppingCartService->getItemsForUserOrSession($user, $request->session()->getId());
+        $shippingMethods = ShippingMethod::where('is_active', true)->orderBy('sort_order')->get();
+        $addresses = $user ? $user->addresses()->latest()->get() : collect();
 
         return view('cart.index', [
             'items' => $items,
+            'itemStatusMessages' => $shoppingCartService->statusMessagesForItems($items, $user),
             'subtotal' => $items->sum(fn (CartItem $item) => $productPricingService->calculateUnitPrice($item->product, $item->variant, $user, $item->quantity) * $item->quantity),
-            'shippingMethods' => ShippingMethod::where('is_active', true)->orderBy('sort_order')->get(),
-            'addresses' => $user ? $user->addresses()->latest()->get() : collect(),
+            'shippingMethods' => $shippingMethods,
+            'defaultShippingMethod' => $shippingMethods->first(),
+            'addresses' => $addresses,
+            'defaultAddress' => $addresses->firstWhere('is_default', true),
             'promotionService' => $promotionService,
             'pricingService' => $productPricingService,
         ]);
@@ -43,14 +48,13 @@ class ShoppingCartController extends Controller
                 ->findOrFail($data['product_variant_id']);
         }
 
-        $availableInventory = $variant ? $variant->inventory : $product->inventory;
-        if ($availableInventory < 1) {
-            return back()->withErrors(['product_id' => '商品已售完']);
+        $addedQuantity = $shoppingCartService->addAvailableQuantity($request->user(), $request->session()->getId(), $product, $data['quantity'], $variant);
+
+        if ($addedQuantity < 1) {
+            return back()->withErrors(['product_id' => 'Product is out of stock.']);
         }
 
-        $shoppingCartService->addProduct($request->user(), $request->session()->getId(), $product, $data['quantity'], $variant);
-
-        return redirect()->route('cart.index')->with('status', '已加入購物車');
+        return redirect()->route('cart.index')->with('status', 'Added ' . $addedQuantity . ' item(s) to cart.');
     }
 
     public function changeItemQuantity(UpdateCartItemRequest $request, CartItem $cartItem, ShoppingCartService $shoppingCartService)
@@ -59,7 +63,14 @@ class ShoppingCartController extends Controller
 
         $shoppingCartService->updateQuantity($cartItem->load(['product', 'variant']), $request->validated('quantity'));
 
-        return redirect()->route('cart.index');
+        return redirect()->route('cart.index')->with('status', 'Cart updated.');
+    }
+
+    public function clearItems(Request $request, ShoppingCartService $shoppingCartService)
+    {
+        $shoppingCartService->clearItemsForUserOrSession($request->user(), $request->session()->getId());
+
+        return redirect()->route('cart.index')->with('status', 'Cart cleared.');
     }
 
     public function removeItem(CartItem $cartItem)
@@ -67,6 +78,6 @@ class ShoppingCartController extends Controller
         $this->authorize('manage', $cartItem);
         $cartItem->delete();
 
-        return redirect()->route('cart.index');
+        return redirect()->route('cart.index')->with('status', 'Item removed.');
     }
 }

@@ -30,6 +30,7 @@ Route::post('/logout', [UserAuthController::class, 'logoutUser'])->middleware('a
 
 Route::get('/cart', [ShoppingCartController::class, 'showCart'])->name('cart.index');
 Route::post('/cart/items', [ShoppingCartController::class, 'addItem'])->name('cart.items.store');
+Route::delete('/cart/items', [ShoppingCartController::class, 'clearItems'])->name('cart.items.clear');
 Route::patch('/cart/items/{cartItem}', [ShoppingCartController::class, 'changeItemQuantity'])->name('cart.items.update');
 Route::delete('/cart/items/{cartItem}', [ShoppingCartController::class, 'removeItem'])->name('cart.items.destroy');
 
