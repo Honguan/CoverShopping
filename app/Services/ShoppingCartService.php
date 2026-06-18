@@ -23,7 +23,7 @@ class ShoppingCartService
     {
         $quantity = max(1, $quantity);
         $identity = $user ? ['user_id' => $user->id] : ['session_id' => $sessionId];
-        $availableInventory = $variant ? $variant->inventory : $product->inventory;
+        $availableInventory = $this->availableInventory($product, $variant);
 
         $item = CartItem::firstOrNew($identity + [
             'product_id' => $product->id,
@@ -37,7 +37,7 @@ class ShoppingCartService
 
     public function updateQuantity(CartItem $cartItem, int $quantity): CartItem
     {
-        $availableInventory = $cartItem->variant ? $cartItem->variant->inventory : $cartItem->product->inventory;
+        $availableInventory = $this->availableInventory($cartItem->product, $cartItem->variant);
         $cartItem->quantity = max(1, min($availableInventory, $quantity));
         $cartItem->save();
 
@@ -46,19 +46,41 @@ class ShoppingCartService
 
     public function mergeGuestCartIntoUserCart(User $user, string $sessionId): void
     {
-        CartItem::where('session_id', $sessionId)->with(['product', 'variant'])->get()->each(function (CartItem $guestItem) use ($user) {
-            $existing = CartItem::firstOrNew([
+        $guestItems = CartItem::where('session_id', $sessionId)->with(['product', 'variant'])->get();
+
+        if ($guestItems->isEmpty()) {
+            return;
+        }
+
+        $existingItems = CartItem::where('user_id', $user->id)
+            ->whereIn('product_id', $guestItems->pluck('product_id')->unique())
+            ->get()
+            ->keyBy(fn (CartItem $item) => $this->cartKey($item->product_id, $item->product_variant_id));
+
+        $guestItems->each(function (CartItem $guestItem) use ($user, $existingItems) {
+            $key = $this->cartKey($guestItem->product_id, $guestItem->product_variant_id);
+            $existing = $existingItems->get($key) ?? new CartItem([
                 'user_id' => $user->id,
                 'product_id' => $guestItem->product_id,
                 'product_variant_id' => $guestItem->product_variant_id,
             ]);
             $existing->quantity = min(
-                $guestItem->variant ? $guestItem->variant->inventory : $guestItem->product->inventory,
+                $this->availableInventory($guestItem->product, $guestItem->variant),
                 ($existing->exists ? $existing->quantity : 0) + $guestItem->quantity
             );
             $existing->session_id = null;
             $existing->save();
             $guestItem->delete();
         });
+    }
+
+    private function availableInventory(Product $product, ?ProductVariant $variant): int
+    {
+        return $variant ? $variant->inventory : $product->inventory;
+    }
+
+    private function cartKey(int $productId, ?int $variantId): string
+    {
+        return $productId . ':' . ($variantId ?: 'default');
     }
 }

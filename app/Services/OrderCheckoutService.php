@@ -21,30 +21,40 @@ class OrderCheckoutService
 
     public function createOrderFromCart(User $user, ?int $shippingMethodId = null, ?int $addressId = null, ?string $couponCode = null): Order
     {
+        $user->loadMissing('businessProfile');
+
         return DB::transaction(function () use ($user, $shippingMethodId, $addressId, $couponCode) {
-            $cartItems = CartItem::where('user_id', $user->id)->with(['product', 'variant'])->lockForUpdate()->get();
+            $cartItems = CartItem::where('user_id', $user->id)
+                ->lockForUpdate()
+                ->get();
 
             if ($cartItems->isEmpty()) {
                 throw new RuntimeException('購物車沒有商品');
             }
 
+            $products = Product::whereKey($cartItems->pluck('product_id')->unique())
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $variants = ProductVariant::whereKey($cartItems->pluck('product_variant_id')->filter()->unique())
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
             $subtotal = 0;
-            $lockedProducts = [];
-            $lockedVariants = [];
+            $lines = [];
 
             foreach ($cartItems as $cartItem) {
-                $product = Product::whereKey($cartItem->product_id)->lockForUpdate()->firstOrFail();
-                $variant = null;
+                $product = $products->get($cartItem->product_id);
+                $variant = $cartItem->product_variant_id ? $variants->get($cartItem->product_variant_id) : null;
 
-                if ($product->status !== 'active') {
-                    throw new RuntimeException("商品 {$product->name} 尚未上架");
+                if (!$product || $product->status !== 'active') {
+                    throw new RuntimeException('商品目前無法購買');
                 }
 
-                if ($cartItem->product_variant_id) {
-                    $variant = ProductVariant::whereKey($cartItem->product_variant_id)->lockForUpdate()->firstOrFail();
-                    if (!$variant->is_active || $variant->product_id !== $product->id) {
-                        throw new RuntimeException("商品 {$product->name} 規格不可購買");
-                    }
+                if ($cartItem->product_variant_id && (!$variant || !$variant->is_active || $variant->product_id !== $product->id)) {
+                    throw new RuntimeException("商品 {$product->name} 規格無法購買");
                 }
 
                 $availableInventory = $variant ? $variant->inventory : $product->inventory;
@@ -53,12 +63,16 @@ class OrderCheckoutService
                 }
 
                 $unitPrice = $this->productPricingService->calculateUnitPrice($product, $variant, $user, $cartItem->quantity, true);
-                $subtotal += $unitPrice * $cartItem->quantity;
-                $lockedProducts[$cartItem->product_id] = $product;
+                $lineSubtotal = $unitPrice * $cartItem->quantity;
+                $subtotal += $lineSubtotal;
 
-                if ($variant) {
-                    $lockedVariants[$cartItem->id] = $variant;
-                }
+                $lines[$cartItem->id] = [
+                    'cart_item' => $cartItem,
+                    'product' => $product,
+                    'variant' => $variant,
+                    'unit_price' => $unitPrice,
+                    'subtotal' => $lineSubtotal,
+                ];
             }
 
             $coupon = $this->couponDiscountService->findUsableCoupon($couponCode, $subtotal, $user);
@@ -83,21 +97,23 @@ class OrderCheckoutService
                 'total' => $subtotal - $discountTotal + $shippingFee,
             ]);
 
-            foreach ($cartItems as $cartItem) {
-                $product = $lockedProducts[$cartItem->product_id];
-                $variant = $lockedVariants[$cartItem->id] ?? null;
+            foreach ($lines as $line) {
+                /** @var CartItem $cartItem */
+                $cartItem = $line['cart_item'];
+                /** @var Product $product */
+                $product = $line['product'];
+                /** @var ProductVariant|null $variant */
+                $variant = $line['variant'];
 
                 if ($variant) {
-                    $variant->decrement('inventory', $cartItem->quantity);
-                    $variant->refresh();
+                    $variant->inventory -= $cartItem->quantity;
+                    $variant->save();
                     $inventoryAfter = $variant->inventory;
                 } else {
-                    $product->decrement('inventory', $cartItem->quantity);
-                    $product->refresh();
+                    $product->inventory -= $cartItem->quantity;
+                    $product->save();
                     $inventoryAfter = $product->inventory;
                 }
-
-                $unitPrice = $this->productPricingService->calculateUnitPrice($product, $variant, $user, $cartItem->quantity, true);
 
                 $orderItem = $order->items()->create([
                     'product_id' => $product->id,
@@ -105,9 +121,9 @@ class OrderCheckoutService
                     'seller_id' => $product->seller_id,
                     'product_name' => $product->name,
                     'variant_name' => $variant?->displayName(),
-                    'unit_price' => $unitPrice,
+                    'unit_price' => $line['unit_price'],
                     'quantity' => $cartItem->quantity,
-                    'subtotal' => $unitPrice * $cartItem->quantity,
+                    'subtotal' => $line['subtotal'],
                 ]);
 
                 InventoryMovement::create([
@@ -130,7 +146,7 @@ class OrderCheckoutService
                 ]);
             }
 
-            CartItem::where('user_id', $user->id)->delete();
+            CartItem::whereKey($cartItems->modelKeys())->delete();
 
             return $order->load('items');
         }, 3);

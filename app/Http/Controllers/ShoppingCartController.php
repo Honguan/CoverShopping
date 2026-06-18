@@ -16,11 +16,13 @@ class ShoppingCartController extends Controller
 {
     public function showCart(Request $request, ShoppingCartService $shoppingCartService, ProductPricingService $productPricingService)
     {
-        $items = $shoppingCartService->getItemsForUserOrSession($request->user(), $request->session()->getId());
+        $user = $request->user();
+        $user?->loadMissing('businessProfile');
+        $items = $shoppingCartService->getItemsForUserOrSession($user, $request->session()->getId());
 
         return view('cart.index', [
             'items' => $items,
-            'subtotal' => $items->sum(fn (CartItem $item) => $productPricingService->calculateUnitPrice($item->product, $item->variant, $request->user(), $item->quantity) * $item->quantity),
+            'subtotal' => $items->sum(fn (CartItem $item) => $productPricingService->calculateUnitPrice($item->product, $item->variant, $user, $item->quantity) * $item->quantity),
             'shippingMethods' => ShippingMethod::where('is_active', true)->orderBy('sort_order')->get(),
             'pricingService' => $productPricingService,
         ]);

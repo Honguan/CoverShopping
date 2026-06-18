@@ -10,14 +10,15 @@ class CouponDiscountService
 {
     public function findUsableCoupon(?string $code, int $subtotal, User $user): ?Coupon
     {
-        if (!$code) {
+        $code = strtoupper(trim((string) $code));
+        if ($code === '') {
             return null;
         }
 
-        $coupon = Coupon::where('code', strtoupper(trim($code)))->lockForUpdate()->first();
+        $coupon = Coupon::where('code', $code)->lockForUpdate()->first();
 
         if (!$coupon || !$coupon->is_active) {
-            throw new RuntimeException('優惠券不存在或已停用');
+            throw new RuntimeException('優惠券無法使用');
         }
 
         if ($coupon->starts_at && $coupon->starts_at->isFuture()) {

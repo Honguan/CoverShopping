@@ -22,10 +22,12 @@ class ProductCatalogController extends Controller
     {
         abort_unless($product->status === 'active', 404);
 
+        $user = $request->user();
+
         DB::table('recently_viewed_products')->updateOrInsert(
             [
-                'user_id' => $request->user()?->id,
-                'session_id' => $request->user() ? null : $request->session()->getId(),
+                'user_id' => $user?->id,
+                'session_id' => $user ? null : $request->session()->getId(),
                 'product_id' => $product->id,
             ],
             ['viewed_at' => now()]

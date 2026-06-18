@@ -10,8 +10,10 @@ class AuditLogService
 {
     public function writeLog(string $action, ?Model $auditable = null, array $payload = [], ?Request $request = null): void
     {
+        $user = $request?->user();
+
         AuditLog::create([
-            'user_id' => $request && $request->user() ? $request->user()->id : null,
+            'user_id' => $user?->id,
             'action' => $action,
             'auditable_type' => $auditable ? get_class($auditable) : null,
             'auditable_id' => $auditable ? $auditable->getKey() : null,
