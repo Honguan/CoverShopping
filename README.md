@@ -1,18 +1,19 @@
-# CoverShopping
+﻿# CoverShopping
 
-CoverShopping 是以 Laravel 為核心的現代化購物網站，支援 B2C 與 B2B 銷售流程。新版專案已提升到根目錄，舊版自製 MVC 結構已移除。
+CoverShopping 是以 Laravel 為核心的 B2C / B2B 電商單體專案，目標是在大型電商的交易穩定性與小型電商的擴充彈性之間取得平衡。
 
-## 環境需求
+## 技術環境
 
 - PHP 8.3+
+- Laravel 13
 - Composer 2.8+
-- Node.js 20+
-- MySQL 8
+- Node.js 22+
+- MySQL 8 或測試用 SQLite
 - Apache + PHP-FPM
-- Redis（快取與佇列）
-- Meilisearch（商品搜尋，可先用資料庫搜尋）
+- Redis：快取、Session、Queue 可選
+- Meilisearch：商品搜尋可選，預設可使用 Laravel Scout database driver
 
-## 安裝
+## 快速開始
 
 ```bash
 composer install
@@ -20,44 +21,52 @@ npm install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
-php artisan storage:link
 npm run build
 ```
 
-## Apache
+Apache / Nginx 的網站根目錄請指向：
 
-VirtualHost 的 `DocumentRoot` 請指向：
-
-```apache
+```text
 /path/to/CoverShopping/public
-```
-
-## 舊資料匯入
-
-如需匯入舊站資料，請在 `.env` 設定 `LEGACY_DB_*`，再執行：
-
-```bash
-php artisan legacy:import-shopping
 ```
 
 ## 主要功能
 
-- 會員、商家、管理員角色
-- B2C 一般價格與 B2B 企業價格
-- 商品分類、多圖、SKU、庫存
-- 商品推薦、最近瀏覽、價格篩選與排序
-- 購物車、優惠券、滿額折扣、免運門檻、配送、結帳
-- 訂單快照、庫存鎖定、出貨狀態
-- 地址簿、收藏、評價、問答、通知、再次購買
-- 商家低庫存提醒
-- 退貨申請與後台審核
-- 操作紀錄與集中權限控管
+- 商品瀏覽、分類、搜尋、推薦、最近瀏覽。
+- 購物車支援訪客 session 與會員購物車，登入後合併。
+- 結帳使用 transaction 與 row lock，訂單保留商品與價格快照。
+- B2C 一般價格與 B2B 企業價格、企業最低採購量。
+- 優惠券、滿額折扣、免運門檻、配送方式。
+- 地址簿、收藏、商品評價、商品問答、通知、退貨申請。
+- 商家後台：商品、SKU、低庫存、訂單出貨、問答回覆。
+- 管理員後台：會員狀態、企業審核、商品審核、付款狀態、退貨狀態、優惠券與配送方式。
+- Audit log 記錄重要後台與交易操作。
 
-## 品質檢查
+## API 現況
+
+目前專案沒有 `routes/api.php`，也尚未提供 REST API v1。現行公開互動介面是 `routes/web.php` 內的 Web endpoints。端點契約請見 [docs/WEB_ENDPOINTS.md](docs/WEB_ENDPOINTS.md)。
+
+## 測試與品質
 
 ```bash
-composer format
-composer analyse
 composer test
-composer quality
+composer analyse
+composer format
+npm run build
 ```
+
+本機若缺 PHP / Composer，可先執行：
+
+```bash
+npm.cmd run build
+git diff --check
+```
+
+完整 PHP 測試需在具備 PHP 8.3 與 Composer 的環境或 GitHub Actions 執行。測試策略請見 [docs/TESTING.md](docs/TESTING.md)。
+
+## 文件
+
+- [DEVELOPMENT.md](DEVELOPMENT.md)：開發環境、架構與交付流程。
+- [docs/WEB_ENDPOINTS.md](docs/WEB_ENDPOINTS.md)：Web endpoints 契約。
+- [docs/LOGIC_FLOWS.md](docs/LOGIC_FLOWS.md)：核心流程與資料一致性。
+- [docs/TESTING.md](docs/TESTING.md)：測試範圍與驗收命令。

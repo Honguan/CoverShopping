@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers;
 
@@ -21,6 +21,6 @@ class ReturnRequestController extends Controller
         $order->update(['return_status' => 'requested']);
         $auditLogService->writeLog('return.requested', $returnRequest, ['order' => $order->number], $request);
 
-        return back()->with('status', '退貨申請已送出');
+        return back()->with('status', 'Return requested.');
     }
 }

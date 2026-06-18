@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers;
 
@@ -60,7 +60,7 @@ class SellerDashboardController extends Controller
 
         $auditLogService->writeLog('seller.product.created', $product, $data, $request);
 
-        return redirect()->route('seller.products.index')->with('status', '商品已建立');
+        return redirect()->route('seller.products.index')->with('status', 'Product created.');
     }
 
     public function updateProductInfo(CreateProductRequest $request, Product $product, AuditLogService $auditLogService)
@@ -86,7 +86,7 @@ class SellerDashboardController extends Controller
 
         $auditLogService->writeLog('seller.product.updated', $product, $data, $request);
 
-        return redirect()->route('seller.products.index')->with('status', '商品已更新');
+        return redirect()->route('seller.products.index')->with('status', 'Product updated.');
     }
 
     public function createProductVariant(CreateProductVariantRequest $request, Product $product, AuditLogService $auditLogService)
@@ -105,7 +105,7 @@ class SellerDashboardController extends Controller
 
         $auditLogService->writeLog('seller.product_variant.created', $variant, $data, $request);
 
-        return redirect()->route('seller.products.index')->with('status', '商品規格已建立');
+        return redirect()->route('seller.products.index')->with('status', 'Product variant created.');
     }
 
     public function answerProductQuestion(AnswerProductQuestionRequest $request, ProductQuestion $productQuestion, AuditLogService $auditLogService)
@@ -123,14 +123,14 @@ class SellerDashboardController extends Controller
         Notification::create([
             'user_id' => $productQuestion->user_id,
             'type' => 'product_question_answered',
-            'title' => '商品問題已回覆',
+            'title' => 'Your product question was answered.',
             'body' => $productQuestion->product->name,
             'url' => route('catalog.show', $productQuestion->product),
         ]);
 
         $auditLogService->writeLog('seller.question.answered', $answer, ['question' => $productQuestion->id], $request);
 
-        return redirect()->route('seller.products.index')->with('status', '已回覆商品問題');
+        return redirect()->route('seller.products.index')->with('status', 'Question answered.');
     }
 
     public function showSellerOrders(Request $request)
@@ -160,6 +160,6 @@ class SellerDashboardController extends Controller
 
         $auditLogService->writeLog('seller.order_item.shipped', $orderItem, ['order' => $order->number], $request);
 
-        return redirect()->route('seller.orders.index')->with('status', '訂單品項已出貨');
+        return redirect()->route('seller.orders.index')->with('status', 'Order item shipped.');
     }
 }

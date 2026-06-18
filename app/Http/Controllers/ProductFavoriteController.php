@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers;
 
@@ -22,7 +22,7 @@ class ProductFavoriteController extends Controller
             'updated_at' => $now,
         ]);
 
-        return back()->with('status', '已加入收藏');
+        return back()->with('status', 'Product added to favorites.');
     }
 
     public function removeProductFromFavorites(Request $request, Product $product)
@@ -32,6 +32,6 @@ class ProductFavoriteController extends Controller
             ->where('product_id', $product->id)
             ->delete();
 
-        return back()->with('status', '已取消收藏');
+        return back()->with('status', 'Product removed from favorites.');
     }
 }

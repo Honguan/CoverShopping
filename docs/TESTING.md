@@ -1,0 +1,70 @@
+﻿# 測試策略
+
+## 驗收命令
+
+完整驗收：
+
+```bash
+composer install
+composer analyse
+composer test
+npm run build
+git diff --check
+```
+
+Windows 可使用：
+
+```powershell
+npm.cmd run build
+```
+
+本機缺 PHP / Composer 時，`composer analyse` 與 `composer test` 需交給 GitHub Actions 或 PHP 8.3 環境執行。
+
+## 測試範圍
+
+### 公開與會員流程
+
+- 訪客可瀏覽首頁、商品列表與商品詳情。
+- 訪客可加入 session 購物車。
+- 註冊、登入、登出可正常運作。
+- 會員可收藏、提問、評價、申請退貨、查看通知與標記已讀。
+- 未登入使用者不可進入訂單、地址、通知與企業資料頁。
+
+### 購物車與結帳
+
+- 購物車支援清空且只清自己的 user/session scope。
+- 購物車顯示下架、規格失效、庫存不足與企業最低量提醒。
+- 結帳建立訂單快照並扣庫存。
+- 優惠券、滿額折扣、免運與配送快照正確。
+- SKU 庫存與商品庫存分開扣減。
+- 再次購買只加入可購買數量並回報略過數量。
+
+### B2B / B2C
+
+- 一般會員使用 B2C 價格。
+- 企業會員需有 approved business profile 才可使用 B2B 價格。
+- B2B 最低採購量不足時不可結帳。
+
+### 商家後台
+
+- 商家可建立商品與 SKU。
+- 商家可回覆自己商品的問答。
+- 商家只能出貨自己的 order item。
+- 買家不可存取商家後台。
+
+### 管理員後台
+
+- 管理員可調整會員狀態與角色。
+- 管理員可審核企業資料與商品狀態。
+- 管理員可更新付款狀態，付款後訂單進入 processing。
+- 管理員可建立優惠券與配送方式。
+- 管理員可更新退貨狀態並同步訂單 return_status。
+
+## 目前測試檔
+
+- `FavoriteAndReturnTest.php`：收藏、地址簿、再次購買、購物車清空、退貨。
+- `OrderCheckoutServiceTest.php`：結帳、庫存、優惠券、配送、B2B 價格。
+- `PublicEndpointFlowTest.php`：公開端點、會員互動、通知與登入保護。
+- `BackOfficeFlowTest.php`：商家後台、管理員後台與角色阻擋。
+- `ServiceLogicFlowTest.php`：購物車狀態、價格、促銷、推薦。
+- `RoleMiddlewareTest.php`：角色 middleware 基本阻擋。

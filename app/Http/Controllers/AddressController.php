@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers;
 
@@ -27,7 +27,7 @@ class AddressController extends Controller
             'is_default' => $request->boolean('is_default'),
         ]);
 
-        return redirect()->route('addresses.index')->with('status', '收件地址已新增');
+        return redirect()->route('addresses.index')->with('status', 'Address saved.');
     }
 
     public function setDefaultAddress(Request $request, Address $address)
@@ -37,7 +37,7 @@ class AddressController extends Controller
         $request->user()->addresses()->update(['is_default' => false]);
         $address->update(['is_default' => true]);
 
-        return redirect()->route('addresses.index')->with('status', '預設地址已更新');
+        return redirect()->route('addresses.index')->with('status', 'Default address updated.');
     }
 
     public function deleteAddress(Request $request, Address $address)
@@ -46,6 +46,6 @@ class AddressController extends Controller
 
         $address->delete();
 
-        return redirect()->route('addresses.index')->with('status', '收件地址已刪除');
+        return redirect()->route('addresses.index')->with('status', 'Address deleted.');
     }
 }

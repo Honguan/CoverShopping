@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers;
 
@@ -24,13 +24,13 @@ class ProductQuestionController extends Controller
         Notification::create([
             'user_id' => $product->seller_id,
             'type' => 'product_question',
-            'title' => '商品收到新問答',
+            'title' => 'New product question.',
             'body' => $product->name,
             'url' => route('seller.products.index'),
         ]);
 
         $auditLogService->writeLog('product.question.created', $question, ['product' => $product->id], $request);
 
-        return back()->with('status', '問題已送出');
+        return back()->with('status', 'Question submitted.');
     }
 }

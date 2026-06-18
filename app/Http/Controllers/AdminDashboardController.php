@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers;
 
@@ -41,7 +41,7 @@ class AdminDashboardController extends Controller
         $user->update(array_filter($data, fn ($value) => $value !== null));
         $auditLogService->writeLog('admin.user.updated', $user, $data, $request);
 
-        return redirect()->route('admin.dashboard')->with('status', '會員已更新');
+        return redirect()->route('admin.dashboard')->with('status', 'User updated.');
     }
 
     public function reviewBusinessProfile(ReviewBusinessProfileRequest $request, BusinessProfile $businessProfile, AuditLogService $auditLogService)
@@ -56,14 +56,14 @@ class AdminDashboardController extends Controller
         Notification::create([
             'user_id' => $businessProfile->user_id,
             'type' => 'business_profile_reviewed',
-            'title' => '企業會員審核結果',
+            'title' => 'Business profile reviewed.',
             'body' => $data['status'],
             'url' => route('business_profile.edit'),
         ]);
 
         $auditLogService->writeLog('admin.business_profile.updated', $businessProfile, $data, $request);
 
-        return redirect()->route('admin.dashboard')->with('status', '企業會員狀態已更新');
+        return redirect()->route('admin.dashboard')->with('status', 'Business profile reviewed.');
     }
 
     public function changeProductStatus(UpdateProductStatusRequest $request, Product $product, AuditLogService $auditLogService)
@@ -73,7 +73,7 @@ class AdminDashboardController extends Controller
         $product->update($data);
         $auditLogService->writeLog('admin.product.status_updated', $product, $data, $request);
 
-        return redirect()->route('admin.dashboard')->with('status', '商品狀態已更新');
+        return redirect()->route('admin.dashboard')->with('status', 'Product status updated.');
     }
 
     public function changeOrderPaymentStatus(UpdateOrderPaymentRequest $request, Order $order, AuditLogService $auditLogService)
@@ -86,7 +86,7 @@ class AdminDashboardController extends Controller
         }
         $auditLogService->writeLog('admin.order.payment_updated', $order, $data, $request);
 
-        return redirect()->route('admin.dashboard')->with('status', '付款狀態已更新');
+        return redirect()->route('admin.dashboard')->with('status', 'Payment status updated.');
     }
 
     public function createCoupon(CreateCouponRequest $request, AuditLogService $auditLogService)
@@ -99,7 +99,7 @@ class AdminDashboardController extends Controller
         $coupon = Coupon::create($data);
         $auditLogService->writeLog('admin.coupon.created', $coupon, $data, $request);
 
-        return redirect()->route('admin.dashboard')->with('status', '優惠券已建立');
+        return redirect()->route('admin.dashboard')->with('status', 'Coupon created.');
     }
 
     public function createShippingMethod(CreateShippingMethodRequest $request, AuditLogService $auditLogService)
@@ -111,7 +111,7 @@ class AdminDashboardController extends Controller
         $shippingMethod = ShippingMethod::create($data);
         $auditLogService->writeLog('admin.shipping_method.created', $shippingMethod, $data, $request);
 
-        return redirect()->route('admin.dashboard')->with('status', '配送方式已建立');
+        return redirect()->route('admin.dashboard')->with('status', 'Shipping method created.');
     }
 
     public function changeReturnStatus(UpdateReturnStatusRequest $request, ReturnRequest $returnRequest, AuditLogService $auditLogService)
@@ -122,6 +122,6 @@ class AdminDashboardController extends Controller
         $returnRequest->order->update(['return_status' => $data['status']]);
         $auditLogService->writeLog('admin.return.updated', $returnRequest, $data, $request);
 
-        return redirect()->route('admin.dashboard')->with('status', '退貨狀態已更新');
+        return redirect()->route('admin.dashboard')->with('status', 'Return status updated.');
     }
 }

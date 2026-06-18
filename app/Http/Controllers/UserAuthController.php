@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers;
 
@@ -26,7 +26,7 @@ class UserAuthController extends Controller
         $credentials = $request->validated();
 
         if (!Auth::attempt($credentials, $request->boolean('remember'))) {
-            return back()->withErrors(['account' => '帳號或密碼錯誤'])->onlyInput('account');
+            return back()->withErrors(['account' => 'Account or password is incorrect.'])->onlyInput('account');
         }
 
         $request->session()->regenerate();
@@ -34,7 +34,7 @@ class UserAuthController extends Controller
         if ($request->user()->status !== 'active') {
             Auth::logout();
 
-            return back()->withErrors(['account' => '帳號目前無法使用']);
+            return back()->withErrors(['account' => 'This account is not active.']);
         }
 
         $shoppingCartService->mergeGuestCartIntoUserCart($request->user(), $request->session()->getId());

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Tests\Feature;
 
@@ -167,7 +167,7 @@ class FavoriteAndReturnTest extends TestCase
             'name' => 'Inactive Cart Product',
             'price' => 100,
             'inventory' => 5,
-            'status' => 'inactive',
+            'status' => 'archived',
         ]);
         $variantProduct = Product::create([
             'seller_id' => $seller->id,
@@ -225,7 +225,7 @@ class FavoriteAndReturnTest extends TestCase
             'name' => 'Inactive Reorder Product',
             'price' => 100,
             'inventory' => 5,
-            'status' => 'inactive',
+            'status' => 'archived',
         ]);
         $order = Order::create([
             'number' => 'T202606180003',
@@ -284,7 +284,7 @@ class FavoriteAndReturnTest extends TestCase
         ]);
 
         $this->actingAs($buyer)
-            ->post("/orders/{$order->id}/returns", ['reason' => '商品不符合需求'])
+            ->post("/orders/{$order->id}/returns", ['reason' => 'Wrong size'])
             ->assertRedirect();
 
         $this->assertDatabaseHas('return_requests', [

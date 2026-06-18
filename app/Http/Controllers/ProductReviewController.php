@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers;
 
@@ -31,6 +31,6 @@ class ProductReviewController extends Controller
 
         $auditLogService->writeLog('product.review.created', $review, ['product' => $product->id], $request);
 
-        return back()->with('status', '評價已送出');
+        return back()->with('status', 'Review submitted.');
     }
 }
