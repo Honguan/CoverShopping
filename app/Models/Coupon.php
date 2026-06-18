@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Coupon extends Model
 {
@@ -32,7 +33,7 @@ class Coupon extends Model
         ];
     }
 
-    public function redemptions()
+    public function redemptions(): HasMany
     {
         return $this->hasMany(CouponRedemption::class);
     }

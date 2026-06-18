@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Laravel\Scout\Searchable;
 
 class Product extends Model
@@ -32,37 +35,37 @@ class Product extends Model
         ];
     }
 
-    public function seller()
+    public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id');
     }
 
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function images()
+    public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderByDesc('is_primary')->orderBy('sort_order');
     }
 
-    public function variants()
+    public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class)->where('is_active', true)->orderBy('option_name')->orderBy('option_value');
     }
 
-    public function primaryImage()
+    public function primaryImage(): HasOne
     {
         return $this->hasOne(ProductImage::class)->where('is_primary', true);
     }
 
-    public function reviews()
+    public function reviews(): HasMany
     {
         return $this->hasMany(ProductReview::class)->where('status', 'published')->latest();
     }
 
-    public function questions()
+    public function questions(): HasMany
     {
         return $this->hasMany(ProductQuestion::class)->where('status', '!=', 'hidden')->latest();
     }
