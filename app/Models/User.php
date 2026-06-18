@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -38,27 +40,32 @@ class User extends Authenticatable
         ];
     }
 
-    public function products()
+    /** @return HasMany<Product, $this> */
+    public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'seller_id');
     }
 
-    public function cartItems()
+    /** @return HasMany<CartItem, $this> */
+    public function cartItems(): HasMany
     {
         return $this->hasMany(CartItem::class);
     }
 
-    public function orders()
+    /** @return HasMany<Order, $this> */
+    public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
     }
 
-    public function addresses()
+    /** @return HasMany<Address, $this> */
+    public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
     }
 
-    public function businessProfile()
+    /** @return HasOne<BusinessProfile, $this> */
+    public function businessProfile(): HasOne
     {
         return $this->hasOne(BusinessProfile::class);
     }
