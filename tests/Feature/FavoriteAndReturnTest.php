@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Address;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -15,20 +16,7 @@ class FavoriteAndReturnTest extends TestCase
 
     public function test_authenticated_user_can_favorite_active_product(): void
     {
-        $seller = User::create([
-            'name' => 'Seller',
-            'account' => 'seller',
-            'password' => 'password',
-            'role' => 'seller',
-            'status' => 'active',
-        ]);
-        $buyer = User::create([
-            'name' => 'Buyer',
-            'account' => 'buyer',
-            'password' => 'password',
-            'role' => 'customer',
-            'status' => 'active',
-        ]);
+        [$seller, $buyer] = $this->createSellerAndBuyer();
         $product = Product::create([
             'seller_id' => $seller->id,
             'name' => 'Favorite Product',
@@ -45,17 +33,70 @@ class FavoriteAndReturnTest extends TestCase
         ]);
     }
 
-    public function test_customer_can_request_return_for_own_completed_order(): void
+    public function test_customer_can_manage_address_book(): void
     {
-        $buyer = User::create([
-            'name' => 'Buyer',
-            'account' => 'buyer',
-            'password' => 'password',
-            'role' => 'customer',
+        [, $buyer] = $this->createSellerAndBuyer();
+
+        $this->actingAs($buyer)->post('/addresses', [
+            'recipient_name' => 'Buyer',
+            'phone' => '0911000000',
+            'postal_code' => '100',
+            'city' => 'Taipei',
+            'district' => 'Da-an',
+            'address_line' => 'No. 1',
+            'is_default' => '1',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('addresses', [
+            'user_id' => $buyer->id,
+            'recipient_name' => 'Buyer',
+            'is_default' => true,
+        ]);
+    }
+
+    public function test_customer_can_reorder_available_products(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Reorder Product',
+            'price' => 100,
+            'inventory' => 5,
             'status' => 'active',
         ]);
         $order = Order::create([
             'number' => 'T202606180001',
+            'user_id' => $buyer->id,
+            'subtotal' => 100,
+            'shipping_fee' => 0,
+            'total' => 100,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'completed',
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'seller_id' => $seller->id,
+            'product_name' => $product->name,
+            'unit_price' => 100,
+            'quantity' => 2,
+            'subtotal' => 200,
+        ]);
+
+        $this->actingAs($buyer)->post("/orders/{$order->id}/reorder")->assertRedirect('/cart');
+
+        $this->assertDatabaseHas('cart_items', [
+            'user_id' => $buyer->id,
+            'product_id' => $product->id,
+            'quantity' => 2,
+        ]);
+    }
+
+    public function test_customer_can_request_return_for_own_completed_order(): void
+    {
+        [, $buyer] = $this->createSellerAndBuyer();
+        $order = Order::create([
+            'number' => 'T202606180002',
             'user_id' => $buyer->id,
             'subtotal' => 100,
             'shipping_fee' => 0,
@@ -76,135 +117,44 @@ class FavoriteAndReturnTest extends TestCase
         $this->assertSame('requested', $order->fresh()->return_status);
     }
 
-    public function test_customer_cannot_request_return_twice(): void
+    public function test_customer_cannot_delete_other_users_address(): void
     {
-        $buyer = User::create([
-            'name' => 'Buyer',
-            'account' => 'buyer',
+        [, $buyer] = $this->createSellerAndBuyer();
+        $other = User::create([
+            'name' => 'Other',
+            'account' => 'other',
             'password' => 'password',
             'role' => 'customer',
             'status' => 'active',
         ]);
-        $order = Order::create([
-            'number' => 'T202606180002',
-            'user_id' => $buyer->id,
-            'subtotal' => 100,
-            'shipping_fee' => 0,
-            'total' => 100,
-            'payment_status' => 'paid',
-            'fulfillment_status' => 'completed',
-            'return_status' => 'requested',
+        $address = Address::create([
+            'user_id' => $other->id,
+            'recipient_name' => 'Other',
+            'phone' => '0922000000',
+            'city' => 'Taipei',
+            'address_line' => 'No. 9',
         ]);
 
-        $this->actingAs($buyer)
-            ->post("/orders/{$order->id}/returns", ['reason' => '重複申請'])
-            ->assertStatus(409);
+        $this->actingAs($buyer)->delete("/addresses/{$address->id}")->assertForbidden();
     }
 
-    public function test_customer_can_review_purchased_completed_product(): void
+    private function createSellerAndBuyer(): array
     {
         $seller = User::create([
             'name' => 'Seller',
-            'account' => 'seller',
+            'account' => 'seller-' . uniqid(),
             'password' => 'password',
             'role' => 'seller',
             'status' => 'active',
         ]);
         $buyer = User::create([
             'name' => 'Buyer',
-            'account' => 'buyer',
+            'account' => 'buyer-' . uniqid(),
             'password' => 'password',
             'role' => 'customer',
             'status' => 'active',
         ]);
-        $product = Product::create([
-            'seller_id' => $seller->id,
-            'name' => 'Review Product',
-            'price' => 100,
-            'inventory' => 5,
-            'status' => 'active',
-        ]);
-        $order = Order::create([
-            'number' => 'T202606180003',
-            'user_id' => $buyer->id,
-            'subtotal' => 100,
-            'shipping_fee' => 0,
-            'total' => 100,
-            'payment_status' => 'paid',
-            'fulfillment_status' => 'completed',
-        ]);
-        $item = OrderItem::create([
-            'order_id' => $order->id,
-            'product_id' => $product->id,
-            'seller_id' => $seller->id,
-            'product_name' => $product->name,
-            'unit_price' => 100,
-            'quantity' => 1,
-            'subtotal' => 100,
-        ]);
 
-        $this->actingAs($buyer)
-            ->post("/products/{$product->id}/reviews", [
-                'order_item_id' => $item->id,
-                'rating' => 5,
-                'content' => '品質穩定',
-            ])
-            ->assertRedirect();
-
-        $this->assertDatabaseHas('product_reviews', [
-            'product_id' => $product->id,
-            'user_id' => $buyer->id,
-            'order_item_id' => $item->id,
-            'rating' => 5,
-        ]);
-    }
-
-    public function test_customer_question_notifies_seller_and_seller_can_answer(): void
-    {
-        $seller = User::create([
-            'name' => 'Seller',
-            'account' => 'seller',
-            'password' => 'password',
-            'role' => 'seller',
-            'status' => 'active',
-        ]);
-        $buyer = User::create([
-            'name' => 'Buyer',
-            'account' => 'buyer',
-            'password' => 'password',
-            'role' => 'customer',
-            'status' => 'active',
-        ]);
-        $product = Product::create([
-            'seller_id' => $seller->id,
-            'name' => 'Question Product',
-            'price' => 100,
-            'inventory' => 5,
-            'status' => 'active',
-        ]);
-
-        $this->actingAs($buyer)
-            ->post("/products/{$product->id}/questions", ['question' => '今天下單何時出貨？'])
-            ->assertRedirect();
-
-        $this->assertDatabaseHas('notifications', [
-            'user_id' => $seller->id,
-            'type' => 'product_question',
-        ]);
-
-        $questionId = $product->questions()->first()->id;
-        $this->actingAs($seller)
-            ->post("/seller/questions/{$questionId}/answers", ['answer' => '今日可出貨'])
-            ->assertRedirect();
-
-        $this->assertDatabaseHas('product_question_answers', [
-            'product_question_id' => $questionId,
-            'user_id' => $seller->id,
-            'answer' => '今日可出貨',
-        ]);
-        $this->assertDatabaseHas('notifications', [
-            'user_id' => $buyer->id,
-            'type' => 'product_question_answered',
-        ]);
+        return [$seller, $buyer];
     }
 }

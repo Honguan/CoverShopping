@@ -5,8 +5,16 @@
     <section class="list">
         @forelse($orders as $order)
             <article class="panel">
-                <h2>{{ $order->number }}</h2>
-                <p>{{ strtoupper($order->sales_channel) }} / 總額 ${{ number_format($order->total) }}，付款 {{ $order->payment_status }}，物流 {{ $order->fulfillment_status }}</p>
+                <div class="row">
+                    <div>
+                        <h2>{{ $order->number }}</h2>
+                        <p>{{ strtoupper($order->sales_channel) }} / 總金額 ${{ number_format($order->total) }} / 付款 {{ $order->payment_status }} / 出貨 {{ $order->fulfillment_status }}</p>
+                    </div>
+                    <form action="{{ route('orders.reorder', $order) }}" method="post">
+                        @csrf
+                        <button type="submit">再次購買</button>
+                    </form>
+                </div>
                 <ul>
                     @foreach($order->items as $item)
                         <li>
@@ -16,7 +24,7 @@
                             @endif
                             x {{ $item->quantity }} = ${{ number_format($item->subtotal) }}
                             @if($item->product_id && in_array($order->fulfillment_status, ['shipped', 'completed'], true))
-                                <form action="{{ route('reviews.store', $item->product_id) }}" method="post">
+                                <form class="stack" action="{{ route('reviews.store', $item->product_id) }}" method="post">
                                     @csrf
                                     <input type="hidden" name="order_item_id" value="{{ $item->id }}">
                                     <label>評分
@@ -34,7 +42,7 @@
                     @endforeach
                 </ul>
                 @if($order->return_status === 'none' && in_array($order->fulfillment_status, ['shipped', 'completed'], true))
-                    <form action="{{ route('returns.store', $order) }}" method="post">
+                    <form class="stack" action="{{ route('returns.store', $order) }}" method="post">
                         @csrf
                         <label>退貨原因<textarea name="reason" required></textarea></label>
                         <button type="submit">申請退貨</button>

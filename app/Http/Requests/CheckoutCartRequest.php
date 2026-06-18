@@ -10,7 +10,7 @@ class CheckoutCartRequest extends FormRequest
     {
         return [
             'shipping_method_id' => ['nullable', 'integer', 'exists:shipping_methods,id'],
-            'address_id' => ['nullable', 'integer', 'exists:addresses,id'],
+            'address_id' => ['nullable', 'integer', 'exists:addresses,id,user_id,' . $this->user()->id],
             'coupon_code' => ['nullable', 'string', 'max:64'],
         ];
     }

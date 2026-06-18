@@ -17,6 +17,7 @@
             <a href="{{ route('cart.index') }}">購物車</a>
             @auth
                 <a href="{{ route('notifications.index') }}">通知</a>
+                <a href="{{ route('addresses.index') }}">地址簿</a>
                 <a href="{{ route('business_profile.edit') }}">企業會員</a>
                 <a href="{{ route('orders.index') }}">我的訂單</a>
                 @if(auth()->user()->isRole('seller', 'admin'))

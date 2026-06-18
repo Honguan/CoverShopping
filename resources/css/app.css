@@ -125,6 +125,18 @@ label {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 
+.mini-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.filters {
+    align-items: end;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .card,
 .panel,
 .summary {
@@ -140,6 +152,31 @@ label {
     border-radius: 6px;
     object-fit: cover;
     width: 100%;
+}
+
+.image-placeholder {
+    align-items: center;
+    aspect-ratio: 4 / 3;
+    background: linear-gradient(135deg, #e0f2fe, #f8fafc);
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #155eef;
+    display: flex;
+    font-weight: 700;
+    justify-content: center;
+    width: 100%;
+}
+
+.image-placeholder.large {
+    min-height: 320px;
+}
+
+.badge {
+    background: #dcfce7;
+    border-radius: 999px;
+    color: #166534;
+    display: inline-block;
+    padding: 4px 10px;
 }
 
 .price {
@@ -189,8 +226,10 @@ label {
     }
 
     .topbar nav,
-    .row {
+    .row,
+    .filters {
         align-items: stretch;
         flex-direction: column;
+        grid-template-columns: 1fr;
     }
 }

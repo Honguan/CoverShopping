@@ -17,12 +17,20 @@ class SellerDashboardController extends Controller
 {
     public function showSellerProducts(Request $request)
     {
+        $sellerId = $request->user()->id;
+        $lowStockThreshold = (int) config('commerce.low_stock_threshold', 5);
+
         return view('seller.products', [
-            'products' => Product::where('seller_id', $request->user()->id)
+            'products' => Product::where('seller_id', $sellerId)
                 ->with(['variants', 'questions.answers'])
                 ->latest()
                 ->paginate(20),
-            'questions' => ProductQuestion::whereHas('product', fn ($query) => $query->where('seller_id', $request->user()->id))
+            'lowStockProducts' => Product::where('seller_id', $sellerId)
+                ->where('inventory', '<=', $lowStockThreshold)
+                ->orderBy('inventory')
+                ->limit(10)
+                ->get(),
+            'questions' => ProductQuestion::whereHas('product', fn ($query) => $query->where('seller_id', $sellerId))
                 ->with(['product', 'user', 'answers.user'])
                 ->latest()
                 ->limit(20)
@@ -115,14 +123,14 @@ class SellerDashboardController extends Controller
         Notification::create([
             'user_id' => $productQuestion->user_id,
             'type' => 'product_question_answered',
-            'title' => '商品提問已回覆',
+            'title' => '商品問題已回覆',
             'body' => $productQuestion->product->name,
             'url' => route('catalog.show', $productQuestion->product),
         ]);
 
         $auditLogService->writeLog('seller.question.answered', $answer, ['question' => $productQuestion->id], $request);
 
-        return redirect()->route('seller.products.index')->with('status', '已回覆商品提問');
+        return redirect()->route('seller.products.index')->with('status', '已回覆商品問題');
     }
 
     public function showSellerOrders(Request $request)
@@ -152,6 +160,6 @@ class SellerDashboardController extends Controller
 
         $auditLogService->writeLog('seller.order_item.shipped', $orderItem, ['order' => $order->number], $request);
 
-        return redirect()->route('seller.orders.index')->with('status', '已標記出貨');
+        return redirect()->route('seller.orders.index')->with('status', '訂單品項已出貨');
     }
 }

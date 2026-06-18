@@ -44,6 +44,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function address()
+    {
+        return $this->belongsTo(Address::class);
+    }
+
     public function returnRequests()
     {
         return $this->hasMany(ReturnRequest::class);

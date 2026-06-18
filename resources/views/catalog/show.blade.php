@@ -3,17 +3,19 @@
 @section('content')
     <section class="product-detail">
         <div class="gallery">
-            @foreach($product->images as $image)
+            @forelse($product->images as $image)
                 @php $imageUrl = str_starts_with($image->path, '/') ? $image->path : asset('storage/' . $image->path); @endphp
                 <img src="{{ $imageUrl }}" alt="{{ $product->name }}">
-            @endforeach
+            @empty
+                <div class="image-placeholder large">CoverShopping</div>
+            @endforelse
         </div>
-        <div>
+        <div class="panel">
             <h1>{{ $product->name }}</h1>
             <p class="price">${{ number_format($product->price) }}</p>
             @auth
                 @if(auth()->user()->canUseBusinessPricing() && $product->business_price !== null)
-                    <p>企業價：${{ number_format($product->business_price) }}，最低採購 {{ $product->business_min_quantity }}</p>
+                    <p>企業價 ${{ number_format($product->business_price) }}，最低採購量 {{ $product->business_min_quantity }}</p>
                 @endif
             @endauth
             <p>分類：{{ optional($product->category)->name ?? '未分類' }}</p>
@@ -46,6 +48,17 @@
         </div>
     </section>
 
+    @if($relatedProducts->isNotEmpty())
+        <section class="panel">
+            <h2>你可能也喜歡</h2>
+            <div class="mini-grid">
+                @foreach($relatedProducts as $product)
+                    @include('catalog.partials.product-card', ['product' => $product])
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     <section class="panel">
         <h2>商品評價</h2>
         @forelse($product->reviews as $review)
@@ -55,7 +68,7 @@
                 <p>{{ $review->content }}</p>
             </article>
         @empty
-            <p>目前尚無評價。</p>
+            <p>目前沒有評價。</p>
         @endforelse
     </section>
 
@@ -65,7 +78,7 @@
             <form action="{{ route('questions.store', $product) }}" method="post">
                 @csrf
                 <label>提問<textarea name="question" required></textarea></label>
-                <button type="submit">送出提問</button>
+                <button type="submit">送出問題</button>
             </form>
         @endauth
         @forelse($product->questions as $question)
@@ -73,11 +86,11 @@
                 <strong>{{ $question->user->name }}</strong>
                 <p>{{ $question->question }}</p>
                 @foreach($question->answers as $answer)
-                    <blockquote>{{ $answer->answer }} — {{ $answer->user->name }}</blockquote>
+                    <blockquote>{{ $answer->answer }} - {{ $answer->user->name }}</blockquote>
                 @endforeach
             </article>
         @empty
-            <p>目前尚無問答。</p>
+            <p>目前沒有問答。</p>
         @endforelse
     </section>
 @endsection

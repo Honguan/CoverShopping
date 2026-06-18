@@ -15,8 +15,11 @@ use RuntimeException;
 
 class OrderCheckoutService
 {
-    public function __construct(private CouponDiscountService $couponDiscountService, private ProductPricingService $productPricingService)
-    {
+    public function __construct(
+        private CouponDiscountService $couponDiscountService,
+        private ProductPricingService $productPricingService,
+        private PromotionService $promotionService
+    ) {
     }
 
     public function createOrderFromCart(User $user, ?int $shippingMethodId = null, ?int $addressId = null, ?string $couponCode = null): Order
@@ -76,11 +79,13 @@ class OrderCheckoutService
             }
 
             $coupon = $this->couponDiscountService->findUsableCoupon($couponCode, $subtotal, $user);
-            $discountTotal = $coupon ? $this->couponDiscountService->calculateDiscount($coupon, $subtotal) : 0;
+            $couponDiscount = $coupon ? $this->couponDiscountService->calculateDiscount($coupon, $subtotal) : 0;
+            $promotionDiscount = $this->promotionService->calculateOrderDiscount($subtotal);
+            $discountTotal = min($subtotal, $couponDiscount + $promotionDiscount);
             $shippingMethod = $shippingMethodId
                 ? ShippingMethod::whereKey($shippingMethodId)->where('is_active', true)->firstOrFail()
                 : null;
-            $shippingFee = $shippingMethod ? $shippingMethod->fee : 0;
+            $shippingFee = $this->promotionService->calculateShippingFee($shippingMethod, $subtotal);
 
             $order = Order::create([
                 'number' => $this->newOrderNumber(),

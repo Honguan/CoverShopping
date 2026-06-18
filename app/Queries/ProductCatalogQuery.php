@@ -12,10 +12,13 @@ class ProductCatalogQuery
     {
         $keyword = trim((string) $request->string('q'));
         $categorySlug = (string) $request->string('category');
+        $minPrice = $request->integer('min_price');
+        $maxPrice = $request->integer('max_price');
+        $sort = (string) $request->string('sort', 'latest');
 
         if ($keyword !== '' && config('scout.driver') !== 'database') {
             return Product::search($keyword)
-                ->query(fn ($query) => $this->applyCommonFilters($query, $categorySlug))
+                ->query(fn ($query) => $this->applyCommonFilters($query, $categorySlug, $minPrice, $maxPrice, $sort))
                 ->paginate($perPage)
                 ->withQueryString();
         }
@@ -30,14 +33,18 @@ class ProductCatalogQuery
         }
 
         $this->applyCategoryFilter($query, $categorySlug);
+        $this->applyPriceFilter($query, $minPrice, $maxPrice);
+        $this->applySort($query, $sort);
 
-        return $query->latest()->paginate($perPage)->withQueryString();
+        return $query->paginate($perPage)->withQueryString();
     }
 
-    private function applyCommonFilters($query, string $categorySlug)
+    private function applyCommonFilters($query, string $categorySlug, int $minPrice, int $maxPrice, string $sort)
     {
         $query->active()->with(['primaryImage', 'category']);
         $this->applyCategoryFilter($query, $categorySlug);
+        $this->applyPriceFilter($query, $minPrice, $maxPrice);
+        $this->applySort($query, $sort);
 
         return $query;
     }
@@ -47,5 +54,26 @@ class ProductCatalogQuery
         if ($categorySlug !== '') {
             $query->whereHas('category', fn ($builder) => $builder->where('slug', $categorySlug));
         }
+    }
+
+    private function applyPriceFilter($query, int $minPrice, int $maxPrice): void
+    {
+        if ($minPrice > 0) {
+            $query->where('price', '>=', $minPrice);
+        }
+
+        if ($maxPrice > 0) {
+            $query->where('price', '<=', $maxPrice);
+        }
+    }
+
+    private function applySort($query, string $sort): void
+    {
+        match ($sort) {
+            'price_asc' => $query->orderBy('price'),
+            'price_desc' => $query->orderByDesc('price'),
+            'oldest' => $query->oldest(),
+            default => $query->latest(),
+        };
     }
 }

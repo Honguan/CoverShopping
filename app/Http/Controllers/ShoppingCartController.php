@@ -9,12 +9,13 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShippingMethod;
 use App\Services\ProductPricingService;
+use App\Services\PromotionService;
 use App\Services\ShoppingCartService;
 use Illuminate\Http\Request;
 
 class ShoppingCartController extends Controller
 {
-    public function showCart(Request $request, ShoppingCartService $shoppingCartService, ProductPricingService $productPricingService)
+    public function showCart(Request $request, ShoppingCartService $shoppingCartService, ProductPricingService $productPricingService, PromotionService $promotionService)
     {
         $user = $request->user();
         $user?->loadMissing('businessProfile');
@@ -24,6 +25,8 @@ class ShoppingCartController extends Controller
             'items' => $items,
             'subtotal' => $items->sum(fn (CartItem $item) => $productPricingService->calculateUnitPrice($item->product, $item->variant, $user, $item->quantity) * $item->quantity),
             'shippingMethods' => ShippingMethod::where('is_active', true)->orderBy('sort_order')->get(),
+            'addresses' => $user ? $user->addresses()->latest()->get() : collect(),
+            'promotionService' => $promotionService,
             'pricingService' => $productPricingService,
         ]);
     }
