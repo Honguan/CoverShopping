@@ -1,44 +1,64 @@
 <?php
-// .env 讀取設定
-function load_env($env_path)
-{
-    if (!file_exists($env_path)) return;
-    $lines = file($env_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
-        list($name, $value) = array_map('trim', explode('=', $line, 2));
-        if (!getenv($name)) {
-            putenv("{$name}={$value}");
-        }
-    }
-}
 
-// 資料庫連線設定範例
-function create_connection()
-{
-    load_env(__DIR__ . '/.env');
-    $host = getenv('DB_HOST');
-    $user = getenv('DB_USER');
-    $pass = getenv('DB_PASS');
-    $port = getenv('DB_PORT');
+use Illuminate\Support\Str;
 
-    // 僅允許本地連線
-    if ($host !== 'localhost' && $host !== '127.0.0.1') {
-        die('只允許本地資料庫連線');
-    }
-
-    $link = mysqli_connect($host, $user, $pass, '', $port)
-        or die("無法建立資料連接: " . mysqli_connect_error());
-    mysqli_set_charset($link, "utf8");
-    return $link;
-}
-
-function execute_sql($link, $database, $sql)
-{
-    mysqli_select_db($link, $database)
-        or die("開啟資料庫失敗: " . mysqli_error($link));
-
-    $result = mysqli_query($link, $sql);
-
-    return $result;
-}
+return [
+    'default' => env('DB_CONNECTION', 'mysql'),
+    'connections' => [
+        'mysql' => [
+            'driver' => 'mysql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE', 'covershopping'),
+            'username' => env('DB_USERNAME', 'root'),
+            'password' => env('DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => 'InnoDB',
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+        'sqlite' => [
+            'driver' => 'sqlite',
+            'url' => env('DB_URL'),
+            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+            'busy_timeout' => null,
+            'journal_mode' => null,
+            'synchronous' => null,
+        ],
+        'legacy' => [
+            'driver' => 'mysql',
+            'host' => env('LEGACY_DB_HOST', '127.0.0.1'),
+            'port' => env('LEGACY_DB_PORT', '3306'),
+            'database' => env('LEGACY_DB_DATABASE', 'shopping'),
+            'username' => env('LEGACY_DB_USERNAME', 'root'),
+            'password' => env('LEGACY_DB_PASSWORD', ''),
+            'unix_socket' => env('LEGACY_DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => false,
+            'engine' => 'InnoDB',
+        ],
+    ],
+    'migrations' => [
+        'table' => 'migrations',
+        'update_date_on_publish' => true,
+    ],
+    'redis' => [
+        'client' => env('REDIS_CLIENT', 'phpredis'),
+        'options' => [
+            'cluster' => env('REDIS_CLUSTER', 'redis'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
+        ],
+    ],
+];

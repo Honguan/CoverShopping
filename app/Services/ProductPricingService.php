@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\User;
+use RuntimeException;
+
+class ProductPricingService
+{
+    public function calculateUnitPrice(Product $product, ?ProductVariant $variant, ?User $user, int $quantity, bool $enforceMinimum = false): int
+    {
+        $basePrice = $product->price;
+
+        if ($user && $user->canUseBusinessPricing() && $product->business_price !== null) {
+            if ($enforceMinimum && $quantity < $product->business_min_quantity) {
+                throw new RuntimeException("企業採購最低數量為 {$product->business_min_quantity}");
+            }
+            $basePrice = $product->business_price;
+        }
+
+        return max(0, $basePrice + ($variant ? $variant->price_delta : 0));
+    }
+
+    public function detectSalesChannel(?User $user): string
+    {
+        return $user && $user->canUseBusinessPricing() ? 'b2b' : 'b2c';
+    }
+}

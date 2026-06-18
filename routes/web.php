@@ -1,284 +1,66 @@
 <?php
 
-// ===================== AdminController 路由分發 =====================
-// product      : 商品管理頁面（AdminController::showProductPage）
-// order        : 訂單管理頁面（AdminController::showOrderPage）
-// member       : 會員管理頁面（AdminController::showMemberPage）
-// message      : 留言管理頁面（AdminController::showMessagePage）
-// change       : 會員資料更改頁面（AdminController::showChangePage），需帶 account 參數
-// adminUpdateMember : 處理更新會員資料請求（AdminController::updateMember），需帶 account 參數
-// adminDeleteMember : 處理刪除會員請求（AdminController::delete
-//adminDeleteOrder  : 處理刪除訂單請求（AdminController::deleteOrder），需帶 no 參數
-// adminDeleteProduct : 處理刪除商品請求（AdminController::deleteProduct），需帶 id 參數
-// adminDeleteMessage : 處理刪除留言請求（AdminController::deleteMessage），需帶 id 參數
-// adminUpdateOrderShipping : 處理更新訂單運送請求（AdminController::updateOrderShipping），需帶 id 與 no 參數
-// adminUpdateOrderPayment  : 處理更新訂單付款請求（AdminController::updateOrderPayment），需帶 payment 與 no 參數
-// adminChangeProduct      : 處理商品更改請求（AdminController::update  ChangeProduct），需帶 id 參數
-// ================================================================
-require_once __DIR__ . '/../app/controllers/AdminController.php';
-$admin = new AdminController();
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\BusinessAccountController;
+use App\Http\Controllers\CustomerOrderController;
+use App\Http\Controllers\ProductCatalogController;
+use App\Http\Controllers\ProductFavoriteController;
+use App\Http\Controllers\SellerDashboardController;
+use App\Http\Controllers\ShoppingCartController;
+use App\Http\Controllers\UserAuthController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ProductReviewController;
+use App\Http\Controllers\ProductQuestionController;
+use App\Http\Controllers\UserNotificationController;
+use App\Http\Controllers\ReturnRequestController;
+use Illuminate\Support\Facades\Route;
 
-// 商品管理頁面
-if ($_GET['page'] === 'product') {
-    // 載入商品管理頁面
-    $admin->showProductPage();
-    exit;
-}
-// 訂單管理頁面
-if ($_GET['page'] === 'order') {
-    // 載入訂單管理頁面
-    $admin->showOrderPage();
-    exit;
-}
-// 會員管理頁面
-if ($_GET['page'] === 'member') {
-    // 載入會員管理頁面
-    $admin->showMemberPage();
-    exit;
-}
-// 留言管理頁面
-if ($_GET['page'] === 'message') {
-    // 載入留言管理頁面
-    $admin->showMessagePage();
-    exit;
-}
-// 會員資料更改頁面
-if ($_GET['page'] === 'adminChangeAccount' && isset($_GET['account'])) {
-    // 載入會員資料更改頁面，需指定 account
-    $admin->showChangePage();
-    exit;
-}
-// 處理更新會員資料請求
-if ($_GET['page'] === 'adminUpdateMember' && isset($_GET['account'])) {
-    // 處理更新會員資料請求
-    $admin->updateMember();
-    exit;
-}
-// 處理刪除會員請求
-if ($_GET['page'] === 'adminDeleteMember' && isset($_GET['account'])) {
-    $admin->deleteMember();
-    exit;
-}
-// 處理刪除訂單請求
-if ($_GET['page'] === 'adminDeleteOrder' && isset($_GET['no'])) {
-    $admin->deleteOrder();
-    exit;
-}
-// 處理刪除商品請求
-if ($_GET['page'] === 'adminDeleteProduct' && isset($_GET['id'])) {
-    $admin->deleteProduct();
-    exit;
-}
-// 處理刪除留言請求
-if ($_GET['page'] === 'adminDeleteMessage' && isset($_GET['id'])) {
-    $admin->deleteMessage();
-    exit;
-}
-// 處理更新訂單運送請求
-if ($_GET['page'] === 'adminUpdateOrderShipping' && isset($_GET['id']) && isset($_GET['no'])) {
-    $admin->updateOrderShipping();
-    exit;
-}
-// 處理更新訂單付款請求
-if ($_GET['page'] === 'adminUpdateOrderPayment' && isset($_GET['payment']) &&  isset($_GET['no'])) {
-    $admin->updateOrderPayment();
-    exit;
-}
-// 處理商品更改請求
-if ($_GET['page'] === 'adminChangeProduct' && isset($_GET['id'])) {
-    $admin->updateChangeProduct();
-    exit;
-}
+Route::get('/', [ProductCatalogController::class, 'showProductList'])->name('catalog.index');
+Route::get('/products/{product}', [ProductCatalogController::class, 'showProductDetail'])->name('catalog.show');
 
-// ===================== AccountController 路由分發 =====================
-// login               : 登入頁面（AccountController::showLoginPage）
-// register            : 註冊頁面（AccountController::showRegisterPage）
-// checkcode           : 驗證碼頁面（AccountController::showCheckcodePage）
-// checkcode_database  : 驗證碼資料庫頁面（AccountController::showCheckcodeDatabasePage）
-// login              : 處理登入請求（AccountController::login）
-// register           : 處理註冊請求（AccountController::register）
-// logout            : 處理登出請求（AccountController::logout）
-// ================================================================
-require_once __DIR__ . '/../app/controllers/AccountController.php';
-$account = new AccountController();
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [UserAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [UserAuthController::class, 'loginUser'])->name('login.store');
+    Route::get('/register', [UserAuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [UserAuthController::class, 'registerUser'])->name('register.store');
+});
 
-// 登入頁面
-if ($_GET['page'] === 'loginPage') {
-    $account->showLoginPage();
-    exit;
-}
-// 處理登入請求
-if ($_GET['page'] === 'login') {
-    $account->login();
-    exit;
-}
-// 註冊頁面
-if ($_GET['page'] === 'registerPage') {
-    $account->showRegisterPage();
-    exit;
-}
-// 處理註冊請求
-if ($_GET['page'] === 'register') {
-    $account->register();
-    exit;
-}
-// 處理登出請求
-if ($_GET['page'] === 'logout') {
-    $account->logout();
-    exit;
-}
-// 驗證碼頁面
-if ($_GET['page'] === 'checkcode' && isset($_GET['account']) && isset($_GET['checkcode'])) {
-    $account->showCheckcodePage();
-    exit;
-}
-// 驗證碼資料庫頁面
-if ($_GET['page'] === 'checkcodeDatabase') {
-    $account->checkcodeDatabase();
-    exit;
-}
+Route::post('/logout', [UserAuthController::class, 'logoutUser'])->middleware('auth')->name('logout');
 
-// ===================== OrdersController 路由分發 =====================
-// orders       : 買家訂單頁面（OrdersController::showOrderPage）
-// updatePayment : 處理訂單付款更新（OrdersController::updatePayment）
-// ================================================================
-require_once __DIR__ . '/../app/controllers/OrdersController.php';
-$orders = new OrdersController();
+Route::get('/cart', [ShoppingCartController::class, 'showCart'])->name('cart.index');
+Route::post('/cart/items', [ShoppingCartController::class, 'addItem'])->name('cart.items.store');
+Route::patch('/cart/items/{cartItem}', [ShoppingCartController::class, 'changeItemQuantity'])->name('cart.items.update');
+Route::delete('/cart/items/{cartItem}', [ShoppingCartController::class, 'removeItem'])->name('cart.items.destroy');
 
-// 買家訂單頁面
-if ($_GET['page'] === 'orders') {
-    $orders->showOrderPage();
-    exit;
-}
-// 處理訂單付款更新
-if ($_GET['page'] === 'updatePayment' && isset($_POST['payment']) && isset($_POST['no'])) {
-    $orders->updatePayment();
-    exit;
-}
+Route::post('/checkout', [CheckoutController::class, 'createOrderFromCart'])->middleware('auth')->name('checkout.store');
+Route::get('/orders', [CustomerOrderController::class, 'showCustomerOrders'])->middleware('auth')->name('orders.index');
+Route::post('/products/{product}/favorite', [ProductFavoriteController::class, 'addProductToFavorites'])->middleware('auth')->name('favorites.store');
+Route::delete('/products/{product}/favorite', [ProductFavoriteController::class, 'removeProductFromFavorites'])->middleware('auth')->name('favorites.destroy');
+Route::post('/products/{product}/reviews', [ProductReviewController::class, 'createProductReview'])->middleware('auth')->name('reviews.store');
+Route::post('/products/{product}/questions', [ProductQuestionController::class, 'askProductQuestion'])->middleware('auth')->name('questions.store');
+Route::post('/orders/{order}/returns', [ReturnRequestController::class, 'requestOrderReturn'])->middleware('auth')->name('returns.store');
+Route::get('/notifications', [UserNotificationController::class, 'showNotifications'])->middleware('auth')->name('notifications.index');
+Route::patch('/notifications/{notification}/read', [UserNotificationController::class, 'markNotificationRead'])->middleware('auth')->name('notifications.read');
+Route::get('/business-profile', [BusinessAccountController::class, 'showBusinessProfileForm'])->middleware('auth')->name('business_profile.edit');
+Route::post('/business-profile', [BusinessAccountController::class, 'submitBusinessProfile'])->middleware('auth')->name('business_profile.store');
 
-// ===================== SellerController 路由分發 =====================
-// seller_product         : 商品管理頁面（SellerController::showManagementProductPage）
-// seller_new_product     : 新增商品頁面（SellerController::showNewProductPage）
-// seller_order           : 訂單管理頁面（SellerController::showManagementOrderPage）
-// seller_change_product  : 商品更改頁面（SellerController::showChangeProductPage），需帶 id 參數
-// seller_sales_results   : 銷售結果頁面（SellerController::showSalesResultsPage）
-// sellerDeleteProduct   : 刪除商品（SellerController::deleteProduct），需帶 id 參數
-// updateShipping        : 更新訂單運送狀態（SellerController::updateShipping）
-// sellerUpdatePayment   : 更新訂單付款狀態（SellerController::updatePayment
-// ================================================================
-require_once __DIR__ . '/../app/controllers/SellerController.php';
-$seller = new SellerController();
+Route::middleware(['auth', 'role:seller,admin'])->prefix('seller')->name('seller.')->group(function () {
+    Route::get('/products', [SellerDashboardController::class, 'showSellerProducts'])->name('products.index');
+    Route::post('/products', [SellerDashboardController::class, 'createProduct'])->name('products.store');
+    Route::patch('/products/{product}', [SellerDashboardController::class, 'updateProductInfo'])->name('products.update');
+    Route::post('/products/{product}/variants', [SellerDashboardController::class, 'createProductVariant'])->name('products.variants.store');
+    Route::get('/orders', [SellerDashboardController::class, 'showSellerOrders'])->name('orders.index');
+    Route::patch('/orders/{order}/items/{orderItem}/ship', [SellerDashboardController::class, 'markOrderItemShipped'])->name('orders.items.ship');
+    Route::post('/questions/{productQuestion}/answers', [SellerDashboardController::class, 'answerProductQuestion'])->name('questions.answer');
+});
 
-// 商品管理頁面
-if ($_GET['page'] === 'management_product') {
-    $seller->showManagementProductPage();
-    exit;
-}
-// 新增商品頁面
-if ($_GET['page'] === 'new_product') {
-    $seller->showNewProductPage();
-    exit;
-}
-// 處理新增商品請求
-if ($_GET['page'] === 'saveNewProduct') {
-    $seller->newProduct();
-    exit;
-}
-// 訂單管理頁面
-if ($_GET['page'] === 'management_order') {
-    $seller->showManagementOrderPage();
-    exit;
-}
-// 商品更改頁面
-if ($_GET['page'] === 'change_product' && isset($_GET['id'])) {
-    $seller->showChangeProductPage();
-    exit;
-}
-// 商品更改儲存
-if ($_GET['page'] === 'saveChangeProduct' && isset($_GET['id']) && isset($_GET['img'])) {
-    $seller->saveChangeProduct();
-    exit;
-}
-// 處理刪除商品請求
-if ($_GET['page'] === 'sellerDeleteProduct' && isset($_GET['id'])) {
-    $seller->deleteProduct();
-    exit;
-}
-// 處理更新訂單運送狀態請求
-if ($_GET['page'] === "updateShipping") {
-    $seller->updateShipping();
-    exit;
-}
-// 銷售結果頁面
-if ($_GET['page'] === 'sales_results') {
-    $seller->showSalesResultsPage();
-    exit;
-}
-// 處理更新訂單付款請求
-if ($_GET['page'] === 'sellerUpdatePayment' &&  isset($_GET['no'])) {
-    $seller->updatePayment();
-    exit;
-}
-
-// ===================== ShoppingController 路由分發 =====================
-// shopping_cart   : 購物車頁面（ShoppingController::showCartPage）
-// deleteAll       : 清空購物車（ShoppingController::deleteAll）
-// changeProduct  : 修改購物車商品數量（ShoppingController::changeProduct）
-// deleteProduct  : 刪除購物車商品（ShoppingController::deleteProduct）
-// createOrder    : 建立訂單（ShoppingController::createOrder）
-// ================================================================
-require_once __DIR__ . '/../app/controllers/ShoppingController.php';
-$shopping = new ShoppingController();
-
-// 加入購物車
-if ($_GET['page'] === 'addShoppingCart' && isset($_GET['id']) && isset($_GET['name']) && isset($_GET['price'])) {
-    $shopping->addShoppingCart();
-    exit;
-}
-// 購物車相關 AJAX 行為
-if (isset($_GET['page']) && $_GET['page'] === 'shopping_cart') {
-    if (isset($_GET['action'])) {
-        switch ($_GET['action']) {
-            case 'changeProduct':
-                $shopping->changeProduct();
-                exit;
-            case 'deleteProduct':
-                $shopping->deleteProduct();
-                exit;
-            case 'createOrder':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    if (isset($_POST['freight'])) {
-                        $freight = $_POST['freight'];
-                    } else {
-                        $input = json_decode(file_get_contents('php://input'), true);
-                        if (isset($input['freight'])) {
-                            $_POST['freight'] = $input['freight'];
-                        }
-                    }
-                }
-                $shopping->createOrder();
-                exit;
-            case 'deleteAll':
-                $shopping->deleteAll();
-                exit;
-        }
-    }
-    // 一般購物車頁面顯示
-    $shopping->showCartPage();
-    exit;
-}
-
-// ===================== indexController 路由分發 =====================
-// index         : 首頁（indexController::showIndexPage）
-// ================================================================
-require_once __DIR__ . '/../app/controllers/indexController.php';
-$index = new indexController();
-
-// 首頁
-if ($_GET['page'] === 'index' || !isset($_GET['page'])) {
-    $index->showIndexPage();
-    exit;
-}
-// 其他未定義頁面，導向首頁
-$index->showIndexPage();
-exit;
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'showDashboard'])->name('dashboard');
+    Route::patch('/users/{user}/status', [AdminDashboardController::class, 'changeUserStatus'])->name('users.status');
+    Route::patch('/business-profiles/{businessProfile}', [AdminDashboardController::class, 'reviewBusinessProfile'])->name('business_profiles.status');
+    Route::patch('/products/{product}/status', [AdminDashboardController::class, 'changeProductStatus'])->name('products.status');
+    Route::patch('/orders/{order}/payment', [AdminDashboardController::class, 'changeOrderPaymentStatus'])->name('orders.payment');
+    Route::post('/coupons', [AdminDashboardController::class, 'createCoupon'])->name('coupons.store');
+    Route::post('/shipping-methods', [AdminDashboardController::class, 'createShippingMethod'])->name('shipping_methods.store');
+    Route::patch('/returns/{returnRequest}', [AdminDashboardController::class, 'changeReturnStatus'])->name('returns.status');
+});
