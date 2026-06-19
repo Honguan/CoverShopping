@@ -4,22 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\RequestOrderReturnRequest;
 use App\Models\Order;
-use App\Services\AuditLogService;
+use App\Services\ReturnRequestService;
 
 class ReturnRequestController extends Controller
 {
-    public function requestOrderReturn(RequestOrderReturnRequest $request, Order $order, AuditLogService $auditLogService)
+    public function requestOrderReturn(RequestOrderReturnRequest $request, Order $order, ReturnRequestService $returns)
     {
-        $this->authorize('requestReturn', $order);
-
-        $returnRequest = $order->returnRequests()->create([
-            'user_id' => $request->user()->id,
-            'reason' => $request->validated('reason'),
-            'status' => 'requested',
-        ]);
-
-        $order->update(['return_status' => 'requested']);
-        $auditLogService->writeLog('return.requested', $returnRequest, ['order' => $order->number], $request);
+        $returns->request($request->user(), $order, $request->validated('reason'), $request);
 
         return back()->with('status', 'Return requested.');
     }

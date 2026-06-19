@@ -15,6 +15,7 @@ use App\Services\ProductRecommendationService;
 use App\Services\ProductQuestionService;
 use App\Services\ProductReviewService;
 use App\Services\PromotionService;
+use App\Services\ReturnRequestService;
 use App\Services\ShoppingCartService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
@@ -164,6 +165,32 @@ class ServiceLogicFlowTest extends TestCase
         $recommendations->recordRecentlyViewed($related, $buyer->id, null);
 
         $this->assertSame($related->id, $recommendations->recentlyViewed($buyer->id, null, 1)->first()->id);
+    }
+
+    public function test_return_request_service_creates_request_updates_order_and_audit_log(): void
+    {
+        [, $buyer] = $this->createSellerAndBuyer();
+        $order = Order::create([
+            'number' => 'RET202606190001',
+            'user_id' => $buyer->id,
+            'subtotal' => 100,
+            'shipping_fee' => 0,
+            'total' => 100,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'completed',
+            'return_status' => 'none',
+        ]);
+
+        $returnRequest = app(ReturnRequestService::class)->request($buyer, $order, 'Wrong size');
+
+        $this->assertSame($buyer->id, $returnRequest->user_id);
+        $this->assertSame('Wrong size', $returnRequest->reason);
+        $this->assertSame('requested', $returnRequest->status);
+        $this->assertSame('requested', $order->fresh()->return_status);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'return.requested',
+            'auditable_id' => $returnRequest->id,
+        ]);
     }
 
     public function test_product_review_service_creates_review_and_audit_log(): void
