@@ -13,6 +13,7 @@ use App\Services\CouponDiscountService;
 use App\Services\ProductPricingService;
 use App\Services\ProductRecommendationService;
 use App\Services\ProductQuestionService;
+use App\Services\ProductReviewService;
 use App\Services\PromotionService;
 use App\Services\ShoppingCartService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -163,6 +164,46 @@ class ServiceLogicFlowTest extends TestCase
         $recommendations->recordRecentlyViewed($related, $buyer->id, null);
 
         $this->assertSame($related->id, $recommendations->recentlyViewed($buyer->id, null, 1)->first()->id);
+    }
+
+    public function test_product_review_service_creates_review_and_audit_log(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Review Product',
+            'price' => 100,
+            'inventory' => 10,
+            'status' => 'active',
+        ]);
+        $order = Order::create([
+            'number' => 'R202606190001',
+            'user_id' => $buyer->id,
+            'subtotal' => 100,
+            'shipping_fee' => 0,
+            'total' => 100,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'completed',
+        ]);
+        $orderItem = OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'seller_id' => $seller->id,
+            'product_name' => $product->name,
+            'unit_price' => 100,
+            'quantity' => 1,
+            'subtotal' => 100,
+        ]);
+
+        $review = app(ProductReviewService::class)->create($buyer, $product, $orderItem->id, 5, 'Useful review');
+
+        $this->assertSame($buyer->id, $review->user_id);
+        $this->assertSame(5, $review->rating);
+        $this->assertSame('Useful review', $review->content);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'product.review.created',
+            'auditable_id' => $review->id,
+        ]);
     }
 
     public function test_product_question_service_creates_question_notification_and_audit_log(): void
