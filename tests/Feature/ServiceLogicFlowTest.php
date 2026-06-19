@@ -16,6 +16,7 @@ use App\Services\ProductQuestionService;
 use App\Services\ProductReviewService;
 use App\Services\PromotionService;
 use App\Services\ReturnRequestService;
+use App\Services\SellerOrderShipmentService;
 use App\Services\ShoppingCartService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
@@ -165,6 +166,66 @@ class ServiceLogicFlowTest extends TestCase
         $recommendations->recordRecentlyViewed($related, $buyer->id, null);
 
         $this->assertSame($related->id, $recommendations->recentlyViewed($buyer->id, null, 1)->first()->id);
+    }
+
+    public function test_seller_order_shipment_service_updates_item_order_and_audit_log(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $firstProduct = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'First Shipment Product',
+            'price' => 100,
+            'inventory' => 10,
+            'status' => 'active',
+        ]);
+        $secondProduct = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Second Shipment Product',
+            'price' => 100,
+            'inventory' => 10,
+            'status' => 'active',
+        ]);
+        $order = Order::create([
+            'number' => 'SHIP202606190001',
+            'user_id' => $buyer->id,
+            'subtotal' => 200,
+            'shipping_fee' => 0,
+            'total' => 200,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'processing',
+        ]);
+        $firstItem = OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $firstProduct->id,
+            'seller_id' => $seller->id,
+            'product_name' => $firstProduct->name,
+            'unit_price' => 100,
+            'quantity' => 1,
+            'subtotal' => 100,
+        ]);
+        $secondItem = OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $secondProduct->id,
+            'seller_id' => $seller->id,
+            'product_name' => $secondProduct->name,
+            'unit_price' => 100,
+            'quantity' => 1,
+            'subtotal' => 100,
+        ]);
+
+        $shipments = app(SellerOrderShipmentService::class);
+        $shipments->markItemShipped($seller, $order, $firstItem);
+
+        $this->assertSame('shipped', $firstItem->fresh()->shipping_status);
+        $this->assertSame('partially_shipped', $order->fresh()->fulfillment_status);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'seller.order_item.shipped',
+            'auditable_id' => $firstItem->id,
+        ]);
+
+        $shipments->markItemShipped($seller, $order, $secondItem);
+
+        $this->assertSame('completed', $order->fresh()->fulfillment_status);
     }
 
     public function test_return_request_service_creates_request_updates_order_and_audit_log(): void

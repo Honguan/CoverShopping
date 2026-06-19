@@ -11,6 +11,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductQuestion;
 use App\Services\AuditLogService;
+use App\Services\SellerOrderShipmentService;
 use Illuminate\Http\Request;
 
 class SellerDashboardController extends Controller
@@ -143,22 +144,9 @@ class SellerDashboardController extends Controller
         ]);
     }
 
-    public function markOrderItemShipped(Request $request, Order $order, OrderItem $orderItem, AuditLogService $auditLogService)
+    public function markOrderItemShipped(Request $request, Order $order, OrderItem $orderItem, SellerOrderShipmentService $shipments)
     {
-        $this->authorize('ship', $orderItem);
-        abort_unless($orderItem->order_id === $order->id, 404);
-
-        $orderItem->update([
-            'shipping_status' => 'shipped',
-            'shipped_at' => now(),
-        ]);
-
-        $statuses = $order->items()->pluck('shipping_status');
-        $order->update([
-            'fulfillment_status' => $statuses->every(fn ($status) => $status === 'shipped') ? 'completed' : 'partially_shipped',
-        ]);
-
-        $auditLogService->writeLog('seller.order_item.shipped', $orderItem, ['order' => $order->number], $request);
+        $shipments->markItemShipped($request->user(), $order, $orderItem, $request);
 
         return redirect()->route('seller.orders.index')->with('status', 'Order item shipped.');
     }
