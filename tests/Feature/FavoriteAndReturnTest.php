@@ -37,6 +37,26 @@ class FavoriteAndReturnTest extends TestCase
         ]);
     }
 
+    public function test_authenticated_user_can_remove_favorite_product(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Removed Favorite Product',
+            'price' => 100,
+            'inventory' => 5,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($buyer)->post("/products/{$product->id}/favorite")->assertRedirect();
+        $this->actingAs($buyer)->delete("/products/{$product->id}/favorite")->assertRedirect();
+
+        $this->assertDatabaseMissing('favorites', [
+            'user_id' => $buyer->id,
+            'product_id' => $product->id,
+        ]);
+    }
+
     public function test_customer_can_manage_address_book(): void
     {
         [, $buyer] = $this->createSellerAndBuyer();

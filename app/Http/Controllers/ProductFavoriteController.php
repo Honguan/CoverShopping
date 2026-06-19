@@ -3,34 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Services\ProductFavoriteService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ProductFavoriteController extends Controller
 {
-    public function addProductToFavorites(Request $request, Product $product)
+    public function addProductToFavorites(Request $request, Product $product, ProductFavoriteService $favorites)
     {
         abort_unless($product->status === 'active', 404);
 
-        $now = now();
-
-        DB::table('favorites')->updateOrInsert([
-            'user_id' => $request->user()->id,
-            'product_id' => $product->id,
-        ], [
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
+        $favorites->add($request->user(), $product);
 
         return back()->with('status', 'Product added to favorites.');
     }
 
-    public function removeProductFromFavorites(Request $request, Product $product)
+    public function removeProductFromFavorites(Request $request, Product $product, ProductFavoriteService $favorites)
     {
-        DB::table('favorites')
-            ->where('user_id', $request->user()->id)
-            ->where('product_id', $product->id)
-            ->delete();
+        $favorites->remove($request->user(), $product);
 
         return back()->with('status', 'Product removed from favorites.');
     }
