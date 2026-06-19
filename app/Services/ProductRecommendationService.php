@@ -22,12 +22,7 @@ class ProductRecommendationService
             return Product::active()->with('primaryImage')->latest()->limit($limit)->get();
         }
 
-        return Product::active()
-            ->with('primaryImage')
-            ->whereIn('id', $productIds)
-            ->get()
-            ->sortBy(fn (Product $product) => $productIds->search($product->id))
-            ->values();
+        return $this->activeProductsInOrder($productIds);
     }
 
     public function recentlyViewed(?int $userId, ?string $sessionId, int $limit = 8): Collection
@@ -49,12 +44,7 @@ class ProductRecommendationService
             return collect();
         }
 
-        return Product::active()
-            ->with('primaryImage')
-            ->whereIn('id', $productIds)
-            ->get()
-            ->sortBy(fn (Product $product) => $productIds->search($product->id))
-            ->values();
+        return $this->activeProductsInOrder($productIds);
     }
 
     public function relatedProducts(Product $product, int $limit = 4): Collection
@@ -69,5 +59,27 @@ class ProductRecommendationService
             ->latest()
             ->limit($limit)
             ->get();
+    }
+
+    public function recordRecentlyViewed(Product $product, ?int $userId, ?string $sessionId): void
+    {
+        DB::table('recently_viewed_products')->updateOrInsert(
+            [
+                'user_id' => $userId,
+                'session_id' => $userId ? null : $sessionId,
+                'product_id' => $product->id,
+            ],
+            ['viewed_at' => now()]
+        );
+    }
+
+    private function activeProductsInOrder(Collection $productIds): Collection
+    {
+        return Product::active()
+            ->with('primaryImage')
+            ->whereIn('id', $productIds)
+            ->get()
+            ->sortBy(fn (Product $product) => $productIds->search($product->id))
+            ->values();
     }
 }

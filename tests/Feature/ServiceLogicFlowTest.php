@@ -158,6 +158,10 @@ class ServiceLogicFlowTest extends TestCase
 
         $this->assertSame($popular->id, $recommendations->popularProducts(1)->first()->id);
         $this->assertTrue($recommendations->relatedProducts($popular)->contains('id', $related->id));
+
+        $recommendations->recordRecentlyViewed($related, $buyer->id, null);
+
+        $this->assertSame($related->id, $recommendations->recentlyViewed($buyer->id, null, 1)->first()->id);
     }
 
     private function createSellerAndBuyer(array $buyerOverrides = []): array
