@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -19,9 +19,10 @@ jobs:
           extensions: mbstring, pdo_mysql, sqlite, bcmath
           coverage: none
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
+          package-manager-cache: false
 
       - run: composer install --no-interaction --prefer-dist
       - run: npm install
