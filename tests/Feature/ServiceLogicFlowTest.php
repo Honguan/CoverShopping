@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\CouponDiscountService;
 use App\Services\ProductPricingService;
 use App\Services\ProductRecommendationService;
+use App\Services\ProductQuestionService;
 use App\Services\PromotionService;
 use App\Services\ShoppingCartService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -162,6 +163,32 @@ class ServiceLogicFlowTest extends TestCase
         $recommendations->recordRecentlyViewed($related, $buyer->id, null);
 
         $this->assertSame($related->id, $recommendations->recentlyViewed($buyer->id, null, 1)->first()->id);
+    }
+
+    public function test_product_question_service_creates_question_notification_and_audit_log(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Question Product',
+            'price' => 100,
+            'inventory' => 10,
+            'status' => 'active',
+        ]);
+
+        $question = app(ProductQuestionService::class)->ask($buyer, $product, 'Can this ship today?');
+
+        $this->assertSame('Can this ship today?', $question->question);
+        $this->assertSame('open', $question->status);
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $seller->id,
+            'type' => 'product_question',
+            'body' => 'Question Product',
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'product.question.created',
+            'auditable_id' => $question->id,
+        ]);
     }
 
     private function createSellerAndBuyer(array $buyerOverrides = []): array
