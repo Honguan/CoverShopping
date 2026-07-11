@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class PlatformFoundationTest extends TestCase
@@ -49,5 +51,18 @@ class PlatformFoundationTest extends TestCase
         $this->assertSame('redis', config('cache.stores.redis.driver'));
         $this->assertSame('cache', config('cache.stores.redis.connection'));
         $this->assertSame('redis', config('queue.connections.redis.driver'));
+    }
+
+    public function test_catalog_caches_active_categories(): void
+    {
+        Category::create([
+            'name' => 'Cached Category',
+            'slug' => 'cached-category',
+            'is_active' => true,
+        ]);
+
+        $this->get('/')->assertOk();
+
+        $this->assertTrue(Cache::has('catalog.active-categories'));
     }
 }

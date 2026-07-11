@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Queries\ProductCatalogQuery;
 use App\Services\ProductRecommendationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class ProductCatalogController extends Controller
 {
@@ -16,7 +17,12 @@ class ProductCatalogController extends Controller
 
         return view('catalog.index', [
             'products' => $productCatalogQuery->paginate($request),
-            'categories' => Category::where('is_active', true)->orderBy('name')->get(),
+            // ponytail: categories may be stale for 10 minutes; add event-driven invalidation with category administration.
+            'categories' => Cache::remember(
+                'catalog.active-categories',
+                now()->addMinutes(10),
+                fn () => Category::where('is_active', true)->orderBy('name')->get(),
+            ),
             'popularProducts' => $recommendations->popularProducts(),
             'recentlyViewedProducts' => $recommendations->recentlyViewed($user?->id, $user ? null : $request->session()->getId()),
         ]);
