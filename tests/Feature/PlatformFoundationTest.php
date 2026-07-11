@@ -29,4 +29,11 @@ class PlatformFoundationTest extends TestCase
     {
         $this->get('/locale/invalid')->assertNotFound();
     }
+
+    public function test_production_cache_can_use_redis(): void
+    {
+        $this->assertSame('redis', config('cache.stores.redis.driver'));
+        $this->assertSame('cache', config('cache.stores.redis.connection'));
+        $this->assertSame('redis', config('queue.connections.redis.driver'));
+    }
 }

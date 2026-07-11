@@ -25,9 +25,10 @@ jobs:
           package-manager-cache: false
 
       - run: composer install --no-interaction --prefer-dist
-      - run: npm install
+      - run: npm ci
       - run: cp .env.example .env
       - run: php artisan key:generate
       - run: npm run build
       - run: composer analyse
       - run: composer test
+      - run: docker build --tag covershopping:${{ github.sha }} .

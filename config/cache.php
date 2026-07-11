@@ -19,6 +19,11 @@ return [
             'driver' => 'array',
             'serialize' => false,
         ],
+        'redis' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_CACHE_CONNECTION', 'cache'),
+            'lock_connection' => env('REDIS_LOCK_CONNECTION', 'default'),
+        ],
     ],
     'prefix' => env('CACHE_PREFIX', Illuminate\Support\Str::slug(env('APP_NAME', 'laravel'), '_') . '_cache_'),
 ];
