@@ -30,6 +30,20 @@ class PlatformFoundationTest extends TestCase
         $this->get('/locale/invalid')->assertNotFound();
     }
 
+    public function test_each_supported_locale_translates_global_navigation(): void
+    {
+        foreach ([
+            'zh_TW' => '搜尋',
+            'en' => 'Search',
+            'ja' => '検索',
+            'ko' => '검색',
+            'es' => 'Buscar',
+        ] as $locale => $searchLabel) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->get('/')->assertSee($searchLabel);
+        }
+    }
+
     public function test_production_cache_can_use_redis(): void
     {
         $this->assertSame('redis', config('cache.stores.redis.driver'));

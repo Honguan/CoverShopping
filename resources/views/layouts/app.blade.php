@@ -10,32 +10,32 @@
     <header class="topbar">
         <a class="brand" href="{{ route('catalog.index') }}">CoverShopping</a>
         <form class="search" action="{{ route('catalog.index') }}" method="get">
-            <input name="q" value="{{ request('q') }}" placeholder="搜尋商品">
-            <button type="submit">搜尋</button>
+            <input name="q" value="{{ request('q') }}" placeholder="{{ __('ui.search_products') }}">
+            <button type="submit">{{ __('ui.search') }}</button>
         </form>
         <nav>
             @foreach(config('app.supported_locales') as $locale => $label)
                 <a href="{{ route('locale.update', $locale) }}" @class(['active' => app()->getLocale() === $locale])>{{ $label }}</a>
             @endforeach
-            <a href="{{ route('cart.index') }}">購物車</a>
+            <a href="{{ route('cart.index') }}">{{ __('ui.cart') }}</a>
             @auth
-                <a href="{{ route('notifications.index') }}">通知</a>
-                <a href="{{ route('addresses.index') }}">地址簿</a>
-                <a href="{{ route('business_profile.edit') }}">企業會員</a>
-                <a href="{{ route('orders.index') }}">我的訂單</a>
+                <a href="{{ route('notifications.index') }}">{{ __('ui.notifications') }}</a>
+                <a href="{{ route('addresses.index') }}">{{ __('ui.addresses') }}</a>
+                <a href="{{ route('business_profile.edit') }}">{{ __('ui.business_account') }}</a>
+                <a href="{{ route('orders.index') }}">{{ __('ui.orders') }}</a>
                 @if(auth()->user()->isRole('seller', 'admin'))
-                    <a href="{{ route('seller.products.index') }}">商家後台</a>
+                    <a href="{{ route('seller.products.index') }}">{{ __('ui.seller_dashboard') }}</a>
                 @endif
                 @if(auth()->user()->isRole('admin'))
-                    <a href="{{ route('admin.dashboard') }}">管理後台</a>
+                    <a href="{{ route('admin.dashboard') }}">{{ __('ui.admin_dashboard') }}</a>
                 @endif
                 <form action="{{ route('logout') }}" method="post">
                     @csrf
-                    <button type="submit">登出</button>
+                    <button type="submit">{{ __('ui.logout') }}</button>
                 </form>
             @else
-                <a href="{{ route('login') }}">登入</a>
-                <a href="{{ route('register') }}">註冊</a>
+                <a href="{{ route('login') }}">{{ __('ui.login') }}</a>
+                <a href="{{ route('register') }}">{{ __('ui.register') }}</a>
             @endauth
         </nav>
     </header>
