@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,6 +14,9 @@
             <button type="submit">搜尋</button>
         </form>
         <nav>
+            @foreach(config('app.supported_locales') as $locale => $label)
+                <a href="{{ route('locale.update', $locale) }}" @class(['active' => app()->getLocale() === $locale])>{{ $label }}</a>
+            @endforeach
             <a href="{{ route('cart.index') }}">購物車</a>
             @auth
                 <a href="{{ route('notifications.index') }}">通知</a>

@@ -10,6 +10,7 @@ use App\Http\Controllers\SellerDashboardController;
 use App\Http\Controllers\ShoppingCartController;
 use App\Http\Controllers\UserAuthController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\ProductQuestionController;
 use App\Http\Controllers\UserNotificationController;
@@ -18,6 +19,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [ProductCatalogController::class, 'showProductList'])->name('catalog.index');
 Route::get('/products/{product}', [ProductCatalogController::class, 'showProductDetail'])->name('catalog.show');
+Route::get('/locale/{locale}', [LocaleController::class, 'update'])
+    ->whereIn('locale', array_keys(config('app.supported_locales')))
+    ->name('locale.update');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [UserAuthController::class, 'showLoginForm'])->name('login');

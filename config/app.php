@@ -8,6 +8,13 @@ return [
     'timezone' => 'Asia/Taipei',
     'locale' => env('APP_LOCALE', 'zh_TW'),
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'zh_TW'),
+    'supported_locales' => [
+        'zh_TW' => '繁體中文',
+        'en' => 'English',
+        'ja' => '日本語',
+        'ko' => '한국어',
+        'es' => 'Español',
+    ],
     'faker_locale' => 'zh_TW',
     'cipher' => 'AES-256-CBC',
     'key' => env('APP_KEY'),
