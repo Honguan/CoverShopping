@@ -3,11 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class PlatformFoundationTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_public_pages_include_security_headers(): void
     {
         $this->get('/')
@@ -64,5 +68,20 @@ class PlatformFoundationTest extends TestCase
         $this->get('/')->assertOk();
 
         $this->assertTrue(Cache::has('catalog.active-categories'));
+    }
+
+    public function test_operational_indexes_support_catalog_and_seller_queries(): void
+    {
+        $this->assertContains('categories_is_active_name_index', $this->indexNamesFor('categories'));
+        $this->assertContains('products_status_created_at_index', $this->indexNamesFor('products'));
+        $this->assertContains('products_status_price_index', $this->indexNamesFor('products'));
+        $this->assertContains('order_items_seller_id_shipping_status_created_at_index', $this->indexNamesFor('order_items'));
+    }
+
+    private function indexNamesFor(string $table): array
+    {
+        return collect(DB::select("PRAGMA index_list('{$table}')"))
+            ->pluck('name')
+            ->all();
     }
 }
