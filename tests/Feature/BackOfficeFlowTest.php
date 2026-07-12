@@ -29,6 +29,30 @@ class BackOfficeFlowTest extends TestCase
 
         $product = Product::where('name', 'Seller Product')->firstOrFail();
 
+        $this->assertDatabaseHas('inventory_movements', [
+            'product_id' => $product->id,
+            'user_id' => $seller->id,
+            'reason' => 'seller_initial_stock',
+            'quantity_delta' => 4,
+            'inventory_after' => 4,
+        ]);
+
+        $this->actingAs($seller)->patch("/seller/products/{$product->id}", [
+            'name' => 'Seller Product',
+            'description' => 'Product description',
+            'price' => 500,
+            'inventory' => 7,
+        ])->assertRedirect('/seller/products');
+
+        $this->assertSame(7, $product->fresh()->inventory);
+        $this->assertDatabaseHas('inventory_movements', [
+            'product_id' => $product->id,
+            'user_id' => $seller->id,
+            'reason' => 'seller_adjustment',
+            'quantity_delta' => 3,
+            'inventory_after' => 7,
+        ]);
+
         $this->actingAs($seller)->post("/seller/products/{$product->id}/variants", [
             'sku' => 'SELLER-SKU-1',
             'option_name' => 'Color',

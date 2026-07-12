@@ -11,6 +11,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductQuestion;
 use App\Services\AuditLogService;
+use App\Services\InventoryAdjustmentService;
 use App\Services\SellerOrderShipmentService;
 use Illuminate\Http\Request;
 
@@ -39,17 +40,20 @@ class SellerDashboardController extends Controller
         ]);
     }
 
-    public function createProduct(CreateProductRequest $request, AuditLogService $auditLogService)
+    public function createProduct(CreateProductRequest $request, AuditLogService $auditLogService, InventoryAdjustmentService $inventoryAdjustmentService)
     {
         $data = $request->validated();
         $images = $request->file('images', []);
-        unset($data['images']);
+        $inventory = $data['inventory'];
+        unset($data['images'], $data['inventory']);
 
         $product = Product::create($data + [
             'seller_id' => $request->user()->id,
             'status' => $request->user()->isRole('admin') ? 'active' : 'pending',
             'business_min_quantity' => $data['business_min_quantity'] ?? 1,
+            'inventory' => 0,
         ]);
+        $inventoryAdjustmentService->setProductInventory($product, $request->user(), $inventory, 'seller_initial_stock');
 
         foreach ($images as $index => $image) {
             $product->images()->create([
@@ -64,18 +68,20 @@ class SellerDashboardController extends Controller
         return redirect()->route('seller.products.index')->with('status', 'Product created.');
     }
 
-    public function updateProductInfo(CreateProductRequest $request, Product $product, AuditLogService $auditLogService)
+    public function updateProductInfo(CreateProductRequest $request, Product $product, AuditLogService $auditLogService, InventoryAdjustmentService $inventoryAdjustmentService)
     {
         $this->authorize('update', $product);
 
         $data = $request->validated();
         $images = $request->file('images', []);
-        unset($data['images']);
+        $inventory = $data['inventory'];
+        unset($data['images'], $data['inventory']);
 
         $product->update($data + [
             'status' => $product->status === 'active' ? 'active' : 'pending',
             'business_min_quantity' => $data['business_min_quantity'] ?? 1,
         ]);
+        $inventoryAdjustmentService->setProductInventory($product, $request->user(), $inventory, 'seller_adjustment');
 
         foreach ($images as $index => $image) {
             $product->images()->create([
