@@ -259,6 +259,42 @@ class PlatformFoundationTest extends TestCase
         }
     }
 
+    public function test_each_supported_locale_translates_seller_products_page(): void
+    {
+        $seller = User::create([
+            'name' => 'Localized Product Seller',
+            'account' => 'localized-product-seller',
+            'password' => 'password',
+            'role' => 'seller',
+            'status' => 'active',
+        ]);
+        Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Localized Product',
+            'price' => 100,
+            'inventory' => 1,
+            'status' => 'active',
+        ]);
+
+        foreach ([
+            'zh_TW' => ['商家商品管理', '低庫存提醒', '新增商品', '送出審核', '已上架', '商品問答', '目前沒有待處理問答。'],
+            'en' => ['Seller product management', 'Low stock alert', 'Add product', 'Submit for review', 'Active', 'Product questions', 'No pending product questions.'],
+            'ja' => ['販売者商品管理', '在庫不足アラート', '商品を追加', '審査を申請', '販売中', '商品への質問', '未対応の質問はありません。'],
+            'ko' => ['판매자 상품 관리', '재고 부족 알림', '상품 추가', '검토 요청', '판매 중', '상품 문의', '처리 대기 중인 문의가 없습니다.'],
+            'es' => ['Gestión de productos del vendedor', 'Alerta de bajo inventario', 'Añadir producto', 'Enviar a revisión', 'Activo', 'Preguntas del producto', 'No hay preguntas pendientes sobre productos.'],
+        ] as $locale => [$title, $lowStock, $create, $submit, $status, $questions, $noQuestions]) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->actingAs($seller)->get('/seller/products')
+                ->assertSee("<h1>{$title}</h1>", false)
+                ->assertSee($lowStock)
+                ->assertSee($create)
+                ->assertSee($submit)
+                ->assertSee($status)
+                ->assertSee($questions)
+                ->assertSee($noQuestions);
+        }
+    }
+
     public function test_production_cache_can_use_redis(): void
     {
         $this->assertSame('redis', config('cache.stores.redis.driver'));
