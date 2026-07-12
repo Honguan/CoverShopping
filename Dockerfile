@@ -23,6 +23,9 @@ RUN apt-get update \
     && docker-php-ext-install bcmath intl pdo_mysql zip \
     && a2enmod rewrite \
     && sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!AllowOverride None!AllowOverride All!g' /etc/apache2/apache2.conf \
+    && printf '%s\n' 'ServerName localhost' '<Directory /var/www/html/public>' '    FallbackResource /index.php' '</Directory>' > /etc/apache2/conf-available/covershopping.conf \
+    && a2enconf covershopping \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
@@ -32,7 +35,8 @@ COPY --from=assets /app/public/build ./public/build
 COPY --from=dependencies /app/vendor ./vendor
 COPY docker/entrypoint.sh /usr/local/bin/covershopping-entrypoint
 
-RUN chmod +x /usr/local/bin/covershopping-entrypoint \
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/testing storage/framework/views storage/logs \
+    && chmod +x /usr/local/bin/covershopping-entrypoint \
     && chown -R www-data:www-data bootstrap/cache storage
 
 ENTRYPOINT ["covershopping-entrypoint"]
