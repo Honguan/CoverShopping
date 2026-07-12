@@ -365,6 +365,39 @@ class PlatformFoundationTest extends TestCase
         }
     }
 
+    public function test_each_supported_locale_translates_addresses_page(): void
+    {
+        $user = User::create([
+            'name' => 'Localized Address User',
+            'account' => 'localized-address-user',
+            'password' => 'password',
+            'role' => 'customer',
+            'status' => 'active',
+        ]);
+
+        foreach ([
+            'zh_TW' => ['地址簿', '新增收件地址', '收件人', '電話', '郵遞區號', '城市', '區域', '詳細地址', '設為預設地址', '新增地址', '尚未建立收件地址。'],
+            'en' => ['Addresses', 'Add shipping address', 'Recipient name', 'Phone', 'Postal code', 'City', 'District', 'Address line', 'Set as default address', 'Add address', 'No shipping addresses yet.'],
+            'ja' => ['住所', '配送先住所を追加', '受取人名', '電話番号', '郵便番号', '市区町村', '地区', '住所', '既定の住所に設定', '住所を追加', '配送先住所はまだありません。'],
+            'ko' => ['주소록', '배송지 주소 추가', '수령인 이름', '전화번호', '우편번호', '도시', '지역', '상세 주소', '기본 주소로 설정', '주소 추가', '배송지 주소가 없습니다.'],
+            'es' => ['Direcciones', 'Añadir dirección de envío', 'Nombre del destinatario', 'Teléfono', 'Código postal', 'Ciudad', 'Distrito', 'Dirección', 'Establecer como dirección predeterminada', 'Añadir dirección', 'Aún no hay direcciones de envío.'],
+        ] as $locale => [$title, $addShipping, $recipient, $phone, $postalCode, $city, $district, $addressLine, $default, $addAddress, $empty]) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->actingAs($user)->get('/addresses')
+                ->assertSee("<h1>{$title}</h1>", false)
+                ->assertSee($addShipping)
+                ->assertSee($recipient)
+                ->assertSee($phone)
+                ->assertSee($postalCode)
+                ->assertSee($city)
+                ->assertSee($district)
+                ->assertSee($addressLine)
+                ->assertSee($default)
+                ->assertSee($addAddress)
+                ->assertSee($empty);
+        }
+    }
+
     public function test_production_cache_can_use_redis(): void
     {
         $this->assertSame('redis', config('cache.stores.redis.driver'));
