@@ -177,20 +177,27 @@ class SellerDashboardController extends Controller
 
             foreach ($items as $item) {
                 fputcsv($output, [
-                    $item->order_number,
-                    $item->sales_channel,
-                    $item->purchase_order_number,
-                    $item->product_name,
-                    $item->variant_name,
+                    $this->csvValue($item->order_number),
+                    $this->csvValue($item->sales_channel),
+                    $this->csvValue($item->purchase_order_number),
+                    $this->csvValue($item->product_name),
+                    $this->csvValue($item->variant_name),
                     $item->quantity,
                     $item->subtotal,
-                    $item->payment_status,
-                    $item->shipping_status,
+                    $this->csvValue($item->payment_status),
+                    $this->csvValue($item->shipping_status),
                 ]);
             }
 
             fclose($output);
         }, 'seller-orders.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function csvValue(?string $value): string
+    {
+        $value ??= '';
+
+        return preg_match('/^\s*[=+\-@]/', $value) ? "'{$value}" : $value;
     }
 
     public function markOrderItemShipped(Request $request, Order $order, OrderItem $orderItem, SellerOrderShipmentService $shipments)

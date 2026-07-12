@@ -76,6 +76,8 @@ class BackOfficeFlowTest extends TestCase
         $order = Order::create([
             'number' => 'B202606190001',
             'user_id' => $buyer->id,
+            'sales_channel' => 'b2b',
+            'purchase_order_number' => '=PO-ACME-2026-001',
             'subtotal' => 500,
             'shipping_fee' => 0,
             'total' => 500,
@@ -92,7 +94,8 @@ class BackOfficeFlowTest extends TestCase
             'subtotal' => 500,
         ]);
 
-        $this->actingAs($seller)->get('/seller/orders/export')->assertDownload('seller-orders.csv');
+        $export = $this->actingAs($seller)->get('/seller/orders/export')->assertDownload('seller-orders.csv');
+        $this->assertStringContainsString("'=PO-ACME-2026-001", $export->streamedContent());
 
         $this->actingAs($seller)->patch("/seller/orders/{$order->id}/items/{$orderItem->id}/ship")
             ->assertRedirect('/seller/orders');
