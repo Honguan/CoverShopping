@@ -12,7 +12,9 @@ class SecurityHeadersMiddleware
     {
         $response = $next($request);
 
-        $response->headers->set('Content-Security-Policy', "base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'");
+        $response->headers->set('Content-Security-Policy', app()->environment('local')
+            ? "base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'"
+            : "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'");
         $response->headers->set('Permissions-Policy', 'camera=(), geolocation=(), microphone=()');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
