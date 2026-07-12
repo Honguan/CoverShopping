@@ -169,4 +169,7 @@ return [
     'add_address' => '住所を追加',
     'default_address' => '既定',
     'no_shipping_addresses' => '配送先住所はまだありません。',
+    'notification_center' => '通知センター',
+    'view_notification' => '表示',
+    'no_notifications' => '通知はまだありません。',
 ];

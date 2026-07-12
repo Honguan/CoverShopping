@@ -169,4 +169,7 @@ return [
     'add_address' => 'Añadir dirección',
     'default_address' => 'Predeterminada',
     'no_shipping_addresses' => 'Aún no hay direcciones de envío.',
+    'notification_center' => 'Centro de notificaciones',
+    'view_notification' => 'Ver',
+    'no_notifications' => 'Aún no hay notificaciones.',
 ];

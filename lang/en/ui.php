@@ -169,4 +169,7 @@ return [
     'add_address' => 'Add address',
     'default_address' => 'Default',
     'no_shipping_addresses' => 'No shipping addresses yet.',
+    'notification_center' => 'Notification center',
+    'view_notification' => 'View',
+    'no_notifications' => 'No notifications yet.',
 ];

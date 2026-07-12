@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <h1>通知中心</h1>
+    <h1>{{ __('ui.notification_center') }}</h1>
     <section class="list">
         @forelse($notifications as $notification)
             <article class="row">
@@ -14,12 +14,12 @@
                     <form action="{{ route('notifications.read', $notification) }}" method="post">
                         @csrf
                         @method('PATCH')
-                        <button type="submit">查看</button>
+                        <button type="submit">{{ __('ui.view_notification') }}</button>
                     </form>
                 @endif
             </article>
         @empty
-            <p>目前沒有通知。</p>
+            <p>{{ __('ui.no_notifications') }}</p>
         @endforelse
     </section>
     {{ $notifications->links() }}

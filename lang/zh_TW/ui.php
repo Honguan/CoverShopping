@@ -169,4 +169,7 @@ return [
     'add_address' => '新增地址',
     'default_address' => '預設',
     'no_shipping_addresses' => '尚未建立收件地址。',
+    'notification_center' => '通知中心',
+    'view_notification' => '查看',
+    'no_notifications' => '目前沒有通知。',
 ];

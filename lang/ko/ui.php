@@ -169,4 +169,7 @@ return [
     'add_address' => '주소 추가',
     'default_address' => '기본',
     'no_shipping_addresses' => '배송지 주소가 없습니다.',
+    'notification_center' => '알림 센터',
+    'view_notification' => '보기',
+    'no_notifications' => '알림이 없습니다.',
 ];

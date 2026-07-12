@@ -419,6 +419,30 @@ class PlatformFoundationTest extends TestCase
         }
     }
 
+    public function test_each_supported_locale_translates_notifications_page(): void
+    {
+        $user = User::create([
+            'name' => 'Localized Notifications User',
+            'account' => 'localized-notifications-user',
+            'password' => 'password',
+            'role' => 'customer',
+            'status' => 'active',
+        ]);
+
+        foreach ([
+            'zh_TW' => ['通知中心', '目前沒有通知。'],
+            'en' => ['Notification center', 'No notifications yet.'],
+            'ja' => ['通知センター', '通知はまだありません。'],
+            'ko' => ['알림 센터', '알림이 없습니다.'],
+            'es' => ['Centro de notificaciones', 'Aún no hay notificaciones.'],
+        ] as $locale => [$title, $empty]) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->actingAs($user)->get('/notifications')
+                ->assertSee("<h1>{$title}</h1>", false)
+                ->assertSee($empty);
+        }
+    }
+
     public function test_production_cache_can_use_redis(): void
     {
         $this->assertSame('redis', config('cache.stores.redis.driver'));
