@@ -419,6 +419,35 @@ class PlatformFoundationTest extends TestCase
         }
     }
 
+    public function test_each_supported_locale_translates_address_saved_message(): void
+    {
+        $user = User::create([
+            'name' => 'Localized Address Message User',
+            'account' => 'localized-address-message-user',
+            'password' => 'password',
+            'role' => 'customer',
+            'status' => 'active',
+        ]);
+
+        foreach ([
+            'zh_TW' => '地址已儲存。',
+            'en' => 'Address saved.',
+            'ja' => '住所を保存しました。',
+            'ko' => '주소를 저장했습니다.',
+            'es' => 'Dirección guardada.',
+        ] as $locale => $message) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->actingAs($user)->post('/addresses', [
+                'recipient_name' => "Recipient {$locale}",
+                'phone' => '0911000000',
+                'city' => 'Taipei',
+                'address_line' => 'No. 1',
+            ])
+                ->assertRedirect('/addresses')
+                ->assertSessionHas('status', $message);
+        }
+    }
+
     public function test_each_supported_locale_translates_notifications_page(): void
     {
         $user = User::create([

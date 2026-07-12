@@ -172,4 +172,7 @@ return [
     'notification_center' => 'Centro de notificaciones',
     'view_notification' => 'Ver',
     'no_notifications' => 'Aún no hay notificaciones.',
+    'address_saved' => 'Dirección guardada.',
+    'default_address_updated' => 'Dirección predeterminada actualizada.',
+    'address_deleted' => 'Dirección eliminada.',
 ];

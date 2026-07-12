@@ -172,4 +172,7 @@ return [
     'notification_center' => '알림 센터',
     'view_notification' => '보기',
     'no_notifications' => '알림이 없습니다.',
+    'address_saved' => '주소를 저장했습니다.',
+    'default_address_updated' => '기본 주소를 업데이트했습니다.',
+    'address_deleted' => '주소를 삭제했습니다.',
 ];

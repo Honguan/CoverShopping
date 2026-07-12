@@ -27,7 +27,7 @@ class AddressController extends Controller
             'is_default' => $request->boolean('is_default'),
         ]);
 
-        return redirect()->route('addresses.index')->with('status', 'Address saved.');
+        return redirect()->route('addresses.index')->with('status', __('ui.address_saved'));
     }
 
     public function setDefaultAddress(Request $request, Address $address)
@@ -37,7 +37,7 @@ class AddressController extends Controller
         $request->user()->addresses()->update(['is_default' => false]);
         $address->update(['is_default' => true]);
 
-        return redirect()->route('addresses.index')->with('status', 'Default address updated.');
+        return redirect()->route('addresses.index')->with('status', __('ui.default_address_updated'));
     }
 
     public function deleteAddress(Request $request, Address $address)
@@ -46,6 +46,6 @@ class AddressController extends Controller
 
         $address->delete();
 
-        return redirect()->route('addresses.index')->with('status', 'Address deleted.');
+        return redirect()->route('addresses.index')->with('status', __('ui.address_deleted'));
     }
 }

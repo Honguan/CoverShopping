@@ -172,4 +172,7 @@ return [
     'notification_center' => '通知センター',
     'view_notification' => '表示',
     'no_notifications' => '通知はまだありません。',
+    'address_saved' => '住所を保存しました。',
+    'default_address_updated' => '既定の住所を更新しました。',
+    'address_deleted' => '住所を削除しました。',
 ];

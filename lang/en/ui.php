@@ -172,4 +172,7 @@ return [
     'notification_center' => 'Notification center',
     'view_notification' => 'View',
     'no_notifications' => 'No notifications yet.',
+    'address_saved' => 'Address saved.',
+    'default_address_updated' => 'Default address updated.',
+    'address_deleted' => 'Address deleted.',
 ];

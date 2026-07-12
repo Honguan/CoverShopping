@@ -172,4 +172,7 @@ return [
     'notification_center' => '通知中心',
     'view_notification' => '查看',
     'no_notifications' => '目前沒有通知。',
+    'address_saved' => '地址已儲存。',
+    'default_address_updated' => '預設地址已更新。',
+    'address_deleted' => '地址已刪除。',
 ];
