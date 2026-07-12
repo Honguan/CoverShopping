@@ -10,6 +10,7 @@ use App\Models\ProductQuestion;
 use App\Models\ReturnRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class BackOfficeFlowTest extends TestCase
@@ -105,6 +106,25 @@ class BackOfficeFlowTest extends TestCase
         $this->assertSame('answered', $question->fresh()->status);
         $this->assertSame('shipped', $orderItem->fresh()->shipping_status);
         $this->assertSame('completed', $order->fresh()->fulfillment_status);
+    }
+
+    public function test_seller_cannot_upload_more_than_eight_product_images(): void
+    {
+        [$seller] = $this->createUsers();
+
+        $this->actingAs($seller)->from('/seller/products')->post('/seller/products', [
+            'name' => 'Too Many Images',
+            'price' => 100,
+            'inventory' => 1,
+            'images' => array_map(
+                fn () => UploadedFile::fake()->createWithContent('product.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9J8BcAAAAASUVORK5CYII=') ?: ''),
+                range(1, 9),
+            ),
+        ])
+            ->assertRedirect('/seller/products')
+            ->assertSessionHasErrors('images');
+
+        $this->assertDatabaseMissing('products', ['name' => 'Too Many Images']);
     }
 
     public function test_admin_can_manage_users_products_orders_returns_coupons_and_shipping(): void
