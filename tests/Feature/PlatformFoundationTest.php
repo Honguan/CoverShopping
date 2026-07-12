@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -108,6 +109,49 @@ class PlatformFoundationTest extends TestCase
         ] as $locale => $cartTitle) {
             $this->get("/locale/{$locale}")->assertRedirect('/');
             $this->get('/cart')->assertSee("<h1>{$cartTitle}</h1>", false);
+        }
+    }
+
+    public function test_each_supported_locale_translates_cart_checkout_controls(): void
+    {
+        $seller = User::create([
+            'name' => 'Seller',
+            'account' => 'cart-localized-seller',
+            'password' => 'password',
+            'role' => 'seller',
+            'status' => 'active',
+        ]);
+        $buyer = User::create([
+            'name' => 'Buyer',
+            'account' => 'cart-localized-buyer',
+            'password' => 'password',
+            'role' => 'customer',
+            'status' => 'active',
+        ]);
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Cart Product',
+            'price' => 100,
+            'inventory' => 1,
+            'status' => 'active',
+        ]);
+        CartItem::create([
+            'user_id' => $buyer->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        foreach ([
+            'zh_TW' => ['結帳', '配送地址'],
+            'en' => ['Checkout', 'Shipping address'],
+            'ja' => ['注文を確定', '配送先住所'],
+            'ko' => ['주문하기', '배송지 주소'],
+            'es' => ['Finalizar compra', 'Dirección de envío'],
+        ] as $locale => [$checkoutLabel, $shippingAddressLabel]) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->actingAs($buyer)->get('/cart')
+                ->assertSee($checkoutLabel)
+                ->assertSee($shippingAddressLabel);
         }
     }
 
