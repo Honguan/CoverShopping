@@ -50,6 +50,21 @@ class PlatformFoundationTest extends TestCase
         }
     }
 
+    public function test_each_supported_locale_translates_catalog_and_login_pages(): void
+    {
+        foreach ([
+            'zh_TW' => ['商品列表', '會員登入'],
+            'en' => ['Product catalog', 'Member login'],
+            'ja' => ['商品一覧', '会員ログイン'],
+            'ko' => ['상품 목록', '회원 로그인'],
+            'es' => ['Catálogo de productos', 'Inicio de sesión'],
+        ] as $locale => [$catalogTitle, $loginTitle]) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->get('/')->assertSee($catalogTitle);
+            $this->get('/login')->assertSee($loginTitle);
+        }
+    }
+
     public function test_production_cache_can_use_redis(): void
     {
         $this->assertSame('redis', config('cache.stores.redis.driver'));
