@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureActiveUserMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecurityHeadersMiddleware;
 use App\Http\Middleware\SetLocaleMiddleware;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             SetLocaleMiddleware::class,
+            EnsureActiveUserMiddleware::class,
             SecurityHeadersMiddleware::class,
         ]);
 

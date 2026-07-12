@@ -22,4 +22,19 @@ class RoleMiddlewareTest extends TestCase
 
         $this->actingAs($user)->get('/admin/dashboard')->assertForbidden();
     }
+
+    public function test_suspended_user_cannot_use_an_existing_session(): void
+    {
+        $user = User::create([
+            'name' => 'Suspended Customer',
+            'account' => 'suspended-customer',
+            'password' => 'password',
+            'role' => 'customer',
+            'status' => 'suspended',
+        ]);
+
+        $this->actingAs($user)->get('/orders')->assertRedirect('/login');
+
+        $this->assertGuest();
+    }
 }
