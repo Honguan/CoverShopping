@@ -2,6 +2,7 @@
 
 @section('content')
     <h1>商家訂單管理</h1>
+    <a class="button" href="{{ route('seller.orders.export') }}">匯出 CSV</a>
     <section class="list">
         @foreach($items as $item)
             <article class="row">

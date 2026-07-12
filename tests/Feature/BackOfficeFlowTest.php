@@ -92,6 +92,8 @@ class BackOfficeFlowTest extends TestCase
             'subtotal' => 500,
         ]);
 
+        $this->actingAs($seller)->get('/seller/orders/export')->assertDownload('seller-orders.csv');
+
         $this->actingAs($seller)->patch("/seller/orders/{$order->id}/items/{$orderItem->id}/ship")
             ->assertRedirect('/seller/orders');
 
@@ -174,6 +176,7 @@ class BackOfficeFlowTest extends TestCase
 
         $this->actingAs($buyer)->get('/seller/products')->assertForbidden();
         $this->actingAs($buyer)->get('/seller/orders')->assertForbidden();
+        $this->actingAs($buyer)->get('/seller/orders/export')->assertForbidden();
         $this->actingAs($buyer)->get('/admin/dashboard')->assertForbidden();
     }
 

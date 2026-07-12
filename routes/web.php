@@ -77,6 +77,7 @@ Route::middleware(['auth', 'role:seller,admin'])->prefix('seller')->name('seller
     Route::post('/products', [SellerDashboardController::class, 'createProduct'])->name('products.store');
     Route::patch('/products/{product}', [SellerDashboardController::class, 'updateProductInfo'])->name('products.update');
     Route::post('/products/{product}/variants', [SellerDashboardController::class, 'createProductVariant'])->name('products.variants.store');
+    Route::get('/orders/export', [SellerDashboardController::class, 'exportSellerOrders'])->name('orders.export');
     Route::get('/orders', [SellerDashboardController::class, 'showSellerOrders'])->name('orders.index');
     Route::patch('/orders/{order}/items/{orderItem}/ship', [SellerDashboardController::class, 'markOrderItemShipped'])->name('orders.items.ship');
     Route::post('/questions/{productQuestion}/answers', [SellerDashboardController::class, 'answerProductQuestion'])->name('questions.answer');

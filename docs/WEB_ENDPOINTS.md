@@ -61,6 +61,7 @@
 | POST | `/seller/products` | `seller.products.store` | 建立商品，seller 預設 pending。 |
 | PATCH | `/seller/products/{product}` | `seller.products.update` | 更新自己的商品。 |
 | POST | `/seller/products/{product}/variants` | `seller.products.variants.store` | 建立商品 SKU。 |
+| GET | `/seller/orders/export` | `seller.orders.export` | 匯出自己的訂單明細 CSV，包含 B2B 採購單號。 |
 | GET | `/seller/orders` | `seller.orders.index` | 商家訂單明細。 |
 | PATCH | `/seller/orders/{order}/items/{orderItem}/ship` | `seller.orders.items.ship` | 出貨自己的訂單明細。 |
 | POST | `/seller/questions/{productQuestion}/answers` | `seller.questions.answer` | 回覆自己商品的問答。 |

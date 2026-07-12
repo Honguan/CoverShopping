@@ -14,6 +14,7 @@ use App\Services\AuditLogService;
 use App\Services\InventoryAdjustmentService;
 use App\Services\SellerOrderShipmentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SellerDashboardController extends Controller
 {
@@ -148,6 +149,48 @@ class SellerDashboardController extends Controller
                 ->latest()
                 ->paginate(30),
         ]);
+    }
+
+    public function exportSellerOrders(Request $request)
+    {
+        $items = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.seller_id', $request->user()->id)
+            ->orderByDesc('order_items.id')
+            ->select([
+                'order_items.product_name',
+                'order_items.variant_name',
+                'order_items.quantity',
+                'order_items.subtotal',
+                'order_items.shipping_status',
+                'orders.number as order_number',
+                'orders.sales_channel',
+                'orders.purchase_order_number',
+                'orders.payment_status',
+            ])
+            ->cursor();
+
+        return response()->streamDownload(function () use ($items) {
+            $output = fopen('php://output', 'w');
+            fwrite($output, "\xEF\xBB\xBF");
+            fputcsv($output, ['Order Number', 'Channel', 'Purchase Order Number', 'Product', 'Variant', 'Quantity', 'Subtotal', 'Payment Status', 'Shipping Status']);
+
+            foreach ($items as $item) {
+                fputcsv($output, [
+                    $item->order_number,
+                    $item->sales_channel,
+                    $item->purchase_order_number,
+                    $item->product_name,
+                    $item->variant_name,
+                    $item->quantity,
+                    $item->subtotal,
+                    $item->payment_status,
+                    $item->shipping_status,
+                ]);
+            }
+
+            fclose($output);
+        }, 'seller-orders.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     public function markOrderItemShipped(Request $request, Order $order, OrderItem $orderItem, SellerOrderShipmentService $shipments)
