@@ -63,6 +63,21 @@ class PublicEndpointFlowTest extends TestCase
         $this->assertAuthenticated();
     }
 
+    public function test_login_attempts_are_rate_limited(): void
+    {
+        foreach (range(1, 5) as $attempt) {
+            $this->post('/login', [
+                'account' => 'rate-limited-account',
+                'password' => 'incorrect',
+            ])->assertRedirect();
+        }
+
+        $this->post('/login', [
+            'account' => 'rate-limited-account',
+            'password' => 'incorrect',
+        ])->assertTooManyRequests();
+    }
+
     public function test_customer_can_review_question_favorite_return_and_read_notification(): void
     {
         [$seller, $buyer] = $this->createSellerAndBuyer();

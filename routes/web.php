@@ -25,9 +25,9 @@ Route::get('/locale/{locale}', [LocaleController::class, 'update'])
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [UserAuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [UserAuthController::class, 'loginUser'])->name('login.store');
+    Route::post('/login', [UserAuthController::class, 'loginUser'])->middleware('throttle:login')->name('login.store');
     Route::get('/register', [UserAuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [UserAuthController::class, 'registerUser'])->name('register.store');
+    Route::post('/register', [UserAuthController::class, 'registerUser'])->middleware('throttle:register')->name('register.store');
 });
 
 Route::post('/logout', [UserAuthController::class, 'logoutUser'])->middleware('auth')->name('logout');
