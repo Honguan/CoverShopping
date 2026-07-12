@@ -39,9 +39,9 @@ jobs:
       - run: docker compose up --detach --build
       - run: |
           for attempt in {1..30}; do
-            if curl --fail --silent --show-error http://127.0.0.1:8080/up; then
+            if curl --fail --silent --show-error http://127.0.0.1:8080/health; then
               docker compose exec -T app php artisan migrate --force
-              curl --fail --silent --show-error http://127.0.0.1:8080/up
+              curl --fail --silent --show-error http://127.0.0.1:8080/health
               exit 0
             fi
             sleep 2

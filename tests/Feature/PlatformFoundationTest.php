@@ -27,6 +27,13 @@ class PlatformFoundationTest extends TestCase
             ->assertHeader('Permissions-Policy', 'camera=(), geolocation=(), microphone=()');
     }
 
+    public function test_dependency_health_endpoint_is_available(): void
+    {
+        $this->get('/health')
+            ->assertOk()
+            ->assertJson(['status' => 'ok']);
+    }
+
     public function test_visitor_can_switch_to_a_supported_locale(): void
     {
         $this->get('/locale/ja')->assertRedirect('/');

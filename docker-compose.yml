@@ -16,6 +16,7 @@ services:
       SESSION_DRIVER: redis
       SESSION_CONNECTION: default
       QUEUE_CONNECTION: redis
+      REDIS_CLIENT: predis
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SESSION_SECURE_COOKIE: "true"
@@ -27,7 +28,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "php -r \"exit((int) ! @file_get_contents('http://127.0.0.1/up'));\""]
+      test: ["CMD-SHELL", "php -r \"exit((int) ! @file_get_contents('http://127.0.0.1/health'));\""]
       interval: 10s
       timeout: 5s
       retries: 6
