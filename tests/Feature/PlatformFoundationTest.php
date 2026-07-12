@@ -50,6 +50,17 @@ class PlatformFoundationTest extends TestCase
         $this->get('/locale/invalid')->assertNotFound();
     }
 
+    public function test_supported_locales_have_matching_ui_keys(): void
+    {
+        $source = require lang_path('zh_TW/ui.php');
+
+        foreach (array_keys(config('app.supported_locales')) as $locale) {
+            $translations = require lang_path("{$locale}/ui.php");
+
+            $this->assertSame(array_keys($source), array_keys($translations));
+        }
+    }
+
     public function test_each_supported_locale_translates_global_navigation(): void
     {
         foreach ([
