@@ -12,3 +12,5 @@
 更新版本後執行 `docker compose up -d --build`，再於單一工作程序執行 migration。容器啟動時會快取設定、路由與 Blade 畫面；不會自動 migration，避免多副本同時更新資料庫。Redis 提供快取、Session 與 Queue；資料庫與 Redis 使用 Docker named volume 保留資料。
 
 正式環境請將 MySQL、Redis、檔案儲存與 Queue worker 改為受管服務或獨立可水平擴充的工作程序。部署前後使用 `/up` 健康檢查，並由 CI 執行 `composer analyse`、`composer test` 與 `npm run build`。
+
+Compose 的 `app` 服務會自行以 `/up` 執行健康檢查，編排平台可據此等待可用實例後再導入流量。
