@@ -29,6 +29,16 @@ class PlatformFoundationTest extends TestCase
             ->assertHeader('Permissions-Policy', 'camera=(), geolocation=(), microphone=()');
     }
 
+    public function test_trusted_proxy_headers_produce_https_urls(): void
+    {
+        $this->get('/', [
+            'HTTP_HOST' => 'shop.example.test',
+            'HTTP_X_FORWARDED_PROTO' => 'https',
+        ])->assertOk();
+
+        $this->assertTrue(request()->isSecure());
+    }
+
     public function test_dependency_health_endpoint_is_available(): void
     {
         $this->get('/health')
