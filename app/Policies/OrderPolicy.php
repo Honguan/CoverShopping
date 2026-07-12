@@ -7,6 +7,13 @@ use App\Models\User;
 
 class OrderPolicy
 {
+    public function cancel(User $user, Order $order): bool
+    {
+        return $order->user_id === $user->id
+            && $order->payment_status === 'unpaid'
+            && $order->fulfillment_status === 'pending';
+    }
+
     public function requestReturn(User $user, Order $order): bool
     {
         return $order->user_id === $user->id

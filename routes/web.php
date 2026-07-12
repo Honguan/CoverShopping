@@ -41,6 +41,7 @@ Route::delete('/cart/items/{cartItem}', [ShoppingCartController::class, 'removeI
 Route::post('/checkout', [CheckoutController::class, 'createOrderFromCart'])->middleware('auth')->name('checkout.store');
 Route::get('/orders', [CustomerOrderController::class, 'showCustomerOrders'])->middleware('auth')->name('orders.index');
 Route::post('/orders/{order}/reorder', [CustomerOrderController::class, 'reorder'])->middleware('auth')->name('orders.reorder');
+Route::post('/orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->middleware('auth')->name('orders.cancel');
 Route::get('/addresses', [AddressController::class, 'showAddresses'])->middleware('auth')->name('addresses.index');
 Route::post('/addresses', [AddressController::class, 'storeAddress'])->middleware('auth')->name('addresses.store');
 Route::patch('/addresses/{address}/default', [AddressController::class, 'setDefaultAddress'])->middleware('auth')->name('addresses.default');

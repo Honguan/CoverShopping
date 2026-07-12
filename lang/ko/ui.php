@@ -85,4 +85,7 @@ return [
     'purchase_order_number' => '구매 주문 번호',
     'billing_company' => '청구 회사',
     'tax_id' => '사업자 번호',
+    'cancel_order' => '주문 취소',
+    'order_cancelled' => '주문이 취소되었습니다.',
+    'order_cannot_cancel' => '이 주문은 취소할 수 없습니다.',
 ];

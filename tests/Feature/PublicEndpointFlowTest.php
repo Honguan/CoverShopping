@@ -102,6 +102,66 @@ class PublicEndpointFlowTest extends TestCase
             ->assertSee('12345678');
     }
 
+    public function test_customer_cannot_cancel_another_customers_order(): void
+    {
+        [, $buyer] = $this->createSellerAndBuyer();
+        $otherBuyer = User::create([
+            'name' => 'Other Buyer',
+            'account' => 'other-buyer',
+            'password' => 'password',
+            'role' => 'customer',
+            'status' => 'active',
+        ]);
+        $order = Order::create([
+            'number' => 'C202607120001',
+            'user_id' => $buyer->id,
+            'subtotal' => 100,
+            'shipping_fee' => 0,
+            'total' => 100,
+            'payment_status' => 'unpaid',
+            'fulfillment_status' => 'pending',
+        ]);
+
+        $this->actingAs($otherBuyer)->post("/orders/{$order->id}/cancel")->assertForbidden();
+    }
+
+    public function test_customer_can_cancel_own_unpaid_order(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Cancelable Product',
+            'price' => 100,
+            'inventory' => 0,
+            'status' => 'active',
+        ]);
+        $order = Order::create([
+            'number' => 'C202607120002',
+            'user_id' => $buyer->id,
+            'subtotal' => 200,
+            'shipping_fee' => 0,
+            'total' => 200,
+            'payment_status' => 'unpaid',
+            'fulfillment_status' => 'pending',
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'seller_id' => $seller->id,
+            'product_name' => $product->name,
+            'unit_price' => 100,
+            'quantity' => 2,
+            'subtotal' => 200,
+        ]);
+
+        $this->actingAs($buyer)->post("/orders/{$order->id}/cancel")
+            ->assertRedirect('/orders')
+            ->assertSessionHas('status', '訂單已取消。');
+
+        $this->assertSame('cancelled', $order->fresh()->fulfillment_status);
+        $this->assertSame(2, $product->fresh()->inventory);
+    }
+
     public function test_customer_can_review_question_favorite_return_and_read_notification(): void
     {
         [$seller, $buyer] = $this->createSellerAndBuyer();

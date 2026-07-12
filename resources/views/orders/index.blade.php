@@ -25,6 +25,12 @@
                         @csrf
                         <button type="submit">{{ __('ui.reorder') }}</button>
                     </form>
+                    @can('cancel', $order)
+                        <form action="{{ route('orders.cancel', $order) }}" method="post">
+                            @csrf
+                            <button type="submit">{{ __('ui.cancel_order') }}</button>
+                        </form>
+                    @endcan
                 </div>
                 <ul>
                     @foreach($order->items as $item)

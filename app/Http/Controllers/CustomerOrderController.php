@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Services\OrderCancellationService;
 use App\Services\ShoppingCartService;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 class CustomerOrderController extends Controller
 {
@@ -56,5 +58,16 @@ class CustomerOrderController extends Controller
         return redirect()
             ->route('cart.index')
             ->with('status', 'Added ' . $addedQuantity . ' item(s), skipped ' . $skippedItems . ' item(s).');
+    }
+
+    public function cancel(Request $request, Order $order, OrderCancellationService $orderCancellationService)
+    {
+        try {
+            $orderCancellationService->cancel($request->user(), $order, $request);
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['order' => $exception->getMessage()]);
+        }
+
+        return redirect()->route('orders.index')->with('status', __('ui.order_cancelled'));
     }
 }

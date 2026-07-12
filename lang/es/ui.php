@@ -85,4 +85,7 @@ return [
     'purchase_order_number' => 'Número de orden de compra',
     'billing_company' => 'Empresa de facturación',
     'tax_id' => 'NIF',
+    'cancel_order' => 'Cancelar pedido',
+    'order_cancelled' => 'Pedido cancelado.',
+    'order_cannot_cancel' => 'Este pedido no se puede cancelar.',
 ];

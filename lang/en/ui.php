@@ -85,4 +85,7 @@ return [
     'purchase_order_number' => 'Purchase order number',
     'billing_company' => 'Billing company',
     'tax_id' => 'Tax ID',
+    'cancel_order' => 'Cancel order',
+    'order_cancelled' => 'Order cancelled.',
+    'order_cannot_cancel' => 'This order cannot be cancelled.',
 ];

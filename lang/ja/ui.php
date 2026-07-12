@@ -85,4 +85,7 @@ return [
     'purchase_order_number' => '発注番号',
     'billing_company' => '請求先会社',
     'tax_id' => '税務番号',
+    'cancel_order' => '注文をキャンセル',
+    'order_cancelled' => '注文をキャンセルしました。',
+    'order_cannot_cancel' => 'この注文はキャンセルできません。',
 ];

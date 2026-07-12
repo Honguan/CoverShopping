@@ -31,6 +31,7 @@
 | POST | `/checkout` | `checkout.store` | 建立訂單、扣庫存、套用優惠與運費。 |
 | GET | `/orders` | `orders.index` | 會員訂單列表。 |
 | POST | `/orders/{order}/reorder` | `orders.reorder` | 將可購買商品再次加入購物車。 |
+| POST | `/orders/{order}/cancel` | `orders.cancel` | 取消自己的未付款待處理訂單並回補庫存。 |
 
 ## Account / Engagement
 

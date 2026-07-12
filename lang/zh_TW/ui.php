@@ -85,4 +85,7 @@ return [
     'purchase_order_number' => '採購單號',
     'billing_company' => '帳務公司',
     'tax_id' => '統一編號',
+    'cancel_order' => '取消訂單',
+    'order_cancelled' => '訂單已取消。',
+    'order_cannot_cancel' => '此訂單無法取消。',
 ];

@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Models\ShippingMethod;
 use App\Models\User;
 use App\Services\OrderCheckoutService;
+use App\Services\OrderCancellationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
 use Tests\TestCase;
@@ -103,6 +104,35 @@ class OrderCheckoutServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
 
         app(OrderCheckoutService::class)->createOrderFromCart($buyer);
+    }
+
+    public function test_customer_can_cancel_an_unpaid_order_and_restore_inventory(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Cancelable Product',
+            'price' => 100,
+            'inventory' => 2,
+            'status' => 'active',
+        ]);
+        CartItem::create([
+            'user_id' => $buyer->id,
+            'product_id' => $product->id,
+            'quantity' => 2,
+        ]);
+
+        $order = app(OrderCheckoutService::class)->createOrderFromCart($buyer);
+        $cancelledOrder = app(OrderCancellationService::class)->cancel($buyer, $order);
+
+        $this->assertSame('cancelled', $cancelledOrder->fulfillment_status);
+        $this->assertSame(2, $product->fresh()->inventory);
+        $this->assertDatabaseHas('inventory_movements', [
+            'product_id' => $product->id,
+            'reason' => 'order_cancelled',
+            'quantity_delta' => 2,
+            'inventory_after' => 2,
+        ]);
     }
 
     public function test_checkout_uses_variant_inventory_and_shipping_method_snapshot(): void
