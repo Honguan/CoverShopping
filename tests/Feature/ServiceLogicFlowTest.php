@@ -18,6 +18,7 @@ use App\Services\PromotionService;
 use App\Services\ReturnRequestService;
 use App\Services\SellerOrderShipmentService;
 use App\Services\ShoppingCartService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
 use Tests\TestCase;
@@ -226,6 +227,40 @@ class ServiceLogicFlowTest extends TestCase
         $shipments->markItemShipped($seller, $order, $secondItem);
 
         $this->assertSame('completed', $order->fresh()->fulfillment_status);
+    }
+
+    public function test_seller_cannot_ship_an_unpaid_order(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Unpaid Shipment Product',
+            'price' => 100,
+            'inventory' => 10,
+            'status' => 'active',
+        ]);
+        $order = Order::create([
+            'number' => 'UNPAID202607120001',
+            'user_id' => $buyer->id,
+            'subtotal' => 100,
+            'shipping_fee' => 0,
+            'total' => 100,
+            'payment_status' => 'unpaid',
+            'fulfillment_status' => 'pending',
+        ]);
+        $orderItem = OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'seller_id' => $seller->id,
+            'product_name' => $product->name,
+            'unit_price' => 100,
+            'quantity' => 1,
+            'subtotal' => 100,
+        ]);
+
+        $this->expectException(AuthorizationException::class);
+
+        app(SellerOrderShipmentService::class)->markItemShipped($seller, $order, $orderItem);
     }
 
     public function test_return_request_service_creates_request_updates_order_and_audit_log(): void

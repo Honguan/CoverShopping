@@ -17,10 +17,13 @@ class SellerOrderShipmentService
 
     public function markItemShipped(User $seller, Order $order, OrderItem $orderItem, ?Request $request = null): OrderItem
     {
-        Gate::forUser($seller)->authorize('ship', $orderItem);
-        abort_unless($orderItem->order_id === $order->id, 404);
+        return DB::transaction(function () use ($seller, $order, $orderItem, $request) {
+            $order = Order::query()->lockForUpdate()->findOrFail($order->id);
+            $orderItem = OrderItem::query()->lockForUpdate()->findOrFail($orderItem->id);
+            abort_unless($orderItem->order_id === $order->id, 404);
+            $orderItem->setRelation('order', $order);
+            Gate::forUser($seller)->authorize('ship', $orderItem);
 
-        return DB::transaction(function () use ($order, $orderItem, $request) {
             $orderItem->update([
                 'shipping_status' => 'shipped',
                 'shipped_at' => now(),

@@ -43,7 +43,7 @@
 1. seller 可建立商品，商品預設 `pending` 等待管理員審核。
 2. seller 可建立自己的商品 SKU。
 3. seller 可回覆自己商品的問答，並通知提問會員。
-4. seller 只能出貨自己的 order item；全部出貨後訂單狀態改為 `completed`。
+4. seller 只能出貨自己的已付款待出貨 order item；全部出貨後訂單狀態改為 `completed`。
 
 ## 管理員後台
 
