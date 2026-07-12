@@ -53,4 +53,6 @@ return [
     'ask_question' => 'Hacer una pregunta',
     'submit_question' => 'Enviar pregunta',
     'no_questions' => 'Aún no hay preguntas.',
+    'shopping_cart' => 'Carrito de compras',
+    'empty_cart' => 'Tu carrito está vacío.',
 ];

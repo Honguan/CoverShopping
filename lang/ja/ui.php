@@ -53,4 +53,6 @@ return [
     'ask_question' => '質問する',
     'submit_question' => '質問を送信',
     'no_questions' => '質問はまだありません。',
+    'shopping_cart' => 'ショッピングカート',
+    'empty_cart' => 'カートは空です。',
 ];

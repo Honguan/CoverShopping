@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <h1>Shopping cart</h1>
+    <h1>{{ __('ui.shopping_cart') }}</h1>
 
     @if(session('status'))
         <p class="notice">{{ session('status') }}</p>
@@ -45,7 +45,7 @@
                 </form>
             </article>
         @empty
-            <p>Your cart is empty.</p>
+            <p>{{ __('ui.empty_cart') }}</p>
         @endforelse
     </section>
 

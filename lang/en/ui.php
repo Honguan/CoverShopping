@@ -53,4 +53,6 @@ return [
     'ask_question' => 'Ask a question',
     'submit_question' => 'Submit question',
     'no_questions' => 'No questions yet.',
+    'shopping_cart' => 'Shopping cart',
+    'empty_cart' => 'Your cart is empty.',
 ];

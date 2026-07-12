@@ -53,4 +53,6 @@ return [
     'ask_question' => '문의하기',
     'submit_question' => '문의 등록',
     'no_questions' => '문의가 없습니다.',
+    'shopping_cart' => '장바구니',
+    'empty_cart' => '장바구니가 비어 있습니다.',
 ];

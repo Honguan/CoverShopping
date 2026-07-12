@@ -96,6 +96,20 @@ class PlatformFoundationTest extends TestCase
         }
     }
 
+    public function test_each_supported_locale_translates_cart_page(): void
+    {
+        foreach ([
+            'zh_TW' => '購物車',
+            'en' => 'Shopping cart',
+            'ja' => 'ショッピングカート',
+            'ko' => '장바구니',
+            'es' => 'Carrito de compras',
+        ] as $locale => $cartTitle) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->get('/cart')->assertSee("<h1>{$cartTitle}</h1>", false);
+        }
+    }
+
     public function test_production_cache_can_use_redis(): void
     {
         $this->assertSame('redis', config('cache.stores.redis.driver'));

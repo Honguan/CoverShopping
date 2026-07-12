@@ -53,4 +53,6 @@ return [
     'ask_question' => '提問',
     'submit_question' => '送出問題',
     'no_questions' => '目前沒有問答。',
+    'shopping_cart' => '購物車',
+    'empty_cart' => '購物車目前沒有商品。',
 ];
