@@ -295,6 +295,38 @@ class PlatformFoundationTest extends TestCase
         }
     }
 
+    public function test_each_supported_locale_translates_admin_dashboard(): void
+    {
+        $admin = User::create([
+            'name' => 'Localized Admin',
+            'account' => 'localized-admin',
+            'password' => 'password',
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+
+        foreach ([
+            'zh_TW' => ['管理後台', '會員', '企業會員審核', '商品審核', '付款狀態', '優惠券', '退貨申請', '配送方式', '啟用', '管理員'],
+            'en' => ['Admin dashboard', 'Members', 'Business profile review', 'Product approval', 'Payment status', 'Coupon', 'Return requests', 'Shipping method', 'Active', 'Administrator'],
+            'ja' => ['管理画面', '会員', '法人アカウント審査', '商品審査', '支払い状況', 'クーポン', '返品申請', '配送方法', '有効', '管理者'],
+            'ko' => ['관리자 페이지', '회원', '기업 회원 검토', '상품 검토', '결제 상태', '쿠폰', '반품 요청', '배송 방법', '활성', '관리자'],
+            'es' => ['Panel de administración', 'Miembros', 'Revisión de perfil empresarial', 'Aprobación de productos', 'Estado del pago', 'Cupón', 'Solicitudes de devolución', 'Método de envío', 'Activo', 'Administrador'],
+        ] as $locale => [$title, $members, $businessProfiles, $products, $paymentStatus, $coupon, $returns, $shipping, $active, $adminRole]) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->actingAs($admin)->get('/admin/dashboard')
+                ->assertSee("<h1>{$title}</h1>", false)
+                ->assertSee($members)
+                ->assertSee($businessProfiles)
+                ->assertSee($products)
+                ->assertSee($paymentStatus)
+                ->assertSee($coupon)
+                ->assertSee($returns)
+                ->assertSee($shipping)
+                ->assertSee($active)
+                ->assertSee($adminRole);
+        }
+    }
+
     public function test_production_cache_can_use_redis(): void
     {
         $this->assertSame('redis', config('cache.stores.redis.driver'));
