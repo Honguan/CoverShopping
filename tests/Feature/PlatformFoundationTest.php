@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -107,6 +108,42 @@ class PlatformFoundationTest extends TestCase
         ] as $locale => $cartTitle) {
             $this->get("/locale/{$locale}")->assertRedirect('/');
             $this->get('/cart')->assertSee("<h1>{$cartTitle}</h1>", false);
+        }
+    }
+
+    public function test_each_supported_locale_translates_orders_page(): void
+    {
+        $user = User::create([
+            'name' => 'Localized Buyer',
+            'account' => 'localized-buyer',
+            'password' => 'password',
+            'role' => 'customer',
+            'status' => 'active',
+        ]);
+        Order::create([
+            'number' => 'L202607120001',
+            'user_id' => $user->id,
+            'subtotal' => 100,
+            'shipping_fee' => 0,
+            'total' => 100,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'shipped',
+            'return_status' => 'requested',
+        ]);
+
+        foreach ([
+            'zh_TW' => ['我的訂單', '已付款', '已出貨', '已申請'],
+            'en' => ['My orders', 'Paid', 'Shipped', 'Requested'],
+            'ja' => ['注文履歴', '支払い済み', '発送済み', '申請済み'],
+            'ko' => ['내 주문', '결제 완료', '배송됨', '신청됨'],
+            'es' => ['Mis pedidos', 'Pagado', 'Enviado', 'Solicitada'],
+        ] as $locale => [$ordersTitle, $paymentStatus, $fulfillmentStatus, $returnStatus]) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->actingAs($user)->get('/orders')
+                ->assertSee("<h1>{$ordersTitle}</h1>", false)
+                ->assertSee($paymentStatus)
+                ->assertSee($fulfillmentStatus)
+                ->assertSee($returnStatus);
         }
     }
 
