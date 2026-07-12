@@ -152,4 +152,10 @@ return [
     'shipping_name' => '配送名稱',
     'shipping_fee' => '運費',
     'create_shipping_method' => '建立配送方式',
+    'business_profile_details' => '企業會員資料',
+    'review_status' => '審核狀態',
+    'company_name' => '公司名稱',
+    'contact_name' => '聯絡人',
+    'contact_phone' => '聯絡電話',
+    'billing_email' => '帳務 Email',
 ];

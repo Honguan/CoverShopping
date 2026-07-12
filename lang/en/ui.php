@@ -152,4 +152,10 @@ return [
     'shipping_name' => 'Shipping name',
     'shipping_fee' => 'Shipping fee',
     'create_shipping_method' => 'Create shipping method',
+    'business_profile_details' => 'Business account details',
+    'review_status' => 'Review status',
+    'company_name' => 'Company name',
+    'contact_name' => 'Contact name',
+    'contact_phone' => 'Contact phone',
+    'billing_email' => 'Billing email',
 ];

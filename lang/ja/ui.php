@@ -152,4 +152,10 @@ return [
     'shipping_name' => '配送名',
     'shipping_fee' => '送料',
     'create_shipping_method' => '配送方法を作成',
+    'business_profile_details' => '法人アカウント情報',
+    'review_status' => '審査状況',
+    'company_name' => '会社名',
+    'contact_name' => '担当者名',
+    'contact_phone' => '連絡先電話番号',
+    'billing_email' => '請求先メールアドレス',
 ];

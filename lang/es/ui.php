@@ -152,4 +152,10 @@ return [
     'shipping_name' => 'Nombre del envío',
     'shipping_fee' => 'Gastos de envío',
     'create_shipping_method' => 'Crear método de envío',
+    'business_profile_details' => 'Datos de la cuenta empresarial',
+    'review_status' => 'Estado de revisión',
+    'company_name' => 'Nombre de la empresa',
+    'contact_name' => 'Nombre de contacto',
+    'contact_phone' => 'Teléfono de contacto',
+    'billing_email' => 'Correo de facturación',
 ];

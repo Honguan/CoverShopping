@@ -152,4 +152,10 @@ return [
     'shipping_name' => '배송명',
     'shipping_fee' => '배송비',
     'create_shipping_method' => '배송 방법 만들기',
+    'business_profile_details' => '기업 회원 정보',
+    'review_status' => '검토 상태',
+    'company_name' => '회사명',
+    'contact_name' => '담당자명',
+    'contact_phone' => '연락처 전화번호',
+    'billing_email' => '청구 이메일',
 ];

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\CartItem;
+use App\Models\BusinessProfile;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -324,6 +325,43 @@ class PlatformFoundationTest extends TestCase
                 ->assertSee($shipping)
                 ->assertSee($active)
                 ->assertSee($adminRole);
+        }
+    }
+
+    public function test_each_supported_locale_translates_business_profile_page(): void
+    {
+        $user = User::create([
+            'name' => 'Localized Business User',
+            'account' => 'localized-business-user',
+            'password' => 'password',
+            'role' => 'customer',
+            'status' => 'active',
+        ]);
+        BusinessProfile::create([
+            'user_id' => $user->id,
+            'company_name' => 'Localized Business',
+            'tax_id' => '12345678',
+            'contact_name' => 'Business Contact',
+            'contact_phone' => '0911000000',
+            'status' => 'pending',
+        ]);
+
+        foreach ([
+            'zh_TW' => ['企業會員資料', '審核狀態', '公司名稱', '聯絡人', '聯絡電話', '帳務 Email', '待審核'],
+            'en' => ['Business account details', 'Review status', 'Company name', 'Contact name', 'Contact phone', 'Billing email', 'Pending'],
+            'ja' => ['法人アカウント情報', '審査状況', '会社名', '担当者名', '連絡先電話番号', '請求先メールアドレス', '審査待ち'],
+            'ko' => ['기업 회원 정보', '검토 상태', '회사명', '담당자명', '연락처 전화번호', '청구 이메일', '검토 대기'],
+            'es' => ['Datos de la cuenta empresarial', 'Estado de revisión', 'Nombre de la empresa', 'Nombre de contacto', 'Teléfono de contacto', 'Correo de facturación', 'Pendiente'],
+        ] as $locale => [$title, $reviewStatus, $company, $contactName, $contactPhone, $billingEmail, $status]) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->actingAs($user)->get('/business-profile')
+                ->assertSee("<h1>{$title}</h1>", false)
+                ->assertSee($reviewStatus)
+                ->assertSee($company)
+                ->assertSee($contactName)
+                ->assertSee($contactPhone)
+                ->assertSee($billingEmail)
+                ->assertSee($status);
         }
     }
 
