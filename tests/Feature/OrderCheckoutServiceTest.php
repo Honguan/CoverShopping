@@ -179,6 +179,13 @@ class OrderCheckoutServiceTest extends TestCase
 
         $this->assertSame('b2b', $order->sales_channel);
         $this->assertSame('PO-ACME-2026-001', $order->purchase_order_number);
+        $this->assertSame([
+            'company_name' => 'Acme Ltd',
+            'tax_id' => '12345678',
+            'contact_name' => 'Buyer',
+            'contact_phone' => '0911000000',
+            'billing_email' => null,
+        ], $order->business_profile_snapshot);
         $this->assertSame(400, $order->subtotal);
         $this->assertSame(400, $order->total);
     }

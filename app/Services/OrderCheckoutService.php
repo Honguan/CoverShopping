@@ -88,6 +88,9 @@ class OrderCheckoutService
             $shippingFee = $this->promotionService->calculateShippingFee($shippingMethod, $subtotal);
 
             $salesChannel = $this->productPricingService->detectSalesChannel($user);
+            $businessProfileSnapshot = $salesChannel === 'b2b'
+                ? $user->businessProfile?->only(['company_name', 'tax_id', 'contact_name', 'contact_phone', 'billing_email'])
+                : null;
 
             $order = Order::create([
                 'number' => $this->newOrderNumber(),
@@ -97,6 +100,7 @@ class OrderCheckoutService
                 'shipping_method_id' => $shippingMethod?->id,
                 'sales_channel' => $salesChannel,
                 'purchase_order_number' => $salesChannel === 'b2b' ? $purchaseOrderNumber : null,
+                'business_profile_snapshot' => $businessProfileSnapshot,
                 'coupon_code' => $coupon?->code,
                 'shipping_method_name' => $shippingMethod?->name,
                 'subtotal' => $subtotal,

@@ -16,6 +16,7 @@ class Order extends Model
         'shipping_method_id',
         'sales_channel',
         'purchase_order_number',
+        'business_profile_snapshot',
         'coupon_code',
         'shipping_method_name',
         'subtotal',
@@ -34,6 +35,7 @@ class Order extends Model
             'discount_total' => 'integer',
             'shipping_fee' => 'integer',
             'total' => 'integer',
+            'business_profile_snapshot' => 'array',
         ];
     }
 
