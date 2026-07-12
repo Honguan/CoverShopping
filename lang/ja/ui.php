@@ -82,4 +82,7 @@ return [
     'return_rejected' => '却下',
     'return_received' => '受領済み',
     'return_refunded' => '返金済み',
+    'purchase_order_number' => '発注番号',
+    'billing_company' => '請求先会社',
+    'tax_id' => '税務番号',
 ];

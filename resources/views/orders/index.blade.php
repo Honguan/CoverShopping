@@ -9,6 +9,17 @@
                     <div>
                         <h2>{{ $order->number }}</h2>
                         <p>{{ strtoupper($order->sales_channel) }} / {{ __('ui.order_total') }} ${{ number_format($order->total) }} / {{ __('ui.payment') }} {{ __('ui.payment_' . $order->payment_status) }} / {{ __('ui.fulfillment') }} {{ __('ui.fulfillment_' . $order->fulfillment_status) }}</p>
+                        @if($order->purchase_order_number)
+                            <p>{{ __('ui.purchase_order_number') }}: {{ $order->purchase_order_number }}</p>
+                        @endif
+                        @if($order->business_profile_snapshot)
+                            @if($companyName = ($order->business_profile_snapshot['company_name'] ?? null))
+                                <p>{{ __('ui.billing_company') }}: {{ $companyName }}</p>
+                            @endif
+                            @if($taxId = ($order->business_profile_snapshot['tax_id'] ?? null))
+                                <p>{{ __('ui.tax_id') }}: {{ $taxId }}</p>
+                            @endif
+                        @endif
                     </div>
                     <form action="{{ route('orders.reorder', $order) }}" method="post">
                         @csrf

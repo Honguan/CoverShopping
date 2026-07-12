@@ -82,4 +82,7 @@ return [
     'return_rejected' => '已拒絕',
     'return_received' => '已收到',
     'return_refunded' => '已退款',
+    'purchase_order_number' => '採購單號',
+    'billing_company' => '帳務公司',
+    'tax_id' => '統一編號',
 ];

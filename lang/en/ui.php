@@ -82,4 +82,7 @@ return [
     'return_rejected' => 'Rejected',
     'return_received' => 'Received',
     'return_refunded' => 'Refunded',
+    'purchase_order_number' => 'Purchase order number',
+    'billing_company' => 'Billing company',
+    'tax_id' => 'Tax ID',
 ];

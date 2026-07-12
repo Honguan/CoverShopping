@@ -78,6 +78,30 @@ class PublicEndpointFlowTest extends TestCase
         ])->assertTooManyRequests();
     }
 
+    public function test_customer_can_view_b2b_order_references(): void
+    {
+        [, $buyer] = $this->createSellerAndBuyer();
+        Order::create([
+            'number' => 'B202607120001',
+            'user_id' => $buyer->id,
+            'sales_channel' => 'b2b',
+            'purchase_order_number' => 'PO-ACME-2026-001',
+            'business_profile_snapshot' => [
+                'company_name' => 'Acme Ltd',
+                'tax_id' => '12345678',
+            ],
+            'subtotal' => 100,
+            'shipping_fee' => 0,
+            'total' => 100,
+        ]);
+
+        $this->actingAs($buyer)->get('/orders')
+            ->assertOk()
+            ->assertSee('PO-ACME-2026-001')
+            ->assertSee('Acme Ltd')
+            ->assertSee('12345678');
+    }
+
     public function test_customer_can_review_question_favorite_return_and_read_notification(): void
     {
         [$seller, $buyer] = $this->createSellerAndBuyer();

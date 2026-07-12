@@ -82,4 +82,7 @@ return [
     'return_rejected' => 'Rechazada',
     'return_received' => 'Recibida',
     'return_refunded' => 'Reembolsada',
+    'purchase_order_number' => 'Número de orden de compra',
+    'billing_company' => 'Empresa de facturación',
+    'tax_id' => 'NIF',
 ];

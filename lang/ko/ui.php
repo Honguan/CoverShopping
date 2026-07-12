@@ -82,4 +82,7 @@ return [
     'return_rejected' => '거절됨',
     'return_received' => '수령됨',
     'return_refunded' => '환불됨',
+    'purchase_order_number' => '구매 주문 번호',
+    'billing_company' => '청구 회사',
+    'tax_id' => '사업자 번호',
 ];
