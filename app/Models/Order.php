@@ -15,6 +15,7 @@ class Order extends Model
         'coupon_id',
         'shipping_method_id',
         'sales_channel',
+        'purchase_order_number',
         'coupon_code',
         'shipping_method_name',
         'subtotal',

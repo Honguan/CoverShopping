@@ -97,6 +97,11 @@
                     <label>Coupon
                         <input name="coupon_code" placeholder="Enter coupon code">
                     </label>
+                    @if(auth()->user()->canUseBusinessPricing())
+                        <label>Purchase order number
+                            <input name="purchase_order_number" maxlength="64">
+                        </label>
+                    @endif
                     <button type="submit">Checkout</button>
                 </form>
             @else

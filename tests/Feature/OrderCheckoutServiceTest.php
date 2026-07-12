@@ -175,9 +175,10 @@ class OrderCheckoutServiceTest extends TestCase
             'quantity' => 5,
         ]);
 
-        $order = app(OrderCheckoutService::class)->createOrderFromCart($buyer);
+        $order = app(OrderCheckoutService::class)->createOrderFromCart($buyer, null, null, null, 'PO-ACME-2026-001');
 
         $this->assertSame('b2b', $order->sales_channel);
+        $this->assertSame('PO-ACME-2026-001', $order->purchase_order_number);
         $this->assertSame(400, $order->subtotal);
         $this->assertSame(400, $order->total);
     }

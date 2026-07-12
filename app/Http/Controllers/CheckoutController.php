@@ -18,7 +18,8 @@ class CheckoutController extends Controller
                 $request->user(),
                 $data['shipping_method_id'] ?? null,
                 $data['address_id'] ?? null,
-                $data['coupon_code'] ?? null
+                $data['coupon_code'] ?? null,
+                $data['purchase_order_number'] ?? null,
             );
         } catch (RuntimeException $exception) {
             return back()->withErrors(['checkout' => $exception->getMessage()]);

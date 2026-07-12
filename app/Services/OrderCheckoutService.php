@@ -22,11 +22,11 @@ class OrderCheckoutService
     ) {
     }
 
-    public function createOrderFromCart(User $user, ?int $shippingMethodId = null, ?int $addressId = null, ?string $couponCode = null): Order
+    public function createOrderFromCart(User $user, ?int $shippingMethodId = null, ?int $addressId = null, ?string $couponCode = null, ?string $purchaseOrderNumber = null): Order
     {
         $user->loadMissing('businessProfile');
 
-        return DB::transaction(function () use ($user, $shippingMethodId, $addressId, $couponCode) {
+        return DB::transaction(function () use ($user, $shippingMethodId, $addressId, $couponCode, $purchaseOrderNumber) {
             $cartItems = CartItem::where('user_id', $user->id)
                 ->lockForUpdate()
                 ->get();
@@ -87,13 +87,16 @@ class OrderCheckoutService
                 : null;
             $shippingFee = $this->promotionService->calculateShippingFee($shippingMethod, $subtotal);
 
+            $salesChannel = $this->productPricingService->detectSalesChannel($user);
+
             $order = Order::create([
                 'number' => $this->newOrderNumber(),
                 'user_id' => $user->id,
                 'address_id' => $addressId,
                 'coupon_id' => $coupon?->id,
                 'shipping_method_id' => $shippingMethod?->id,
-                'sales_channel' => $this->productPricingService->detectSalesChannel($user),
+                'sales_channel' => $salesChannel,
+                'purchase_order_number' => $salesChannel === 'b2b' ? $purchaseOrderNumber : null,
                 'coupon_code' => $coupon?->code,
                 'shipping_method_name' => $shippingMethod?->name,
                 'subtotal' => $subtotal,
