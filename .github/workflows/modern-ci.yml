@@ -9,6 +9,11 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_USERNAME: covershopping
+      DB_PASSWORD: covershopping
+      MYSQL_ROOT_PASSWORD: covershopping-root
 
     steps:
       - uses: actions/checkout@v6
@@ -31,4 +36,18 @@ jobs:
       - run: npm run build
       - run: composer analyse
       - run: composer test
-      - run: docker build --tag covershopping:${{ github.sha }} .
+      - run: docker compose up --detach --build
+      - run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/up; then
+              docker compose exec -T app php artisan migrate --force
+              curl --fail --silent --show-error http://127.0.0.1:8080/up
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose ps
+          docker compose logs app
+          exit 1
+      - if: always()
+        run: docker compose down --volumes --remove-orphans
