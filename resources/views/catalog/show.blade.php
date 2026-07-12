@@ -15,34 +15,34 @@
             <p class="price">${{ number_format($product->price) }}</p>
             @auth
                 @if(auth()->user()->canUseBusinessPricing() && $product->business_price !== null)
-                    <p>企業價 ${{ number_format($product->business_price) }}，最低採購量 {{ $product->business_min_quantity }}</p>
+                    <p>{{ __('ui.business_price') }} ${{ number_format($product->business_price) }}，{{ __('ui.minimum_quantity') }} {{ $product->business_min_quantity }}</p>
                 @endif
             @endauth
-            <p>分類：{{ optional($product->category)->name ?? '未分類' }}</p>
-            <p>商家：{{ $product->seller->name }}</p>
-            <p>庫存：{{ $product->inventory }}</p>
+            <p>{{ __('ui.category') }}：{{ optional($product->category)->name ?? __('ui.uncategorized') }}</p>
+            <p>{{ __('ui.seller') }}：{{ $product->seller->name }}</p>
+            <p>{{ __('ui.stock') }}：{{ $product->inventory }}</p>
             <p>{{ $product->description }}</p>
             <form action="{{ route('cart.items.store') }}" method="post">
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
                 @if($product->variants->isNotEmpty())
-                    <label>規格
+                    <label>{{ __('ui.variant') }}
                         <select name="product_variant_id">
                             @foreach($product->variants as $variant)
                                 <option value="{{ $variant->id }}">
-                                    {{ $variant->displayName() }} / ${{ number_format($product->price + $variant->price_delta) }} / 庫存 {{ $variant->inventory }}
+                                    {{ $variant->displayName() }} / ${{ number_format($product->price + $variant->price_delta) }} / {{ __('ui.stock') }} {{ $variant->inventory }}
                                 </option>
                             @endforeach
                         </select>
                     </label>
                 @endif
                 <input type="number" name="quantity" value="1" min="1" max="{{ max(1, $product->inventory) }}">
-                <button type="submit" @disabled($product->inventory < 1)>加入購物車</button>
+                <button type="submit" @disabled($product->inventory < 1)>{{ __('ui.add_to_cart') }}</button>
             </form>
             @auth
                 <form action="{{ route('favorites.store', $product) }}" method="post">
                     @csrf
-                    <button type="submit">加入收藏</button>
+                    <button type="submit">{{ __('ui.add_to_favorites') }}</button>
                 </form>
             @endauth
         </div>
@@ -50,7 +50,7 @@
 
     @if($relatedProducts->isNotEmpty())
         <section class="panel">
-            <h2>你可能也喜歡</h2>
+            <h2>{{ __('ui.related_products') }}</h2>
             <div class="mini-grid">
                 @foreach($relatedProducts as $product)
                     @include('catalog.partials.product-card', ['product' => $product])
@@ -60,7 +60,7 @@
     @endif
 
     <section class="panel">
-        <h2>商品評價</h2>
+        <h2>{{ __('ui.product_reviews') }}</h2>
         @forelse($product->reviews as $review)
             <article>
                 <strong>{{ $review->user->name }}</strong>
@@ -68,17 +68,17 @@
                 <p>{{ $review->content }}</p>
             </article>
         @empty
-            <p>目前沒有評價。</p>
+            <p>{{ __('ui.no_reviews') }}</p>
         @endforelse
     </section>
 
     <section class="panel">
-        <h2>商品問答</h2>
+        <h2>{{ __('ui.product_questions') }}</h2>
         @auth
             <form action="{{ route('questions.store', $product) }}" method="post">
                 @csrf
-                <label>提問<textarea name="question" required></textarea></label>
-                <button type="submit">送出問題</button>
+                <label>{{ __('ui.ask_question') }}<textarea name="question" required></textarea></label>
+                <button type="submit">{{ __('ui.submit_question') }}</button>
             </form>
         @endauth
         @forelse($product->questions as $question)
@@ -90,7 +90,7 @@
                 @endforeach
             </article>
         @empty
-            <p>目前沒有問答。</p>
+            <p>{{ __('ui.no_questions') }}</p>
         @endforelse
     </section>
 @endsection

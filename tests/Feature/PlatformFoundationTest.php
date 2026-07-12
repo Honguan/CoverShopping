@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -62,6 +64,34 @@ class PlatformFoundationTest extends TestCase
             $this->get("/locale/{$locale}")->assertRedirect('/');
             $this->get('/')->assertSee($catalogTitle);
             $this->get('/login')->assertSee($loginTitle);
+        }
+    }
+
+    public function test_each_supported_locale_translates_product_details(): void
+    {
+        $seller = User::create([
+            'name' => 'Seller',
+            'account' => 'detail-seller',
+            'password' => 'password',
+            'role' => 'seller',
+        ]);
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Localized Product',
+            'price' => 100,
+            'inventory' => 3,
+            'status' => 'active',
+        ]);
+
+        foreach ([
+            'zh_TW' => '分類',
+            'en' => 'Category',
+            'ja' => 'カテゴリー',
+            'ko' => '카테고리',
+            'es' => 'Categoría',
+        ] as $locale => $categoryLabel) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->get("/products/{$product->id}")->assertSee($categoryLabel);
         }
     }
 
