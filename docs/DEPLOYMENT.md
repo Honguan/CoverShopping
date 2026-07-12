@@ -4,7 +4,7 @@
 
 1. 複製 `.env.example` 為 `.env`，設定長度至少 32 字元的 `APP_KEY`、資料庫帳密與 `MYSQL_ROOT_PASSWORD`。
 2. 將 `APP_URL` 設為正式 HTTPS 網址，並保留 `APP_DEBUG=false`、`SESSION_SECURE_COOKIE=true`。
-3. 執行 `docker compose up -d --build`，服務預設只綁定 `127.0.0.1:8080`；請由反向代理提供 TLS。
+3. 執行 `docker compose up -d --build`，服務預設只綁定 `127.0.0.1:8080`；請由反向代理提供 TLS，並轉送標準 `X-Forwarded-*` 標頭。
 4. 僅在單一部署工作程序執行 `docker compose exec app php artisan migrate --force`。
 
 ## 更新與維運
