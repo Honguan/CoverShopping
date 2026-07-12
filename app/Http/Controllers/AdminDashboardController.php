@@ -18,6 +18,8 @@ use App\Models\ReturnRequest;
 use App\Models\ShippingMethod;
 use App\Models\User;
 use App\Services\AuditLogService;
+use App\Services\ReturnRequestService;
+use RuntimeException;
 
 class AdminDashboardController extends Controller
 {
@@ -114,13 +116,15 @@ class AdminDashboardController extends Controller
         return redirect()->route('admin.dashboard')->with('status', 'Shipping method created.');
     }
 
-    public function changeReturnStatus(UpdateReturnStatusRequest $request, ReturnRequest $returnRequest, AuditLogService $auditLogService)
+    public function changeReturnStatus(UpdateReturnStatusRequest $request, ReturnRequest $returnRequest, ReturnRequestService $returnRequestService)
     {
         $data = $request->validated();
 
-        $returnRequest->update($data);
-        $returnRequest->order->update(['return_status' => $data['status']]);
-        $auditLogService->writeLog('admin.return.updated', $returnRequest, $data, $request);
+        try {
+            $returnRequestService->updateStatus($request->user(), $returnRequest, $data['status'], $request);
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['return' => $exception->getMessage()]);
+        }
 
         return redirect()->route('admin.dashboard')->with('status', 'Return status updated.');
     }

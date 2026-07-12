@@ -8,6 +8,7 @@ use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ReturnRequest;
 use App\Models\User;
 use App\Services\CouponDiscountService;
 use App\Services\ProductPricingService;
@@ -287,6 +288,68 @@ class ServiceLogicFlowTest extends TestCase
             'action' => 'return.requested',
             'auditable_id' => $returnRequest->id,
         ]);
+    }
+
+    public function test_received_return_restocks_order_items_once(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $admin = User::create([
+            'name' => 'Admin',
+            'account' => 'return-admin',
+            'password' => 'password',
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Returned Product',
+            'price' => 100,
+            'inventory' => 0,
+            'status' => 'active',
+        ]);
+        $order = Order::create([
+            'number' => 'RET202607120001',
+            'user_id' => $buyer->id,
+            'subtotal' => 200,
+            'shipping_fee' => 0,
+            'total' => 200,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'completed',
+            'return_status' => 'requested',
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'seller_id' => $seller->id,
+            'product_name' => $product->name,
+            'unit_price' => 100,
+            'quantity' => 2,
+            'subtotal' => 200,
+        ]);
+        $returnRequest = ReturnRequest::create([
+            'order_id' => $order->id,
+            'user_id' => $buyer->id,
+            'reason' => 'Wrong size',
+            'status' => 'requested',
+        ]);
+
+        $returns = app(ReturnRequestService::class);
+        $returns->updateStatus($admin, $returnRequest, 'approved');
+        $returns->updateStatus($admin, $returnRequest->fresh(), 'received');
+
+        $this->assertSame(2, $product->fresh()->inventory);
+        $this->assertSame('received', $returnRequest->fresh()->status);
+        $this->assertSame('received', $order->fresh()->return_status);
+        $this->assertDatabaseHas('inventory_movements', [
+            'product_id' => $product->id,
+            'reason' => 'return_received',
+            'quantity_delta' => 2,
+            'inventory_after' => 2,
+        ]);
+
+        $returns->updateStatus($admin, $returnRequest->fresh(), 'refunded');
+
+        $this->assertSame(2, $product->fresh()->inventory);
     }
 
     public function test_product_review_service_creates_review_and_audit_log(): void
