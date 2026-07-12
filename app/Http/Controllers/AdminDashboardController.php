@@ -27,12 +27,12 @@ class AdminDashboardController extends Controller
     {
         return view('admin.dashboard', [
             'users' => User::latest()->limit(10)->get(),
-            'products' => Product::with('seller')->latest()->limit(10)->get(),
-            'orders' => Order::with('user')->latest()->limit(10)->get(),
+            'products' => Product::latest()->limit(10)->get(),
+            'orders' => Order::latest()->limit(10)->get(),
             'coupons' => Coupon::latest()->limit(10)->get(),
             'shippingMethods' => ShippingMethod::orderBy('sort_order')->latest()->limit(10)->get(),
             'returnRequests' => ReturnRequest::with(['order.user'])->latest()->limit(10)->get(),
-            'businessProfiles' => BusinessProfile::with('user')->latest()->limit(10)->get(),
+            'businessProfiles' => BusinessProfile::latest()->limit(10)->get(),
         ]);
     }
 

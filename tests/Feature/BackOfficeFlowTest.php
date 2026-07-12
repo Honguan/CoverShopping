@@ -171,6 +171,7 @@ class BackOfficeFlowTest extends TestCase
         $this->assertDatabaseHas('shipping_methods', ['name' => 'Admin Delivery']);
         $this->assertSame('approved', $returnRequest->fresh()->status);
         $this->assertSame('approved', $order->fresh()->return_status);
+        $this->actingAs($admin)->get('/admin/dashboard')->assertOk();
     }
 
     public function test_customer_cannot_access_seller_or_admin_endpoints(): void
