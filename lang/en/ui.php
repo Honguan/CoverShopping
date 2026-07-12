@@ -104,4 +104,8 @@ return [
     'enter_coupon_code' => 'Enter coupon code',
     'checkout' => 'Checkout',
     'login_to_checkout' => 'Log in to checkout',
+    'seller_orders' => 'Seller order management',
+    'export_csv' => 'Export CSV',
+    'buyer' => 'Buyer',
+    'mark_shipped' => 'Mark as shipped',
 ];

@@ -104,4 +104,8 @@ return [
     'enter_coupon_code' => '輸入優惠券代碼',
     'checkout' => '結帳',
     'login_to_checkout' => '登入後結帳',
+    'seller_orders' => '商家訂單管理',
+    'export_csv' => '匯出 CSV',
+    'buyer' => '買家',
+    'mark_shipped' => '標記出貨',
 ];

@@ -104,4 +104,8 @@ return [
     'enter_coupon_code' => 'クーポンコードを入力',
     'checkout' => '注文を確定',
     'login_to_checkout' => 'ログインして注文する',
+    'seller_orders' => '販売者注文管理',
+    'export_csv' => 'CSV をエクスポート',
+    'buyer' => '購入者',
+    'mark_shipped' => '発送済みにする',
 ];

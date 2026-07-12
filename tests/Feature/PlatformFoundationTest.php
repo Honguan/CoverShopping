@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\CartItem;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -195,6 +196,66 @@ class PlatformFoundationTest extends TestCase
                 ->assertSee($paymentStatus)
                 ->assertSee($fulfillmentStatus)
                 ->assertSee($returnStatus);
+        }
+    }
+
+    public function test_each_supported_locale_translates_seller_orders_page(): void
+    {
+        $seller = User::create([
+            'name' => 'Localized Seller',
+            'account' => 'localized-seller',
+            'password' => 'password',
+            'role' => 'seller',
+            'status' => 'active',
+        ]);
+        $buyer = User::create([
+            'name' => 'Localized Seller Buyer',
+            'account' => 'localized-seller-buyer',
+            'password' => 'password',
+            'role' => 'customer',
+            'status' => 'active',
+        ]);
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Localized Seller Product',
+            'price' => 100,
+            'inventory' => 1,
+            'status' => 'active',
+        ]);
+        $order = Order::create([
+            'number' => 'L202607120002',
+            'user_id' => $buyer->id,
+            'subtotal' => 100,
+            'shipping_fee' => 0,
+            'total' => 100,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'processing',
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'seller_id' => $seller->id,
+            'product_name' => $product->name,
+            'unit_price' => 100,
+            'quantity' => 1,
+            'subtotal' => 100,
+            'shipping_status' => 'pending',
+        ]);
+
+        foreach ([
+            'zh_TW' => ['商家訂單管理', '匯出 CSV', '買家', '待處理', '標記出貨'],
+            'en' => ['Seller order management', 'Export CSV', 'Buyer', 'Pending', 'Mark as shipped'],
+            'ja' => ['販売者注文管理', 'CSV をエクスポート', '購入者', '保留中', '発送済みにする'],
+            'ko' => ['판매자 주문 관리', 'CSV 내보내기', '구매자', '대기 중', '배송 완료로 표시'],
+            'es' => ['Gestión de pedidos del vendedor', 'Exportar CSV', 'Comprador', 'Pendiente', 'Marcar como enviado'],
+        ] as $locale => [$title, $export, $buyerLabel, $shippingStatus, $ship]) {
+            $this->get("/locale/{$locale}")->assertRedirect('/');
+            $this->actingAs($seller)->get('/seller/orders')
+                ->assertSee("<h1>{$title}</h1>", false)
+                ->assertSee($export)
+                ->assertSee($buyerLabel)
+                ->assertSee($shippingStatus)
+                ->assertSee($ship);
         }
     }
 

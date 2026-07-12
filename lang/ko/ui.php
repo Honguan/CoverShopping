@@ -104,4 +104,8 @@ return [
     'enter_coupon_code' => '쿠폰 코드 입력',
     'checkout' => '주문하기',
     'login_to_checkout' => '로그인 후 주문하기',
+    'seller_orders' => '판매자 주문 관리',
+    'export_csv' => 'CSV 내보내기',
+    'buyer' => '구매자',
+    'mark_shipped' => '배송 완료로 표시',
 ];

@@ -104,4 +104,8 @@ return [
     'enter_coupon_code' => 'Introduce el código del cupón',
     'checkout' => 'Finalizar compra',
     'login_to_checkout' => 'Inicia sesión para finalizar la compra',
+    'seller_orders' => 'Gestión de pedidos del vendedor',
+    'export_csv' => 'Exportar CSV',
+    'buyer' => 'Comprador',
+    'mark_shipped' => 'Marcar como enviado',
 ];
