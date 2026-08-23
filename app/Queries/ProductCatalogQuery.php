@@ -23,7 +23,7 @@ class ProductCatalogQuery
                 ->withQueryString();
         }
 
-        $query = Product::query()->active()->with(['primaryImage', 'category']);
+        $query = Product::query()->active()->with(['primaryImage', 'category', 'variants']);
 
         if ($keyword !== '') {
             $query->where(function ($builder) use ($keyword) {
@@ -41,7 +41,7 @@ class ProductCatalogQuery
 
     private function applyCommonFilters($query, string $categorySlug, int $minPrice, int $maxPrice, string $sort)
     {
-        $query->active()->with(['primaryImage', 'category']);
+        $query->active()->with(['primaryImage', 'category', 'variants']);
         $this->applyCategoryFilter($query, $categorySlug);
         $this->applyPriceFilter($query, $minPrice, $maxPrice);
         $this->applySort($query, $sort);

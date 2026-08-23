@@ -23,19 +23,22 @@ class CustomerOrderController extends Controller
 
         $addedQuantity = 0;
         $skippedItems = 0;
-        $order->load('items.product', 'items.variant');
+        $order->load('items.product.variants', 'items.variant');
 
         foreach ($order->items as $item) {
             $product = $item->product;
             $variant = $item->variant;
 
-            if (!$product || $product->status !== 'active') {
+            if (! $product || $product->status !== 'active') {
                 $skippedItems++;
+
                 continue;
             }
 
-            if ($item->product_variant_id && (!$variant || !$variant->is_active || $variant->product_id !== $product->id)) {
+            if (($item->product_variant_id && (! $variant || ! $variant->is_active || $variant->product_id !== $product->id))
+                || (! $item->product_variant_id && $product->variants->isNotEmpty())) {
                 $skippedItems++;
+
                 continue;
             }
 
@@ -49,6 +52,7 @@ class CustomerOrderController extends Controller
 
             if ($added < 1) {
                 $skippedItems++;
+
                 continue;
             }
 
@@ -57,7 +61,7 @@ class CustomerOrderController extends Controller
 
         return redirect()
             ->route('cart.index')
-            ->with('status', 'Added ' . $addedQuantity . ' item(s), skipped ' . $skippedItems . ' item(s).');
+            ->with('status', 'Added '.$addedQuantity.' item(s), skipped '.$skippedItems.' item(s).');
     }
 
     public function cancel(Request $request, Order $order, OrderCancellationService $orderCancellationService)

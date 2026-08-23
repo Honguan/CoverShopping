@@ -19,7 +19,7 @@ class ProductRecommendationService
             ->pluck('product_id');
 
         if ($productIds->isEmpty()) {
-            return Product::active()->with('primaryImage')->latest()->limit($limit)->get();
+            return Product::active()->with(['primaryImage', 'variants'])->latest()->limit($limit)->get();
         }
 
         return $this->activeProductsInOrder($productIds);
@@ -50,7 +50,7 @@ class ProductRecommendationService
     public function relatedProducts(Product $product, int $limit = 4): Collection
     {
         return Product::active()
-            ->with('primaryImage')
+            ->with(['primaryImage', 'variants'])
             ->whereKeyNot($product->id)
             ->where(function ($query) use ($product) {
                 $query->where('category_id', $product->category_id)
@@ -76,7 +76,7 @@ class ProductRecommendationService
     private function activeProductsInOrder(Collection $productIds): Collection
     {
         return Product::active()
-            ->with('primaryImage')
+            ->with(['primaryImage', 'variants'])
             ->whereIn('id', $productIds)
             ->get()
             ->sortBy(fn (Product $product) => $productIds->search($product->id))

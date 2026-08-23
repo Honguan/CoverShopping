@@ -11,7 +11,7 @@
 
 1. 訪客購物車用 `session_id`，會員購物車用 `user_id`。
 2. 登入或註冊後，`ShoppingCartService::mergeGuestCartIntoUserCart` 合併訪客購物車。
-3. 加入商品時會限制在可購買庫存內。
+3. 商品有啟用 SKU 時必須選擇有效 SKU，並依該 SKU 限制數量；無 SKU 商品才使用主商品庫存。
 4. 購物車頁顯示狀態摘要：下架、SKU 失效、庫存不足、B2B 最低採購量。
 5. 清空購物車只會清目前 user 或 session scope。
 
