@@ -5,7 +5,7 @@
 1. `ProductCatalogController` 透過 `ProductCatalogQuery` 查詢 active 商品；關鍵字在 MySQL database driver 使用 Scout full-text，Meilisearch 直接接收狀態、分類、價格與排序條件，不支援 full-text 的 SQLite 則保留測試／開發 fallback。
 2. 商品列表支援關鍵字、分類、價格與排序。
 3. 商品詳情會寫入 `recently_viewed_products`，供推薦區使用。
-4. `ProductRecommendationService` 提供熱門商品、最近瀏覽與相關商品。
+4. `ProductRecommendationService` 提供熱門商品、最近瀏覽與相關商品；熱門排行只計入已付款且未取消的訂單，商品 ID 快取 10 分鐘後重新聚合。
 5. 商品圖片上限為 8 張；新檔案先全部寫入，DB transaction 失敗時清除，賣家可刪除圖片並同步移除檔案。
 
 ## 地址簿

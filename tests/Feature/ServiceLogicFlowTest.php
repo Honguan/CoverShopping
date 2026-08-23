@@ -22,6 +22,8 @@ use App\Services\ShoppingCartService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -142,28 +144,57 @@ class ServiceLogicFlowTest extends TestCase
             'inventory' => 10,
             'status' => 'active',
         ]);
-        $order = Order::create([
-            'number' => 'S202606190001',
-            'user_id' => $buyer->id,
-            'subtotal' => 300,
-            'shipping_fee' => 0,
-            'total' => 300,
-            'payment_status' => 'paid',
-            'fulfillment_status' => 'completed',
-        ]);
-        OrderItem::create([
-            'order_id' => $order->id,
-            'product_id' => $popular->id,
+        $excluded = Product::create([
             'seller_id' => $seller->id,
-            'product_name' => $popular->name,
-            'unit_price' => 100,
-            'quantity' => 3,
-            'subtotal' => 300,
+            'name' => 'Excluded Product',
+            'price' => 100,
+            'inventory' => 10,
+            'status' => 'active',
         ]);
+
+        foreach ([
+            ['S202606190001', $popular, 3, 'paid', 'completed'],
+            ['S202606190002', $related, 1, 'paid', 'processing'],
+            ['S202606190003', $excluded, 20, 'unpaid', 'pending'],
+            ['S202606190004', $excluded, 15, 'failed', 'cancelled'],
+            ['S202606190005', $excluded, 10, 'paid', 'cancelled'],
+            ['S202606190006', $excluded, 5, 'refunded', 'completed'],
+        ] as [$number, $product, $quantity, $paymentStatus, $fulfillmentStatus]) {
+            $order = Order::create([
+                'number' => $number,
+                'user_id' => $buyer->id,
+                'subtotal' => 100 * $quantity,
+                'shipping_fee' => 0,
+                'total' => 100 * $quantity,
+                'payment_status' => $paymentStatus,
+                'fulfillment_status' => $fulfillmentStatus,
+            ]);
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $product->id,
+                'seller_id' => $seller->id,
+                'product_name' => $product->name,
+                'unit_price' => 100,
+                'quantity' => $quantity,
+                'subtotal' => 100 * $quantity,
+            ]);
+        }
 
         $recommendations = app(ProductRecommendationService::class);
 
-        $this->assertSame($popular->id, $recommendations->popularProducts(1)->first()->id);
+        Cache::flush();
+        $this->assertSame([$popular->id, $related->id], $recommendations->popularProducts(3)->pluck('id')->all());
+
+        $queries = [];
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = $query->sql;
+        });
+
+        $recommendations->popularProducts(3);
+
+        $this->assertFalse(collect($queries)->contains(
+            fn (string $sql): bool => str_contains($sql, 'order_items') && str_contains(strtolower($sql), 'sum(')
+        ));
         $this->assertTrue($recommendations->relatedProducts($popular)->contains('id', $related->id));
 
         $recommendations->recordRecentlyViewed($related, $buyer->id, null);
