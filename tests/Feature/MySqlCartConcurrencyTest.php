@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Address;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\User;
@@ -84,6 +85,21 @@ class MySqlCartConcurrencyTest extends TestCase
             'product_id' => $product->id,
             'quantity' => 5,
         ]);
+    }
+
+    public function test_mysql_concurrent_default_address_changes_leave_one_default(): void
+    {
+        $this->requireMySql();
+        [, $user] = $this->createProductAndUser();
+        $first = $this->createAddress($user, 'First');
+        $second = $this->createAddress($user, 'Second');
+
+        $this->runConcurrently([
+            [PHP_BINARY, base_path('tests/Support/address_default_worker.php'), (string) $user->id, (string) $first->id],
+            [PHP_BINARY, base_path('tests/Support/address_default_worker.php'), (string) $user->id, (string) $second->id],
+        ]);
+
+        $this->assertSame(1, Address::query()->where('user_id', $user->id)->where('is_default', true)->count());
     }
 
     public function test_checkout_validates_the_total_of_legacy_duplicate_rows(): void
@@ -186,5 +202,16 @@ class MySqlCartConcurrencyTest extends TestCase
         ]);
 
         return [$product, $user];
+    }
+
+    private function createAddress(User $user, string $recipient): Address
+    {
+        return Address::create([
+            'user_id' => $user->id,
+            'recipient_name' => $recipient,
+            'phone' => '0911000000',
+            'city' => 'Taipei',
+            'address_line' => 'No. 1',
+        ]);
     }
 }

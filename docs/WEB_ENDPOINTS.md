@@ -39,8 +39,8 @@
 | --- | --- | --- | --- |
 | GET | `/addresses` | `addresses.index` | 地址簿。 |
 | POST | `/addresses` | `addresses.store` | 新增地址，可設為預設。 |
-| PATCH | `/addresses/{address}/default` | `addresses.default` | 設定預設地址。 |
-| DELETE | `/addresses/{address}` | `addresses.destroy` | 刪除自己的地址。 |
+| PATCH | `/addresses/{address}/default` | `addresses.default` | 原子切換預設地址；每位會員最多一筆。 |
+| DELETE | `/addresses/{address}` | `addresses.destroy` | 刪除自己的地址；刪除預設地址時由最新剩餘地址接替。 |
 | POST | `/products/{product}/favorite` | `favorites.store` | 收藏商品。 |
 | DELETE | `/products/{product}/favorite` | `favorites.destroy` | 取消收藏。 |
 | POST | `/products/{product}/reviews` | `reviews.store` | 對已完成訂單商品評價。 |

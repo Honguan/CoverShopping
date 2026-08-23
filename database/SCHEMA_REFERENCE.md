@@ -16,6 +16,11 @@
 - `account_type`：`b2c`、`b2b`。
 - `status`：`pending`、`active`、`suspended`。
 
+### addresses
+
+- 每位會員最多一個預設地址，由 generated column 唯一索引強制。
+- 切換預設地址時鎖定會員；刪除預設地址會將最新的剩餘地址設為預設。
+
 ### business_profiles
 
 - 企業會員資料與審核狀態。
