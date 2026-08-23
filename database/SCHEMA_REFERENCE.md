@@ -37,6 +37,7 @@
 - 商品主資料，包含商家、分類、一般價格、企業價格、最低企業採購量、庫存與狀態。
 - `status`：`draft`、`pending`、`active`、`archived`。
 - 無 SKU 商品使用 `products.inventory`。
+- MySQL 以 `(name, description)` full-text index 執行目錄關鍵字搜尋。
 
 ### product_variants
 
