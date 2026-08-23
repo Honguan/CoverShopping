@@ -53,6 +53,7 @@
 3. admin 可審核商品、更新付款狀態、建立優惠券與配送方式。
 4. 付款狀態改為 `paid` 且訂單仍為 `pending` 時，履約狀態改為 `processing`。
 5. admin 依退貨狀態轉換更新訂單 `return_status`；首次標為 `received` 時會在 transaction 內回補商品或 SKU 庫存並寫入庫存帳。
+6. 退貨申請會在 transaction 內鎖定並重新驗證訂單；資料庫限制每張訂單只能有一筆申請，且重複的 `received` 更新為 no-op，庫存回補以時間戳保證只執行一次。
 
 ## 權限原則
 

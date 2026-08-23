@@ -12,7 +12,15 @@ class ReturnRequest extends Model
         'user_id',
         'reason',
         'status',
+        'inventory_restocked_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'inventory_restocked_at' => 'datetime',
+        ];
+    }
 
     /** @return BelongsTo<Order, $this> */
     public function order(): BelongsTo

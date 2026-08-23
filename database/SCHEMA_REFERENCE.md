@@ -98,7 +98,8 @@
 ### return_requests
 
 - 退貨申請。
-- 同一訂單在 `return_status != none` 時不可重複申請。
+- `order_id` 唯一，資料庫拒絕同一訂單的重複申請。
+- `inventory_restocked_at` 記錄首次收貨回補時間，避免重複回補庫存。
 
 ### inventory_movements
 
