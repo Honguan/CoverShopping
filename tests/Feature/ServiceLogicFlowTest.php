@@ -20,6 +20,7 @@ use App\Services\ReturnRequestService;
 use App\Services\SellerOrderShipmentService;
 use App\Services\ShoppingCartService;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
 use Tests\TestCase;
@@ -264,7 +265,7 @@ class ServiceLogicFlowTest extends TestCase
         app(SellerOrderShipmentService::class)->markItemShipped($seller, $order, $orderItem);
     }
 
-    public function test_return_request_service_creates_request_updates_order_and_audit_log(): void
+    public function test_return_request_service_creates_request_and_rejects_a_competing_stale_request(): void
     {
         [, $buyer] = $this->createSellerAndBuyer();
         $order = Order::create([
@@ -278,7 +279,9 @@ class ServiceLogicFlowTest extends TestCase
             'return_status' => 'none',
         ]);
 
-        $returnRequest = app(ReturnRequestService::class)->request($buyer, $order, 'Wrong size');
+        $competingOrder = $order->fresh();
+        $returns = app(ReturnRequestService::class);
+        $returnRequest = $returns->request($buyer, $order, 'Wrong size');
 
         $this->assertSame($buyer->id, $returnRequest->user_id);
         $this->assertSame('Wrong size', $returnRequest->reason);
@@ -288,6 +291,13 @@ class ServiceLogicFlowTest extends TestCase
             'action' => 'return.requested',
             'auditable_id' => $returnRequest->id,
         ]);
+
+        try {
+            $returns->request($buyer, $competingOrder, 'Competing request');
+            $this->fail('A competing stale request should be rejected.');
+        } catch (AuthorizationException) {
+            $this->assertDatabaseCount('return_requests', 1);
+        }
     }
 
     public function test_received_return_restocks_order_items_once(): void
@@ -339,6 +349,7 @@ class ServiceLogicFlowTest extends TestCase
 
         $this->assertSame(2, $product->fresh()->inventory);
         $this->assertSame('received', $returnRequest->fresh()->status);
+        $this->assertNotNull($returnRequest->fresh()->inventory_restocked_at);
         $this->assertSame('received', $order->fresh()->return_status);
         $this->assertDatabaseHas('inventory_movements', [
             'product_id' => $product->id,
@@ -347,10 +358,40 @@ class ServiceLogicFlowTest extends TestCase
             'inventory_after' => 2,
         ]);
 
+        $returns->updateStatus($admin, $returnRequest->fresh(), 'received');
+
+        $this->assertSame(2, $product->fresh()->inventory);
+        $this->assertDatabaseCount('inventory_movements', 1);
+
         $returns->updateStatus($admin, $returnRequest->fresh(), 'refunded');
 
         $this->assertSame(2, $product->fresh()->inventory);
         $this->assertSame('refunded', $order->fresh()->payment_status);
+    }
+
+    public function test_database_rejects_a_second_return_request_for_the_same_order(): void
+    {
+        [, $buyer] = $this->createSellerAndBuyer();
+        $order = Order::create([
+            'number' => 'RET202608230001',
+            'user_id' => $buyer->id,
+            'subtotal' => 100,
+            'shipping_fee' => 0,
+            'total' => 100,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'completed',
+        ]);
+        $attributes = [
+            'order_id' => $order->id,
+            'user_id' => $buyer->id,
+            'reason' => 'Wrong size',
+            'status' => 'requested',
+        ];
+
+        ReturnRequest::create($attributes);
+
+        $this->expectException(QueryException::class);
+        ReturnRequest::create($attributes);
     }
 
     public function test_product_review_service_creates_review_and_audit_log(): void

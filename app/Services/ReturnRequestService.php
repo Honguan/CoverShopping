@@ -23,9 +23,10 @@ class ReturnRequestService
 
     public function request(User $user, Order $order, string $reason, ?Request $request = null): ReturnRequest
     {
-        Gate::forUser($user)->authorize('requestReturn', $order);
-
         return DB::transaction(function () use ($user, $order, $reason, $request) {
+            $order = Order::query()->lockForUpdate()->findOrFail($order->id);
+            Gate::forUser($user)->authorize('requestReturn', $order);
+
             $returnRequest = $order->returnRequests()->create([
                 'user_id' => $user->id,
                 'reason' => $reason,
@@ -46,6 +47,10 @@ class ReturnRequestService
         return DB::transaction(function () use ($admin, $returnRequest, $status, $request) {
             $returnRequest = ReturnRequest::query()->lockForUpdate()->findOrFail($returnRequest->id);
 
+            if ($returnRequest->status === $status) {
+                return $returnRequest;
+            }
+
             if (! $this->canTransition($returnRequest->status, $status)) {
                 throw new RuntimeException('Invalid return status transition.');
             }
@@ -56,7 +61,9 @@ class ReturnRequestService
                 $this->orderPaymentService->transition($admin, $order, 'refunded', $request);
             }
 
-            if ($status === 'received') {
+            $returnUpdates = ['status' => $status];
+
+            if ($status === 'received' && ! $returnRequest->inventory_restocked_at) {
                 $products = Product::whereKey($order->items->pluck('product_id')->filter()->unique())
                     ->lockForUpdate()
                     ->get()
@@ -98,9 +105,11 @@ class ReturnRequestService
                         'reference_id' => $item->id,
                     ]);
                 }
+
+                $returnUpdates['inventory_restocked_at'] = now();
             }
 
-            $returnRequest->update(['status' => $status]);
+            $returnRequest->update($returnUpdates);
             $order->update(['return_status' => $status]);
             $this->auditLogService->writeLog('admin.return.updated', $returnRequest, ['status' => $status], $request);
 

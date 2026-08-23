@@ -313,6 +313,12 @@ class FavoriteAndReturnTest extends TestCase
             'status' => 'requested',
         ]);
         $this->assertSame('requested', $order->fresh()->return_status);
+
+        $this->actingAs($buyer)
+            ->post("/orders/{$order->id}/returns", ['reason' => 'Duplicate request'])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('return_requests', 1);
     }
 
     public function test_customer_cannot_delete_other_users_address(): void
