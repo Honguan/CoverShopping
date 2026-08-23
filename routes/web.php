@@ -1,20 +1,20 @@
 <?php
 
-use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AddressController;
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\BusinessAccountController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CustomerOrderController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProductCatalogController;
 use App\Http\Controllers\ProductFavoriteController;
+use App\Http\Controllers\ProductQuestionController;
+use App\Http\Controllers\ProductReviewController;
+use App\Http\Controllers\ReturnRequestController;
 use App\Http\Controllers\SellerDashboardController;
 use App\Http\Controllers\ShoppingCartController;
 use App\Http\Controllers\UserAuthController;
-use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\LocaleController;
-use App\Http\Controllers\ProductReviewController;
-use App\Http\Controllers\ProductQuestionController;
 use App\Http\Controllers\UserNotificationController;
-use App\Http\Controllers\ReturnRequestController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
@@ -26,7 +26,7 @@ Route::get('/health', function () {
         if (config('cache.default') === 'redis') {
             Redis::connection(config('cache.stores.redis.connection'))->ping();
         }
-    } catch (\Throwable) {
+    } catch (Throwable) {
         return response()->json(['status' => 'unavailable'], 503);
     }
 
@@ -76,6 +76,7 @@ Route::middleware(['auth', 'role:seller,admin'])->prefix('seller')->name('seller
     Route::get('/products', [SellerDashboardController::class, 'showSellerProducts'])->name('products.index');
     Route::post('/products', [SellerDashboardController::class, 'createProduct'])->name('products.store');
     Route::patch('/products/{product}', [SellerDashboardController::class, 'updateProductInfo'])->name('products.update');
+    Route::delete('/products/{product}/images/{productImage}', [SellerDashboardController::class, 'deleteProductImage'])->name('products.images.destroy');
     Route::post('/products/{product}/variants', [SellerDashboardController::class, 'createProductVariant'])->name('products.variants.store');
     Route::get('/orders/export', [SellerDashboardController::class, 'exportSellerOrders'])->name('orders.export');
     Route::get('/orders', [SellerDashboardController::class, 'showSellerOrders'])->name('orders.index');

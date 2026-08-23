@@ -45,6 +45,14 @@
                     <span>{{ __('ui.product_status_'.$product->status) }}</span>
                     <button type="submit">{{ __('ui.update') }}</button>
                 </form>
+                @foreach($product->images as $image)
+                    <form class="row" action="{{ route('seller.products.images.destroy', [$product, $image]) }}" method="post">
+                        @csrf
+                        @method('DELETE')
+                        <span>{{ basename($image->path) }}</span>
+                        <button type="submit">{{ __('ui.remove') }}</button>
+                    </form>
+                @endforeach
                 <form class="row" action="{{ route('seller.products.variants.store', $product) }}" method="post">
                     @csrf
                     <input name="sku" placeholder="SKU" required>
