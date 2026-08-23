@@ -4,19 +4,27 @@ namespace App\Services;
 
 use App\Models\Product;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ProductRecommendationService
 {
     public function popularProducts(int $limit = 8): Collection
     {
-        $productIds = DB::table('order_items')
-            ->select('product_id', DB::raw('SUM(quantity) as sold_quantity'))
-            ->whereNotNull('product_id')
-            ->groupBy('product_id')
-            ->orderByDesc('sold_quantity')
-            ->limit($limit)
-            ->pluck('product_id');
+        // ponytail: rankings may lag sales by 10 minutes; invalidate on payment changes if fresher results become necessary.
+        $productIds = Cache::remember("catalog.popular-product-ids.v1.{$limit}", now()->addMinutes(10), function () use ($limit) {
+            return DB::table('order_items')
+                ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                ->select('order_items.product_id', DB::raw('SUM(order_items.quantity) as sold_quantity'))
+                ->whereNotNull('order_items.product_id')
+                ->where('orders.payment_status', 'paid')
+                ->where('orders.fulfillment_status', '!=', 'cancelled')
+                ->groupBy('order_items.product_id')
+                ->orderByDesc('sold_quantity')
+                ->orderBy('order_items.product_id')
+                ->limit($limit)
+                ->pluck('order_items.product_id');
+        });
 
         if ($productIds->isEmpty()) {
             return Product::active()->with(['primaryImage', 'variants'])->latest()->limit($limit)->get();
