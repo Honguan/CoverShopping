@@ -34,6 +34,8 @@ services:
       retries: 6
       start_period: 20s
     restart: unless-stopped
+    volumes:
+      - uploads:/var/www/html/storage/app/public
 
   db:
     image: mysql:8.4
@@ -66,3 +68,4 @@ services:
 volumes:
   database:
   redis:
+  uploads:

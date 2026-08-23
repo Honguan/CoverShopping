@@ -79,3 +79,5 @@ npm.cmd run build
 - `BackOfficeFlowTest.php`：商家後台、管理員後台與角色阻擋。
 - `ServiceLogicFlowTest.php`：購物車狀態、價格、促銷、推薦。
 - `RoleMiddlewareTest.php`：角色 middleware 基本阻擋。
+
+CI 的 Docker smoke test 會寫入 `uploads` volume、替換 app 容器，再確認同一檔案仍可由 `/storage/...` 讀取。

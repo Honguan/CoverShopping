@@ -9,7 +9,9 @@
 
 ## 更新與維運
 
-更新版本後執行 `docker compose up -d --build`，再於單一工作程序執行 migration。容器啟動時會快取設定、路由與 Blade 畫面；不會自動 migration，避免多副本同時更新資料庫。Redis 提供快取、Session 與 Queue；資料庫與 Redis 使用 Docker named volume 保留資料。
+更新版本後執行 `docker compose up -d --build`，再於單一工作程序執行 migration。容器啟動時會快取設定、路由與 Blade 畫面；不會自動 migration，避免多副本同時更新資料庫。Redis 提供快取、Session 與 Queue；資料庫、Redis 與 `storage/app/public` 分別使用 `database`、`redis`、`uploads` named volume 保留資料，啟動時會建立 `public/storage` 連結。
+
+請定期備份 `uploads` volume，並在還原演練中確認 `/storage/...` 可讀取。此本機 volume 方案只適用單一 app 主機；多主機或多副本部署必須將 Laravel `public` disk 改為所有副本共用的物件儲存，不能各自使用本機 volume。
 
 正式環境請將 MySQL、Redis、檔案儲存與 Queue worker 改為受管服務或獨立可水平擴充的工作程序。部署前後使用 `/health` 健康檢查，它會驗證資料庫與正式 Redis 快取，並由 CI 執行 `composer analyse`、`composer test` 與 `npm run build`。
 
