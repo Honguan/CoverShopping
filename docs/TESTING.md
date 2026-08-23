@@ -75,7 +75,7 @@ npm.cmd run build
 
 ## 目前測試檔
 
-- `FavoriteAndReturnTest.php`：收藏、地址簿、再次購買、購物車清空、退貨。
+- `FavoriteAndReturnTest.php`：收藏、地址簿、預設地址唯一與接替、再次購買、購物車清空、退貨。
 - `OrderCheckoutServiceTest.php`：結帳、庫存、優惠券、配送、B2B 價格。
 - `PublicEndpointFlowTest.php`：公開端點、會員互動、通知與登入保護。
 - `BackOfficeFlowTest.php`：商家後台、管理員後台與角色阻擋。
@@ -83,3 +83,4 @@ npm.cmd run build
 - `RoleMiddlewareTest.php`：角色 middleware 基本阻擋。
 
 CI 的 Docker smoke test 會寫入 `uploads` volume、替換 app 容器，再確認同一檔案仍可由 `/storage/...` 讀取。
+MySQL 工作流會實際並發切換預設地址，驗證會員鎖與唯一索引。

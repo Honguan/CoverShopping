@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShippingMethod;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -76,6 +77,41 @@ class FavoriteAndReturnTest extends TestCase
             'recipient_name' => 'Buyer',
             'is_default' => true,
         ]);
+    }
+
+    public function test_repeated_default_changes_keep_one_default_and_deletion_promotes_latest_address(): void
+    {
+        [, $buyer] = $this->createSellerAndBuyer();
+        $first = $this->createAddress($buyer, 'First', true);
+        $second = $this->createAddress($buyer, 'Second');
+        $third = $this->createAddress($buyer, 'Third');
+
+        $this->actingAs($buyer)->patch("/addresses/{$second->id}/default")->assertRedirect();
+        $this->actingAs($buyer)->patch("/addresses/{$second->id}/default")->assertRedirect();
+
+        $this->assertSame(1, $buyer->addresses()->where('is_default', true)->count());
+        $this->assertFalse($first->fresh()->is_default);
+        $this->assertTrue($second->fresh()->is_default);
+
+        $this->actingAs($buyer)->delete("/addresses/{$second->id}")->assertRedirect();
+
+        $this->assertTrue($third->fresh()->is_default);
+        $this->assertSame(1, $buyer->addresses()->where('is_default', true)->count());
+    }
+
+    public function test_database_rejects_two_default_addresses_for_one_user(): void
+    {
+        [, $buyer] = $this->createSellerAndBuyer();
+        $this->createAddress($buyer, 'First', true);
+
+        try {
+            $this->createAddress($buyer, 'Second', true);
+            $this->fail('Expected the database to reject a second default address.');
+        } catch (QueryException) {
+            $this->addToAssertionCount(1);
+        }
+
+        $this->assertSame(1, $buyer->addresses()->where('is_default', true)->count());
     }
 
     public function test_customer_can_reorder_available_products(): void
@@ -360,5 +396,17 @@ class FavoriteAndReturnTest extends TestCase
         ]);
 
         return [$seller, $buyer];
+    }
+
+    private function createAddress(User $user, string $recipient, bool $isDefault = false): Address
+    {
+        return Address::create([
+            'user_id' => $user->id,
+            'recipient_name' => $recipient,
+            'phone' => '0911000000',
+            'city' => 'Taipei',
+            'address_line' => 'No. 1',
+            'is_default' => $isDefault,
+        ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAddressRequest;
 use App\Models\Address;
+use App\Services\AddressBookService;
 use Illuminate\Http\Request;
 
 class AddressController extends Controller
@@ -15,36 +16,31 @@ class AddressController extends Controller
         ]);
     }
 
-    public function storeAddress(StoreAddressRequest $request)
+    public function storeAddress(StoreAddressRequest $request, AddressBookService $addressBookService)
     {
         $data = $request->validated();
+        $isDefault = $request->boolean('is_default');
+        unset($data['is_default']);
 
-        if ($request->boolean('is_default')) {
-            $request->user()->addresses()->update(['is_default' => false]);
-        }
-
-        $request->user()->addresses()->create($data + [
-            'is_default' => $request->boolean('is_default'),
-        ]);
+        $addressBookService->createAddress($request->user(), $data, $isDefault);
 
         return redirect()->route('addresses.index')->with('status', __('ui.address_saved'));
     }
 
-    public function setDefaultAddress(Request $request, Address $address)
+    public function setDefaultAddress(Request $request, Address $address, AddressBookService $addressBookService)
     {
         abort_unless($address->user_id === $request->user()->id, 403);
 
-        $request->user()->addresses()->update(['is_default' => false]);
-        $address->update(['is_default' => true]);
+        $addressBookService->setDefaultAddress($request->user(), $address);
 
         return redirect()->route('addresses.index')->with('status', __('ui.default_address_updated'));
     }
 
-    public function deleteAddress(Request $request, Address $address)
+    public function deleteAddress(Request $request, Address $address, AddressBookService $addressBookService)
     {
         abort_unless($address->user_id === $request->user()->id, 403);
 
-        $address->delete();
+        $addressBookService->deleteAddress($request->user(), $address);
 
         return redirect()->route('addresses.index')->with('status', __('ui.address_deleted'));
     }
