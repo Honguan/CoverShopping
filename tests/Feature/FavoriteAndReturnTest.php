@@ -226,8 +226,8 @@ class FavoriteAndReturnTest extends TestCase
             ->assertSee('Product variant is unavailable. Remove it and choose again.')
             ->assertSee('Only 1 in stock. Please update quantity.')
             ->assertSee('Business minimum quantity: 5')
-            ->assertSee('value="' . $address->id . '" selected', false)
-            ->assertSee('value="' . $shippingMethod->id . '" selected', false);
+            ->assertSee('value="'.$address->id.'" selected', false)
+            ->assertSee('value="'.$shippingMethod->id.'" selected', false);
     }
 
     public function test_reorder_adds_available_quantity_and_reports_skipped_items(): void
@@ -346,14 +346,14 @@ class FavoriteAndReturnTest extends TestCase
     {
         $seller = User::create([
             'name' => 'Seller',
-            'account' => 'seller-' . uniqid(),
+            'account' => 'seller-'.uniqid(),
             'password' => 'password',
             'role' => 'seller',
             'status' => 'active',
         ]);
         $buyer = User::create($buyerOverrides + [
             'name' => 'Buyer',
-            'account' => 'buyer-' . uniqid(),
+            'account' => 'buyer-'.uniqid(),
             'password' => 'password',
             'role' => 'customer',
             'status' => 'active',
