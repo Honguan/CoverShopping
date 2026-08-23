@@ -107,6 +107,22 @@ jobs:
             if curl --fail --silent --show-error http://127.0.0.1:8080/health; then
               docker compose exec -T app php artisan migrate --force
               curl --fail --silent --show-error http://127.0.0.1:8080/health
+              break
+            fi
+            sleep 2
+          done
+          curl --fail --silent --show-error http://127.0.0.1:8080/health || {
+            docker compose ps
+            docker compose logs app
+            exit 1
+          }
+          docker compose exec -T app test -L public/storage
+          docker compose exec -T --user www-data app sh -c 'printf storage-ok > storage/app/public/ci-storage-check.txt'
+          curl --fail --silent --show-error http://127.0.0.1:8080/storage/ci-storage-check.txt | grep --fixed-strings storage-ok
+          docker compose up --detach --no-deps --force-recreate app
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/health; then
+              curl --fail --silent --show-error http://127.0.0.1:8080/storage/ci-storage-check.txt | grep --fixed-strings storage-ok
               exit 0
             fi
             sleep 2

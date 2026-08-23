@@ -36,7 +36,8 @@ COPY --from=dependencies /app/vendor ./vendor
 COPY docker/entrypoint.sh /usr/local/bin/covershopping-entrypoint
 
 RUN rm -f bootstrap/cache/*.php \
-    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/testing storage/framework/views storage/logs \
+    && mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/testing storage/framework/views storage/logs \
+    && sed -i 's/\r$//' /usr/local/bin/covershopping-entrypoint \
     && chmod +x /usr/local/bin/covershopping-entrypoint \
     && chown -R www-data:www-data bootstrap/cache storage
 
