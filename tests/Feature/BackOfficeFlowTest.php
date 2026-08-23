@@ -6,13 +6,18 @@ use App\Models\BusinessProfile;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\ProductQuestion;
 use App\Models\ProductVariant;
 use App\Models\ReturnRequest;
 use App\Models\User;
+use App\Services\AuditLogService;
 use App\Services\OrderPaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Mockery\Expectation;
+use RuntimeException;
 use Tests\TestCase;
 
 class BackOfficeFlowTest extends TestCase
@@ -112,7 +117,7 @@ class BackOfficeFlowTest extends TestCase
         try {
             $payments->transition($admin, $order, 'failed');
             $this->fail('Expected an invalid payment transition exception.');
-        } catch (\RuntimeException $exception) {
+        } catch (RuntimeException $exception) {
             $this->assertSame('Invalid payment status transition.', $exception->getMessage());
         }
 
@@ -271,6 +276,126 @@ class BackOfficeFlowTest extends TestCase
         $this->assertDatabaseMissing('products', ['name' => 'Too Many Images']);
     }
 
+    public function test_seller_cannot_exceed_eight_total_product_images(): void
+    {
+        Storage::fake('public');
+        [$seller] = $this->createUsers();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Image Limit Product',
+            'price' => 100,
+            'inventory' => 1,
+            'status' => 'pending',
+        ]);
+
+        foreach (range(1, 7) as $index) {
+            ProductImage::create([
+                'product_id' => $product->id,
+                'path' => "products/existing-{$index}.png",
+                'is_primary' => $index === 1,
+                'sort_order' => $index - 1,
+            ]);
+        }
+
+        $this->actingAs($seller)->from('/seller/products')->patch("/seller/products/{$product->id}", [
+            'name' => 'Changed Name',
+            'price' => 100,
+            'inventory' => 1,
+            'images' => [$this->fakeImage('new-1.png'), $this->fakeImage('new-2.png')],
+        ])->assertRedirect('/seller/products')->assertSessionHasErrors('images');
+
+        $this->assertSame('Image Limit Product', $product->fresh()->name);
+        $this->assertSame(7, $product->images()->count());
+        $this->assertSame([], Storage::disk('public')->allFiles('products'));
+
+        $this->actingAs($seller)->patch("/seller/products/{$product->id}", [
+            'name' => 'Eight Image Product',
+            'price' => 100,
+            'inventory' => 1,
+            'images' => [$this->fakeImage('eighth.png')],
+        ])->assertRedirect('/seller/products')->assertSessionHasNoErrors();
+
+        $this->assertSame('Eight Image Product', $product->fresh()->name);
+        $this->assertSame(8, $product->images()->count());
+        $this->assertCount(1, Storage::disk('public')->allFiles('products'));
+    }
+
+    public function test_failed_database_write_removes_uploaded_files_and_product_data(): void
+    {
+        Storage::fake('public');
+        [$seller] = $this->createUsers();
+        /** @var Expectation $expectation */
+        $expectation = $this->mock(AuditLogService::class)->shouldReceive('writeLog');
+        $expectation->once()->andThrow(new RuntimeException('Database write failed.'));
+        $this->withoutExceptionHandling();
+
+        try {
+            $this->actingAs($seller)->post('/seller/products', [
+                'name' => 'Rolled Back Product',
+                'price' => 100,
+                'inventory' => 1,
+                'images' => [$this->fakeImage()],
+            ]);
+            $this->fail('Expected the simulated database failure.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Database write failed.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseMissing('products', ['name' => 'Rolled Back Product']);
+        $this->assertDatabaseCount('product_images', 0);
+        $this->assertSame([], Storage::disk('public')->allFiles('products'));
+    }
+
+    public function test_failed_file_write_removes_earlier_files_without_creating_product(): void
+    {
+        Storage::fake('public');
+        [$seller] = $this->createUsers();
+        $source = $this->fakeImage('failed.png');
+        $failedUpload = new FailingProductImageUpload($source->getPathname(), 'failed.png', 'image/png', null, true);
+        $this->withoutExceptionHandling();
+
+        try {
+            $this->actingAs($seller)->post('/seller/products', [
+                'name' => 'Storage Failed Product',
+                'price' => 100,
+                'inventory' => 1,
+                'images' => [$this->fakeImage('stored.png'), $failedUpload],
+            ]);
+            $this->fail('Expected the simulated storage failure.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Product image storage failed.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseMissing('products', ['name' => 'Storage Failed Product']);
+        $this->assertSame([], Storage::disk('public')->allFiles('products'));
+    }
+
+    public function test_seller_can_delete_an_image_file_and_promote_the_next_image(): void
+    {
+        Storage::fake('public');
+        [$seller] = $this->createUsers();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Image Delete Product',
+            'price' => 100,
+            'inventory' => 1,
+            'status' => 'pending',
+        ]);
+        Storage::disk('public')->put('products/primary.png', 'primary');
+        Storage::disk('public')->put('products/next.png', 'next');
+        $primary = ProductImage::create(['product_id' => $product->id, 'path' => 'products/primary.png', 'is_primary' => true, 'sort_order' => 0]);
+        $next = ProductImage::create(['product_id' => $product->id, 'path' => 'products/next.png', 'is_primary' => false, 'sort_order' => 1]);
+
+        $this->actingAs($seller)->get('/seller/products')->assertSee(route('seller.products.images.destroy', [$product, $primary]));
+        $this->actingAs($seller)->delete("/seller/products/{$product->id}/images/{$primary->id}")
+            ->assertRedirect('/seller/products');
+
+        Storage::disk('public')->assertMissing('products/primary.png');
+        Storage::disk('public')->assertExists('products/next.png');
+        $this->assertDatabaseMissing('product_images', ['id' => $primary->id]);
+        $this->assertTrue($next->fresh()->is_primary);
+    }
+
     public function test_admin_can_manage_users_products_orders_returns_coupons_and_shipping(): void
     {
         [$seller, $buyer, $admin] = $this->createUsers();
@@ -348,6 +473,14 @@ class BackOfficeFlowTest extends TestCase
         $this->actingAs($buyer)->get('/admin/dashboard')->assertForbidden();
     }
 
+    private function fakeImage(string $name = 'product.png'): UploadedFile
+    {
+        return UploadedFile::fake()->createWithContent(
+            $name,
+            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9J8BcAAAAASUVORK5CYII=') ?: '',
+        );
+    }
+
     private function createUsers(): array
     {
         $seller = User::create([
@@ -373,5 +506,13 @@ class BackOfficeFlowTest extends TestCase
         ]);
 
         return [$seller, $buyer, $admin];
+    }
+}
+
+class FailingProductImageUpload extends UploadedFile
+{
+    public function store($path = '', $options = [])
+    {
+        return false;
     }
 }

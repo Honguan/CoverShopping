@@ -6,6 +6,7 @@
 2. 商品列表支援關鍵字、分類、價格與排序。
 3. 商品詳情會寫入 `recently_viewed_products`，供推薦區使用。
 4. `ProductRecommendationService` 提供熱門商品、最近瀏覽與相關商品。
+5. 商品圖片上限為 8 張；新檔案先全部寫入，DB transaction 失敗時清除，賣家可刪除圖片並同步移除檔案。
 
 ## 購物車
 

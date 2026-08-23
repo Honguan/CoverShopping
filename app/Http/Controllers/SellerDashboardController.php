@@ -9,12 +9,17 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\ProductQuestion;
 use App\Services\AuditLogService;
 use App\Services\InventoryAdjustmentService;
 use App\Services\SellerOrderShipmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use RuntimeException;
+use Throwable;
 
 class SellerDashboardController extends Controller
 {
@@ -25,7 +30,7 @@ class SellerDashboardController extends Controller
 
         return view('seller.products', [
             'products' => Product::where('seller_id', $sellerId)
-                ->with(['variants', 'questions.answers'])
+                ->with(['images', 'variants', 'questions.answers'])
                 ->latest()
                 ->paginate(20),
             'lowStockProducts' => Product::where('seller_id', $sellerId)
@@ -48,23 +53,33 @@ class SellerDashboardController extends Controller
         $inventory = $data['inventory'];
         unset($data['images'], $data['inventory']);
 
-        $product = Product::create($data + [
-            'seller_id' => $request->user()->id,
-            'status' => $request->user()->isRole('admin') ? 'active' : 'pending',
-            'business_min_quantity' => $data['business_min_quantity'] ?? 1,
-            'inventory' => 0,
-        ]);
-        $inventoryAdjustmentService->setProductInventory($product, $request->user(), $inventory, 'seller_initial_stock');
+        $storedPaths = $this->storeProductImages($images);
 
-        foreach ($images as $index => $image) {
-            $product->images()->create([
-                'path' => $image->store('products', 'public'),
-                'is_primary' => $index === 0,
-                'sort_order' => $index,
-            ]);
+        try {
+            DB::transaction(function () use ($request, $data, $inventory, $storedPaths, $inventoryAdjustmentService, $auditLogService): void {
+                $product = Product::create($data + [
+                    'seller_id' => $request->user()->id,
+                    'status' => $request->user()->isRole('admin') ? 'active' : 'pending',
+                    'business_min_quantity' => $data['business_min_quantity'] ?? 1,
+                    'inventory' => 0,
+                ]);
+                $inventoryAdjustmentService->setProductInventory($product, $request->user(), $inventory, 'seller_initial_stock');
+
+                foreach ($storedPaths as $index => $path) {
+                    $product->images()->create([
+                        'path' => $path,
+                        'is_primary' => $index === 0,
+                        'sort_order' => $index,
+                    ]);
+                }
+
+                $auditLogService->writeLog('seller.product.created', $product, $data, $request);
+            }, 3);
+        } catch (Throwable $exception) {
+            Storage::disk('public')->delete($storedPaths);
+
+            throw $exception;
         }
-
-        $auditLogService->writeLog('seller.product.created', $product, $data, $request);
 
         return redirect()->route('seller.products.index')->with('status', 'Product created.');
     }
@@ -78,23 +93,70 @@ class SellerDashboardController extends Controller
         $inventory = $data['inventory'];
         unset($data['images'], $data['inventory']);
 
-        $product->update($data + [
-            'status' => $product->status === 'active' ? 'active' : 'pending',
-            'business_min_quantity' => $data['business_min_quantity'] ?? 1,
-        ]);
-        $inventoryAdjustmentService->setProductInventory($product, $request->user(), $inventory, 'seller_adjustment');
+        $storedPaths = $this->storeProductImages($images);
 
-        foreach ($images as $index => $image) {
-            $product->images()->create([
-                'path' => $image->store('products', 'public'),
-                'is_primary' => !$product->images()->where('is_primary', true)->exists() && $index === 0,
-                'sort_order' => $product->images()->count() + $index,
-            ]);
+        try {
+            DB::transaction(function () use ($request, $product, $data, $inventory, $storedPaths, $inventoryAdjustmentService, $auditLogService): void {
+                $product = Product::query()->lockForUpdate()->findOrFail($product->id);
+
+                if ($product->images()->count() + count($storedPaths) > 8) {
+                    throw ValidationException::withMessages(['images' => 'A product can have at most 8 images.']);
+                }
+
+                $product->update($data + [
+                    'status' => $product->status === 'active' ? 'active' : 'pending',
+                    'business_min_quantity' => $data['business_min_quantity'] ?? 1,
+                ]);
+                $inventoryAdjustmentService->setProductInventory($product, $request->user(), $inventory, 'seller_adjustment');
+
+                $hasPrimaryImage = $product->images()->where('is_primary', true)->exists();
+                $nextSortOrder = ($product->images()->max('sort_order') ?? -1) + 1;
+
+                foreach ($storedPaths as $index => $path) {
+                    $product->images()->create([
+                        'path' => $path,
+                        'is_primary' => ! $hasPrimaryImage && $index === 0,
+                        'sort_order' => $nextSortOrder + $index,
+                    ]);
+                }
+
+                $auditLogService->writeLog('seller.product.updated', $product, $data, $request);
+            }, 3);
+        } catch (Throwable $exception) {
+            Storage::disk('public')->delete($storedPaths);
+
+            throw $exception;
         }
 
-        $auditLogService->writeLog('seller.product.updated', $product, $data, $request);
-
         return redirect()->route('seller.products.index')->with('status', 'Product updated.');
+    }
+
+    public function deleteProductImage(Request $request, Product $product, ProductImage $productImage, AuditLogService $auditLogService)
+    {
+        $this->authorize('update', $product);
+        abort_unless($productImage->product_id === $product->id, 404);
+
+        $path = DB::transaction(function () use ($request, $product, $productImage, $auditLogService): string {
+            $product = Product::query()->lockForUpdate()->findOrFail($product->id);
+            $productImage = ProductImage::query()->lockForUpdate()->findOrFail($productImage->id);
+            abort_unless($productImage->product_id === $product->id, 404);
+
+            $wasPrimary = $productImage->is_primary;
+            $path = $productImage->path;
+            $productImage->delete();
+
+            if ($wasPrimary) {
+                $product->images()->first()?->update(['is_primary' => true]);
+            }
+
+            $auditLogService->writeLog('seller.product_image.deleted', $productImage, ['product' => $product->id], $request);
+
+            return $path;
+        }, 3);
+
+        Storage::disk('public')->delete($path);
+
+        return redirect()->route('seller.products.index')->with('status', 'Product image removed.');
     }
 
     public function createProductVariant(CreateProductVariantRequest $request, Product $product, AuditLogService $auditLogService)
@@ -205,5 +267,28 @@ class SellerDashboardController extends Controller
         $shipments->markItemShipped($request->user(), $order, $orderItem, $request);
 
         return redirect()->route('seller.orders.index')->with('status', 'Order item shipped.');
+    }
+
+    private function storeProductImages(array $images): array
+    {
+        $paths = [];
+
+        try {
+            foreach ($images as $image) {
+                $path = $image->store('products', 'public');
+
+                if (! is_string($path)) {
+                    throw new RuntimeException('Product image storage failed.');
+                }
+
+                $paths[] = $path;
+            }
+
+            return $paths;
+        } catch (Throwable $exception) {
+            Storage::disk('public')->delete($paths);
+
+            throw $exception;
+        }
     }
 }

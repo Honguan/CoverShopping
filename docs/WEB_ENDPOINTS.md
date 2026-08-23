@@ -60,6 +60,7 @@
 | GET | `/seller/products` | `seller.products.index` | 商家商品、低庫存與問答管理。 |
 | POST | `/seller/products` | `seller.products.store` | 建立商品，seller 預設 pending。 |
 | PATCH | `/seller/products/{product}` | `seller.products.update` | 更新自己的商品。 |
+| DELETE | `/seller/products/{product}/images/{productImage}` | `seller.products.images.destroy` | 刪除自己的商品圖片並同步移除檔案。 |
 | POST | `/seller/products/{product}/variants` | `seller.products.variants.store` | 建立商品 SKU。 |
 | GET | `/seller/orders/export` | `seller.orders.export` | 匯出自己的訂單明細 CSV，包含 B2B 採購單號。 |
 | GET | `/seller/orders` | `seller.orders.index` | 商家訂單明細。 |

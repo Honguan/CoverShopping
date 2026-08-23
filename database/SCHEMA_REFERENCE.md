@@ -43,6 +43,7 @@
 
 - 商品多圖。
 - `is_primary` 代表列表與詳情預設主圖。
+- 每商品最多 8 張；刪除資料列時同步刪除 public disk 檔案。
 
 ### cart_items
 
