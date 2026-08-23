@@ -12,6 +12,9 @@
                         @if($order->purchase_order_number)
                             <p>{{ __('ui.purchase_order_number') }}: {{ $order->purchase_order_number }}</p>
                         @endif
+                        @if($address = $order->shipping_address_snapshot)
+                            <p>{{ __('ui.shipping_address') }}: {{ $address['recipient_name'] }} / {{ $address['phone'] }} / {{ $address['postal_code'] }} {{ $address['city'] }}{{ $address['district'] }}{{ $address['address_line'] }}</p>
+                        @endif
                         @if($order->business_profile_snapshot)
                             @if($companyName = ($order->business_profile_snapshot['company_name'] ?? null))
                                 <p>{{ __('ui.billing_company') }}: {{ $companyName }}</p>

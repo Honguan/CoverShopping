@@ -9,6 +9,9 @@
                 <div>
                     <strong>{{ $item->order->number }}</strong>
                     <p>{{ $item->product_name }} x {{ $item->quantity }}，{{ __('ui.buyer') }} {{ $item->order->user->name }}</p>
+                    @if($address = $item->order->shipping_address_snapshot)
+                        <p>{{ __('ui.shipping_address') }}: {{ $address['recipient_name'] }} / {{ $address['phone'] }} / {{ $address['postal_code'] }} {{ $address['city'] }}{{ $address['district'] }}{{ $address['address_line'] }}</p>
+                    @endif
                 </div>
                 <span>{{ __('ui.fulfillment_'.$item->shipping_status) }}</span>
                 @if($item->shipping_status !== 'shipped')

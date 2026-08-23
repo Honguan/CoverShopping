@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Address;
 use App\Models\CartItem;
 use App\Models\InventoryMovement;
 use App\Models\Order;
@@ -19,8 +20,7 @@ class OrderCheckoutService
         private CouponDiscountService $couponDiscountService,
         private ProductPricingService $productPricingService,
         private PromotionService $promotionService
-    ) {
-    }
+    ) {}
 
     public function createOrderFromCart(User $user, ?int $shippingMethodId = null, ?int $addressId = null, ?string $couponCode = null, ?string $purchaseOrderNumber = null): Order
     {
@@ -52,17 +52,17 @@ class OrderCheckoutService
                 $product = $products->get($cartItem->product_id);
                 $variant = $cartItem->product_variant_id ? $variants->get($cartItem->product_variant_id) : null;
 
-                if (!$product || $product->status !== 'active') {
+                if (! $product || $product->status !== 'active') {
                     throw new RuntimeException('Product is inactive. Remove it before checkout.');
                 }
 
-                if ($cartItem->product_variant_id && (!$variant || !$variant->is_active || $variant->product_id !== $product->id)) {
+                if ($cartItem->product_variant_id && (! $variant || ! $variant->is_active || $variant->product_id !== $product->id)) {
                     throw new RuntimeException('Product variant is unavailable. Remove it and choose again.');
                 }
 
                 $availableInventory = $variant ? $variant->inventory : $product->inventory;
                 if ($availableInventory < $cartItem->quantity) {
-                    throw new RuntimeException('Only ' . $availableInventory . ' in stock. Please update quantity.');
+                    throw new RuntimeException('Only '.$availableInventory.' in stock. Please update quantity.');
                 }
 
                 $unitPrice = $this->productPricingService->calculateUnitPrice($product, $variant, $user, $cartItem->quantity, true);
@@ -85,6 +85,10 @@ class OrderCheckoutService
             $shippingMethod = $shippingMethodId
                 ? ShippingMethod::whereKey($shippingMethodId)->where('is_active', true)->firstOrFail()
                 : null;
+            $shippingAddressSnapshot = $addressId
+                ? Address::where('user_id', $user->id)->lockForUpdate()->findOrFail($addressId)
+                    ->only(['recipient_name', 'phone', 'postal_code', 'city', 'district', 'address_line'])
+                : null;
             $shippingFee = $this->promotionService->calculateShippingFee($shippingMethod, $subtotal);
 
             $salesChannel = $this->productPricingService->detectSalesChannel($user);
@@ -96,6 +100,7 @@ class OrderCheckoutService
                 'number' => $this->newOrderNumber(),
                 'user_id' => $user->id,
                 'address_id' => $addressId,
+                'shipping_address_snapshot' => $shippingAddressSnapshot,
                 'coupon_id' => $coupon?->id,
                 'shipping_method_id' => $shippingMethod?->id,
                 'sales_channel' => $salesChannel,
@@ -167,7 +172,7 @@ class OrderCheckoutService
     private function newOrderNumber(): string
     {
         do {
-            $number = now()->format('YmdHis') . strtoupper(Str::random(6));
+            $number = now()->format('YmdHis').strtoupper(Str::random(6));
         } while (Order::where('number', $number)->exists());
 
         return $number;
