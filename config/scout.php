@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Product;
+
 return [
     'driver' => env('SCOUT_DRIVER', 'database'),
     'prefix' => env('SCOUT_PREFIX', ''),
@@ -15,8 +17,8 @@ return [
         'host' => env('MEILISEARCH_HOST', 'http://127.0.0.1:7700'),
         'key' => env('MEILISEARCH_KEY'),
         'index-settings' => [
-            App\Models\Product::class => [
-                'filterableAttributes' => ['status', 'category_id', 'seller_id'],
+            Product::class => [
+                'filterableAttributes' => ['status', 'category_id', 'seller_id', 'price'],
                 'sortableAttributes' => ['created_at', 'price'],
             ],
         ],

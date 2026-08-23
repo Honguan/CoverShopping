@@ -4,12 +4,16 @@ namespace Tests\Feature;
 
 use App\Models\Address;
 use App\Models\CartItem;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
+use App\Queries\ProductCatalogQuery;
 use App\Services\OrderCheckoutService;
 use Closure;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Symfony\Component\Process\Process;
@@ -100,6 +104,46 @@ class MySqlCartConcurrencyTest extends TestCase
         ]);
 
         $this->assertSame(1, Address::query()->where('user_id', $user->id)->where('is_default', true)->count());
+    }
+
+    public function test_mysql_catalog_search_uses_fulltext_and_applies_catalog_filters(): void
+    {
+        $this->requireMySql();
+        [$product] = $this->createProductAndUser();
+        $category = Category::create(['name' => 'Indexed', 'slug' => 'indexed', 'is_active' => true]);
+        $otherCategory = Category::create(['name' => 'Other', 'slug' => 'other', 'is_active' => true]);
+        $product->update(['category_id' => $category->id, 'name' => 'Indexed catalogtoken one', 'price' => 150]);
+        $second = Product::create([
+            'seller_id' => $product->seller_id,
+            'category_id' => $category->id,
+            'name' => 'Indexed catalogtoken two',
+            'price' => 250,
+            'inventory' => 1,
+            'status' => 'active',
+        ]);
+        Product::create(['seller_id' => $product->seller_id, 'category_id' => $category->id, 'name' => 'Indexed catalogtoken inactive', 'price' => 200, 'inventory' => 1, 'status' => 'archived']);
+        Product::create(['seller_id' => $product->seller_id, 'category_id' => $otherCategory->id, 'name' => 'Indexed catalogtoken other', 'price' => 200, 'inventory' => 1, 'status' => 'active']);
+        Product::create(['seller_id' => $product->seller_id, 'category_id' => $category->id, 'name' => 'Indexed catalogtoken expensive', 'price' => 600, 'inventory' => 1, 'status' => 'active']);
+        config(['scout.driver' => 'database']);
+        $queries = [];
+        DB::listen(function (QueryExecuted $query) use (&$queries): void {
+            $queries[] = $query;
+        });
+
+        $results = app(ProductCatalogQuery::class)->paginate(Request::create('/products', 'GET', [
+            'q' => 'catalogtoken',
+            'category' => 'indexed',
+            'min_price' => 100,
+            'max_price' => 500,
+            'sort' => 'price_desc',
+        ]));
+
+        $this->assertSame([$second->id, $product->id], collect($results->items())->pluck('id')->all());
+        $searchQuery = collect($queries)->first(fn (QueryExecuted $query) => str_contains(strtolower($query->sql), 'match (') && str_contains(strtolower($query->sql), 'select *'));
+        $this->assertInstanceOf(QueryExecuted::class, $searchQuery);
+        $plan = DB::select('EXPLAIN '.$searchQuery->toRawSql());
+        $this->assertTrue(collect($plan)->contains(fn (object $row) => strtolower((string) ($row->type ?? '')) === 'fulltext'));
+        $this->assertStringNotContainsString(' like ', strtolower($searchQuery->sql));
     }
 
     public function test_checkout_validates_the_total_of_legacy_duplicate_rows(): void

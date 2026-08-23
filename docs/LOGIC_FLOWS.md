@@ -2,7 +2,7 @@
 
 ## 商品瀏覽
 
-1. `ProductCatalogController` 透過 `ProductCatalogQuery` 查詢 active 商品。
+1. `ProductCatalogController` 透過 `ProductCatalogQuery` 查詢 active 商品；關鍵字在 MySQL database driver 使用 Scout full-text，Meilisearch 直接接收狀態、分類、價格與排序條件，不支援 full-text 的 SQLite 則保留測試／開發 fallback。
 2. 商品列表支援關鍵字、分類、價格與排序。
 3. 商品詳情會寫入 `recently_viewed_products`，供推薦區使用。
 4. `ProductRecommendationService` 提供熱門商品、最近瀏覽與相關商品。

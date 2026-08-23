@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Laravel\Scout\Attributes\SearchUsingFullText;
 use Laravel\Scout\Searchable;
 
 class Product extends Model
@@ -82,12 +83,19 @@ class Product extends Model
         return $query->where('status', 'active');
     }
 
+    #[SearchUsingFullText(['name', 'description'])]
     public function toSearchableArray(): array
     {
-        return [
-            'id' => $this->id,
+        $searchable = [
             'name' => $this->name,
             'description' => $this->description,
+        ];
+
+        if (config('scout.driver') === 'database') {
+            return $searchable;
+        }
+
+        return $searchable + [
             'status' => $this->status,
             'category_id' => $this->category_id,
             'seller_id' => $this->seller_id,

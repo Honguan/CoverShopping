@@ -2,9 +2,11 @@
 
 namespace App\Queries;
 
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProductCatalogQuery
 {
@@ -16,21 +18,50 @@ class ProductCatalogQuery
         $maxPrice = $request->integer('max_price');
         $sort = (string) $request->string('sort', 'latest');
 
-        if ($keyword !== '' && config('scout.driver') !== 'database') {
-            return Product::search($keyword)
-                ->query(fn ($query) => $this->applyCommonFilters($query, $categorySlug, $minPrice, $maxPrice, $sort))
-                ->paginate($perPage)
-                ->withQueryString();
-        }
-
-        $query = Product::query()->active()->with(['primaryImage', 'category', 'variants']);
-
-        if ($keyword !== '') {
-            $query->where(function ($builder) use ($keyword) {
+        if ($keyword !== '' && config('scout.driver') === 'database' && DB::getDriverName() !== 'mysql') {
+            $query = Product::query()->active()->with(['primaryImage', 'category', 'variants']);
+            $query->where(function ($builder) use ($keyword): void {
                 $builder->where('name', 'like', "%{$keyword}%")
                     ->orWhere('description', 'like', "%{$keyword}%");
             });
+            $this->applyCategoryFilter($query, $categorySlug);
+            $this->applyPriceFilter($query, $minPrice, $maxPrice);
+            $this->applySort($query, $sort);
+
+            return $query->paginate($perPage)->withQueryString();
         }
+
+        if ($keyword !== '') {
+            $categoryId = $categorySlug === ''
+                ? null
+                : (Category::query()->where('slug', $categorySlug)->value('id') ?? -1);
+            $search = Product::search($keyword)
+                ->where('status', 'active')
+                ->query(fn ($query) => $this->applySearchHydrationFilters($query, $categoryId, $minPrice, $maxPrice));
+
+            if ($categoryId !== null) {
+                $search->where('category_id', $categoryId);
+            }
+
+            if ($minPrice > 0) {
+                $search->where('price', '>=', $minPrice);
+            }
+
+            if ($maxPrice > 0) {
+                $search->where('price', '<=', $maxPrice);
+            }
+
+            match ($sort) {
+                'price_asc' => $search->orderBy('price'),
+                'price_desc' => $search->orderBy('price', 'desc'),
+                'oldest' => $search->orderBy('created_at'),
+                default => $search->orderBy('created_at', 'desc'),
+            };
+
+            return $search->paginate($perPage)->withQueryString();
+        }
+
+        $query = Product::query()->active()->with(['primaryImage', 'category', 'variants']);
 
         $this->applyCategoryFilter($query, $categorySlug);
         $this->applyPriceFilter($query, $minPrice, $maxPrice);
@@ -39,12 +70,15 @@ class ProductCatalogQuery
         return $query->paginate($perPage)->withQueryString();
     }
 
-    private function applyCommonFilters($query, string $categorySlug, int $minPrice, int $maxPrice, string $sort)
+    private function applySearchHydrationFilters($query, mixed $categoryId, int $minPrice, int $maxPrice)
     {
         $query->active()->with(['primaryImage', 'category', 'variants']);
-        $this->applyCategoryFilter($query, $categorySlug);
+
+        if ($categoryId !== null) {
+            $query->where('category_id', $categoryId);
+        }
+
         $this->applyPriceFilter($query, $minPrice, $maxPrice);
-        $this->applySort($query, $sort);
 
         return $query;
     }

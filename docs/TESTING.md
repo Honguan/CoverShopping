@@ -81,6 +81,8 @@ npm.cmd run build
 - `BackOfficeFlowTest.php`：商家後台、管理員後台與角色阻擋。
 - `ServiceLogicFlowTest.php`：購物車狀態、價格、促銷、推薦。
 - `RoleMiddlewareTest.php`：角色 middleware 基本阻擋。
+- `ProductCatalogSearchTest.php`：Meilisearch 的 active、分類、價格與排序合約。
 
 CI 的 Docker smoke test 會寫入 `uploads` volume、替換 app 容器，再確認同一檔案仍可由 `/storage/...` 讀取。
 MySQL 工作流會實際並發切換預設地址，驗證會員鎖與唯一索引。
+MySQL 8.4 `EXPLAIN` 搜尋測試確認商品關鍵字查詢使用 `type=fulltext`，且 SQL 不含 `LIKE '%keyword%'`。
