@@ -2,12 +2,72 @@ name: Laravel CI
 
 on:
   push:
-    paths-ignore:
-      - "*.md"
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened, edited]
+  merge_group:
+    types: [checks_requested]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: laravel-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  pr-metadata:
+    name: PR metadata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Issue branch and PR references
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.head_ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ ! "$HEAD_REF" =~ ^issue/([0-9]+)-[a-z0-9][a-z0-9-]*$ ]]; then
+            echo "Branch must match issue/<issue-number>-<short-description>."
+            exit 1
+          fi
+
+          issue_number="${BASH_REMATCH[1]}"
+
+          if [[ ! "$PR_TITLE" =~ \#${issue_number}([^0-9]|$) ]]; then
+            echo "PR title must contain #${issue_number}."
+            exit 1
+          fi
+
+          if ! grep -Eiq "(^|[[:space:]])Refs[[:space:]]+#${issue_number}([^0-9]|$)" <<< "$PR_BODY"; then
+            echo "PR body must contain Refs #${issue_number}."
+            exit 1
+          fi
+
+          if grep -Eiq "(Fixes|Closes|Resolves)[[:space:]]+#${issue_number}([^0-9]|$)" <<< "$PR_BODY"; then
+            echo "Do not close the Issue before main verification. Use Refs #${issue_number}."
+            exit 1
+          fi
+
+          state="$(gh issue view "$issue_number" --repo "$GITHUB_REPOSITORY" --json state --jq '.state')"
+          if [[ "$state" != "OPEN" ]]; then
+            echo "Issue #${issue_number} must exist and remain open until main verification."
+            exit 1
+          fi
+
+      - name: Skip metadata validation outside pull requests
+        if: github.event_name != 'pull_request'
+        run: echo "PR metadata validation is not required for this event."
+
   quality:
+    name: Quality
     runs-on: ubuntu-latest
     env:
       APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
@@ -17,6 +77,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -33,9 +95,12 @@ jobs:
       - run: npm ci
       - run: cp .env.example .env
       - run: php artisan key:generate
+      - name: Check changed PHP formatting
+        run: vendor/bin/pint --test --diff=HEAD^
       - run: npm run build
       - run: composer analyse
       - run: composer test
+      - run: git diff --check
       - run: docker compose up --detach --build
       - run: |
           for attempt in {1..30}; do

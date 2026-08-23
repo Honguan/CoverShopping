@@ -20,6 +20,17 @@ npm.cmd run build
 
 本機缺 PHP / Composer 時，`composer analyse` 與 `composer test` 需交給 GitHub Actions 或 PHP 8.3 環境執行。
 
+## Issue 修正驗收流程
+
+1. 從最新 `origin/main` 建立 `issue/<issue-number>-<short-description>` 分支。
+2. 本機執行與變更直接相關的最小測試，再執行完整驗收命令。
+3. 建立以 `main` 為 base 的 PR；標題包含 Issue 編號，body 使用 `Refs #<issue-number>`。
+4. 等待 GitHub Actions 的 `PR metadata` 與 `Quality` checks 成功後才合併。
+5. 合併後必須等待 `main` 分支的 `Quality` workflow 再次成功。
+6. 更新本機 `main`，確認 merge commit 與 Issue 驗收條件後才關閉 Issue。
+
+`PR metadata` 會檢查分支命名、PR 標題、Issue 是否仍為 open，以及 PR body 不得提前使用自動關閉關鍵字。`Quality` 會對本次變更的 PHP 檔執行 Pint check，並執行前端 build、Larastan、PHPUnit、`git diff --check` 與 Docker smoke test。
+
 ## 測試範圍
 
 ### 公開與會員流程

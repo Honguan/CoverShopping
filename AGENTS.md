@@ -27,3 +27,12 @@ PHP 遵循 PSR-4 與 Laravel 慣例，使用 4 空格縮排；Blade、JavaScript
 ## Commit 與 Pull Request
 
 沿用 Git 歷史中的 Conventional Commits，例如 `feat: add coupon validation`、`fix: prevent duplicate checkout`、`refactor: centralize seller shipments`。每次提交只包含單一目的。PR 應說明變更原因、驗證命令及受影響流程，連結相關 issue；畫面異動需附前後截圖，資料表或設定異動需列出 migration 與 `.env.example` 影響。請勿提交 `.env`、憑證、快取、日誌或建置暫存檔。
+
+## Issue 交付工作流
+
+1. 一張 Issue 使用一個 `issue/<issue-number>-<short-description>` 分支，且必須從最新的 `origin/main` 建立。
+2. 完成修正與最小必要測試後，PR 只能以 `main` 為 base；標題必須包含 `#<issue-number>`。
+3. PR body 使用 `Refs #<issue-number>`，在 main 驗證完成前不得使用 `Fixes`、`Closes` 或 `Resolves`。
+4. `PR metadata` 與 `Quality` 兩個 GitHub Actions checks 全部成功後才可合併；不得以本機測試取代 workflow 結果。
+5. 合併後等待 `main` 的 `Quality` workflow 成功，再以最新 `origin/main` 驗證 merge commit、Issue 驗收條件與相關檔案。
+6. main 驗證成功後才關閉 Issue，並最多留下一個包含 merge commit 與測試摘要的完成留言；失敗時保持 Issue 開啟，另開後續 Issue 分支修正。
