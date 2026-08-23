@@ -76,7 +76,7 @@
 | PATCH | `/admin/users/{user}/status` | `admin.users.status` | 更新會員狀態或角色。 |
 | PATCH | `/admin/business-profiles/{businessProfile}` | `admin.business_profiles.status` | 審核企業資料。 |
 | PATCH | `/admin/products/{product}/status` | `admin.products.status` | 審核商品狀態。 |
-| PATCH | `/admin/orders/{order}/payment` | `admin.orders.payment` | 更新付款狀態。 |
+| PATCH | `/admin/orders/{order}/payment` | `admin.orders.payment` | 依合法狀態機更新付款狀態；失敗付款會取消訂單並回補庫存。 |
 | POST | `/admin/coupons` | `admin.coupons.store` | 建立優惠券。 |
 | POST | `/admin/shipping-methods` | `admin.shipping_methods.store` | 建立配送方式。 |
 | PATCH | `/admin/returns/{returnRequest}` | `admin.returns.status` | 更新退貨狀態。 |

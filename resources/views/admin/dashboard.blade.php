@@ -60,12 +60,21 @@
         <div class="panel">
             <h2>{{ __('ui.payment_status') }}</h2>
             @foreach($orders as $order)
+                @php
+                    $paymentStatuses = match (true) {
+                        $order->payment_status === 'unpaid' => ['unpaid', 'paid', 'failed'],
+                        $order->payment_status === 'paid'
+                            && (in_array($order->fulfillment_status, ['pending', 'processing'], true)
+                                || $order->return_status === 'received') => ['paid', 'refunded'],
+                        default => [$order->payment_status],
+                    };
+                @endphp
                 <form class="stack" action="{{ route('admin.orders.payment', $order) }}" method="post">
                     @csrf
                     @method('PATCH')
                     <strong>{{ $order->number }}</strong>
                     <select name="payment_status">
-                        @foreach(['unpaid', 'paid', 'failed', 'refunded'] as $status)
+                        @foreach($paymentStatuses as $status)
                             <option value="{{ $status }}" @selected($order->payment_status === $status)>{{ __('ui.payment_'.$status) }}</option>
                         @endforeach
                     </select>

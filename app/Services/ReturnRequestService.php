@@ -16,9 +16,10 @@ use RuntimeException;
 
 class ReturnRequestService
 {
-    public function __construct(private AuditLogService $auditLogService)
-    {
-    }
+    public function __construct(
+        private AuditLogService $auditLogService,
+        private OrderPaymentService $orderPaymentService,
+    ) {}
 
     public function request(User $user, Order $order, string $reason, ?Request $request = null): ReturnRequest
     {
@@ -50,6 +51,10 @@ class ReturnRequestService
             }
 
             $order = Order::query()->lockForUpdate()->with('items')->findOrFail($returnRequest->order_id);
+
+            if ($status === 'refunded') {
+                $this->orderPaymentService->transition($admin, $order, 'refunded', $request);
+            }
 
             if ($status === 'received') {
                 $products = Product::whereKey($order->items->pluck('product_id')->filter()->unique())

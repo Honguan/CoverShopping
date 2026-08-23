@@ -18,6 +18,7 @@ use App\Models\ReturnRequest;
 use App\Models\ShippingMethod;
 use App\Models\User;
 use App\Services\AuditLogService;
+use App\Services\OrderPaymentService;
 use App\Services\ReturnRequestService;
 use RuntimeException;
 
@@ -78,15 +79,15 @@ class AdminDashboardController extends Controller
         return redirect()->route('admin.dashboard')->with('status', 'Product status updated.');
     }
 
-    public function changeOrderPaymentStatus(UpdateOrderPaymentRequest $request, Order $order, AuditLogService $auditLogService)
+    public function changeOrderPaymentStatus(UpdateOrderPaymentRequest $request, Order $order, OrderPaymentService $orderPaymentService)
     {
         $data = $request->validated();
 
-        $order->update($data);
-        if ($data['payment_status'] === 'paid' && $order->fulfillment_status === 'pending') {
-            $order->update(['fulfillment_status' => 'processing']);
+        try {
+            $orderPaymentService->transition($request->user(), $order, $data['payment_status'], $request);
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['payment_status' => $exception->getMessage()]);
         }
-        $auditLogService->writeLog('admin.order.payment_updated', $order, $data, $request);
 
         return redirect()->route('admin.dashboard')->with('status', 'Payment status updated.');
     }

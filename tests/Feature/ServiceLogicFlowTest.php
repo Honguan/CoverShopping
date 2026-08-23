@@ -12,8 +12,8 @@ use App\Models\ReturnRequest;
 use App\Models\User;
 use App\Services\CouponDiscountService;
 use App\Services\ProductPricingService;
-use App\Services\ProductRecommendationService;
 use App\Services\ProductQuestionService;
+use App\Services\ProductRecommendationService;
 use App\Services\ProductReviewService;
 use App\Services\PromotionService;
 use App\Services\ReturnRequestService;
@@ -350,6 +350,7 @@ class ServiceLogicFlowTest extends TestCase
         $returns->updateStatus($admin, $returnRequest->fresh(), 'refunded');
 
         $this->assertSame(2, $product->fresh()->inventory);
+        $this->assertSame('refunded', $order->fresh()->payment_status);
     }
 
     public function test_product_review_service_creates_review_and_audit_log(): void
@@ -422,14 +423,14 @@ class ServiceLogicFlowTest extends TestCase
     {
         $seller = User::create([
             'name' => 'Seller',
-            'account' => 'seller-' . uniqid(),
+            'account' => 'seller-'.uniqid(),
             'password' => 'password',
             'role' => 'seller',
             'status' => 'active',
         ]);
         $buyer = User::create($buyerOverrides + [
             'name' => 'Buyer',
-            'account' => 'buyer-' . uniqid(),
+            'account' => 'buyer-'.uniqid(),
             'password' => 'password',
             'role' => 'customer',
             'status' => 'active',

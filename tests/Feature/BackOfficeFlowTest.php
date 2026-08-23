@@ -7,8 +7,10 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductQuestion;
+use App\Models\ProductVariant;
 use App\Models\ReturnRequest;
 use App\Models\User;
+use App\Services\OrderPaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -16,6 +18,148 @@ use Tests\TestCase;
 class BackOfficeFlowTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_failed_payment_cancels_the_order_and_restores_product_and_variant_inventory_once(): void
+    {
+        [$seller, $buyer, $admin] = $this->createUsers();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Failed Payment Product',
+            'price' => 100,
+            'inventory' => 0,
+            'status' => 'active',
+        ]);
+        $variant = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'FAILED-PAYMENT-SKU',
+            'option_name' => 'Color',
+            'option_value' => 'Blue',
+            'inventory' => 0,
+            'is_active' => true,
+        ]);
+        $order = Order::create([
+            'number' => 'PAYMENT-FAILED-1',
+            'user_id' => $buyer->id,
+            'subtotal' => 300,
+            'total' => 300,
+            'payment_status' => 'unpaid',
+            'fulfillment_status' => 'pending',
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'seller_id' => $seller->id,
+            'product_name' => $product->name,
+            'unit_price' => 100,
+            'quantity' => 1,
+            'subtotal' => 100,
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
+            'seller_id' => $seller->id,
+            'product_name' => $product->name,
+            'variant_name' => $variant->displayName(),
+            'unit_price' => 100,
+            'quantity' => 2,
+            'subtotal' => 200,
+        ]);
+
+        $payments = app(OrderPaymentService::class);
+        $payments->transition($admin, $order, 'failed');
+        $payments->transition($admin, $order, 'failed');
+
+        $this->assertSame('failed', $order->fresh()->payment_status);
+        $this->assertSame('cancelled', $order->fresh()->fulfillment_status);
+        $this->assertSame(1, $product->fresh()->inventory);
+        $this->assertSame(2, $variant->fresh()->inventory);
+        $this->assertDatabaseCount('inventory_movements', 2);
+        $this->assertDatabaseHas('inventory_movements', ['reason' => 'payment_failed']);
+    }
+
+    public function test_payment_service_rejects_a_competing_stale_transition_without_changing_inventory(): void
+    {
+        [$seller, $buyer, $admin] = $this->createUsers();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Paid Product',
+            'price' => 100,
+            'inventory' => 0,
+            'status' => 'active',
+        ]);
+        $order = Order::create([
+            'number' => 'PAYMENT-PAID-1',
+            'user_id' => $buyer->id,
+            'subtotal' => 100,
+            'total' => 100,
+            'payment_status' => 'unpaid',
+            'fulfillment_status' => 'pending',
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'seller_id' => $seller->id,
+            'product_name' => $product->name,
+            'unit_price' => 100,
+            'quantity' => 1,
+            'subtotal' => 100,
+        ]);
+
+        $payments = app(OrderPaymentService::class);
+        $payments->transition($admin, $order, 'paid');
+
+        try {
+            $payments->transition($admin, $order, 'failed');
+            $this->fail('Expected an invalid payment transition exception.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('Invalid payment status transition.', $exception->getMessage());
+        }
+
+        $this->assertSame('paid', $order->fresh()->payment_status);
+        $this->assertSame('processing', $order->fresh()->fulfillment_status);
+        $this->assertSame(0, $product->fresh()->inventory);
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
+    public function test_refunding_an_unshipped_paid_order_restores_inventory_once(): void
+    {
+        [$seller, $buyer, $admin] = $this->createUsers();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Voided Product',
+            'price' => 100,
+            'inventory' => 0,
+            'status' => 'active',
+        ]);
+        $order = Order::create([
+            'number' => 'PAYMENT-VOID-1',
+            'user_id' => $buyer->id,
+            'subtotal' => 200,
+            'total' => 200,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'processing',
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'seller_id' => $seller->id,
+            'product_name' => $product->name,
+            'unit_price' => 100,
+            'quantity' => 2,
+            'subtotal' => 200,
+        ]);
+
+        $payments = app(OrderPaymentService::class);
+        $payments->transition($admin, $order, 'refunded');
+        $payments->transition($admin, $order, 'refunded');
+
+        $this->assertSame('refunded', $order->fresh()->payment_status);
+        $this->assertSame('cancelled', $order->fresh()->fulfillment_status);
+        $this->assertSame(2, $product->fresh()->inventory);
+        $this->assertDatabaseCount('inventory_movements', 1);
+        $this->assertDatabaseHas('inventory_movements', ['reason' => 'payment_refunded']);
+    }
 
     public function test_seller_can_manage_products_questions_and_ship_own_order_items(): void
     {
@@ -208,21 +352,21 @@ class BackOfficeFlowTest extends TestCase
     {
         $seller = User::create([
             'name' => 'Seller',
-            'account' => 'seller-' . uniqid(),
+            'account' => 'seller-'.uniqid(),
             'password' => 'password',
             'role' => 'seller',
             'status' => 'active',
         ]);
         $buyer = User::create([
             'name' => 'Buyer',
-            'account' => 'buyer-' . uniqid(),
+            'account' => 'buyer-'.uniqid(),
             'password' => 'password',
             'role' => 'customer',
             'status' => 'active',
         ]);
         $admin = User::create([
             'name' => 'Admin',
-            'account' => 'admin-' . uniqid(),
+            'account' => 'admin-'.uniqid(),
             'password' => 'password',
             'role' => 'admin',
             'status' => 'active',
