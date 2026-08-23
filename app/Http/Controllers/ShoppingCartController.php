@@ -12,6 +12,7 @@ use App\Services\ProductPricingService;
 use App\Services\PromotionService;
 use App\Services\ShoppingCartService;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 class ShoppingCartController extends Controller
 {
@@ -42,19 +43,27 @@ class ShoppingCartController extends Controller
         $product = Product::active()->findOrFail($data['product_id']);
         $variant = null;
 
-        if (!empty($data['product_variant_id'])) {
+        if (! empty($data['product_variant_id'])) {
             $variant = ProductVariant::where('product_id', $product->id)
                 ->where('is_active', true)
-                ->findOrFail($data['product_variant_id']);
+                ->find($data['product_variant_id']);
+
+            if (! $variant) {
+                return back()->withErrors(['product_variant_id' => 'Product variant is unavailable.'])->withInput();
+            }
         }
 
-        $addedQuantity = $shoppingCartService->addAvailableQuantity($request->user(), $request->session()->getId(), $product, $data['quantity'], $variant);
+        try {
+            $addedQuantity = $shoppingCartService->addAvailableQuantity($request->user(), $request->session()->getId(), $product, $data['quantity'], $variant);
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['product_variant_id' => $exception->getMessage()])->withInput();
+        }
 
         if ($addedQuantity < 1) {
             return back()->withErrors(['product_id' => 'Product is out of stock.']);
         }
 
-        return redirect()->route('cart.index')->with('status', 'Added ' . $addedQuantity . ' item(s) to cart.');
+        return redirect()->route('cart.index')->with('status', 'Added '.$addedQuantity.' item(s) to cart.');
     }
 
     public function changeItemQuantity(UpdateCartItemRequest $request, CartItem $cartItem, ShoppingCartService $shoppingCartService)

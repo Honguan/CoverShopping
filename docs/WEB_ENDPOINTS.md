@@ -24,7 +24,7 @@
 | Method | Path | Route name | 說明 |
 | --- | --- | --- | --- |
 | GET | `/cart` | `cart.index` | 顯示購物車、狀態提醒、結帳預設地址與配送。 |
-| POST | `/cart/items` | `cart.items.store` | 加入商品或 SKU 到 user/session 購物車。 |
+| POST | `/cart/items` | `cart.items.store` | 加入商品或 SKU 到 user/session 購物車；商品有啟用 SKU 時必須傳入該商品的有效 `product_variant_id`。 |
 | DELETE | `/cart/items` | `cart.items.clear` | 清空目前 user/session 購物車。 |
 | PATCH | `/cart/items/{cartItem}` | `cart.items.update` | 調整單一購物車項目數量。 |
 | DELETE | `/cart/items/{cartItem}` | `cart.items.destroy` | 移除單一購物車項目。 |

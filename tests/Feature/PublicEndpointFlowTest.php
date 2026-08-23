@@ -7,6 +7,7 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -38,6 +39,82 @@ class PublicEndpointFlowTest extends TestCase
             'user_id' => null,
             'product_id' => $product->id,
             'quantity' => 2,
+        ]);
+    }
+
+    public function test_cart_rejects_a_missing_variant_for_a_product_with_active_variants(): void
+    {
+        [$seller] = $this->createSellerAndBuyer();
+        $product = $this->createProductWithVariant($seller, 'Required Variant', true, 3);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertDontSee('<input type="hidden" name="product_id" value="'.$product->id.'">', false);
+
+        $this->post('/cart/items', [
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ])->assertSessionHasErrors('product_variant_id');
+
+        $this->assertDatabaseCount('cart_items', 0);
+    }
+
+    public function test_cart_rejects_a_variant_from_another_product(): void
+    {
+        [$seller] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Target Product',
+            'price' => 250,
+            'inventory' => 0,
+            'status' => 'active',
+        ]);
+        $otherProduct = $this->createProductWithVariant($seller, 'Other Product', true, 3);
+
+        $this->post('/cart/items', [
+            'product_id' => $product->id,
+            'product_variant_id' => $otherProduct->variants()->firstOrFail()->id,
+            'quantity' => 1,
+        ])->assertSessionHasErrors('product_variant_id');
+
+        $this->assertDatabaseCount('cart_items', 0);
+    }
+
+    public function test_cart_rejects_an_inactive_variant(): void
+    {
+        [$seller] = $this->createSellerAndBuyer();
+        $product = $this->createProductWithVariant($seller, 'Inactive Variant', false, 3);
+
+        $this->post('/cart/items', [
+            'product_id' => $product->id,
+            'product_variant_id' => ProductVariant::where('product_id', $product->id)->firstOrFail()->id,
+            'quantity' => 1,
+        ])->assertSessionHasErrors('product_variant_id');
+
+        $this->assertDatabaseCount('cart_items', 0);
+    }
+
+    public function test_cart_uses_the_selected_active_variant_inventory(): void
+    {
+        [$seller] = $this->createSellerAndBuyer();
+        $product = $this->createProductWithVariant($seller, 'Stocked Variant', true, 3);
+        $variant = $product->variants()->firstOrFail();
+
+        $this->get("/products/{$product->id}")
+            ->assertOk()
+            ->assertSee('data-inventory="3"', false)
+            ->assertSee('max="3"', false);
+
+        $this->post('/cart/items', [
+            'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
+            'quantity' => 5,
+        ])->assertRedirect('/cart');
+
+        $this->assertDatabaseHas('cart_items', [
+            'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
+            'quantity' => 3,
         ]);
     }
 
@@ -315,5 +392,25 @@ class PublicEndpointFlowTest extends TestCase
         ]);
 
         return [$seller, $buyer];
+    }
+
+    private function createProductWithVariant(User $seller, string $name, bool $isActive, int $inventory): Product
+    {
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => $name,
+            'price' => 250,
+            'inventory' => 0,
+            'status' => 'active',
+        ]);
+        $product->variants()->create([
+            'sku' => 'SKU-'.uniqid(),
+            'option_name' => 'Color',
+            'option_value' => 'Blue',
+            'inventory' => $inventory,
+            'is_active' => $isActive,
+        ]);
+
+        return $product;
     }
 }

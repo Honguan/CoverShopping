@@ -8,6 +8,7 @@ use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class ShoppingCartService
 {
@@ -33,6 +34,14 @@ class ShoppingCartService
 
     public function addAvailableQuantity(?User $user, string $sessionId, Product $product, int $quantity, ?ProductVariant $variant = null): int
     {
+        if ($variant && (! $variant->is_active || $variant->product_id !== $product->id)) {
+            throw new RuntimeException('Product variant is unavailable.');
+        }
+
+        if (! $variant && $product->variants()->exists()) {
+            throw new RuntimeException('Select a product variant.');
+        }
+
         $quantity = max(1, $quantity);
         $availableInventory = $this->availableInventory($product, $variant);
 

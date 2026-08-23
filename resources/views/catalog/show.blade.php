@@ -20,24 +20,27 @@
             @endauth
             <p>{{ __('ui.category') }}：{{ optional($product->category)->name ?? __('ui.uncategorized') }}</p>
             <p>{{ __('ui.seller') }}：{{ $product->seller->name }}</p>
-            <p>{{ __('ui.stock') }}：{{ $product->inventory }}</p>
+            @php
+                $selectedInventory = $product->variants->first()?->inventory ?? $product->inventory;
+            @endphp
+            <p>{{ __('ui.stock') }}：<span data-selected-inventory>{{ $selectedInventory }}</span></p>
             <p>{{ $product->description }}</p>
             <form action="{{ route('cart.items.store') }}" method="post">
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
                 @if($product->variants->isNotEmpty())
                     <label>{{ __('ui.variant') }}
-                        <select name="product_variant_id">
+                        <select name="product_variant_id" data-variant-selector>
                             @foreach($product->variants as $variant)
-                                <option value="{{ $variant->id }}">
+                                <option value="{{ $variant->id }}" data-inventory="{{ $variant->inventory }}">
                                     {{ $variant->displayName() }} / ${{ number_format($product->price + $variant->price_delta) }} / {{ __('ui.stock') }} {{ $variant->inventory }}
                                 </option>
                             @endforeach
                         </select>
                     </label>
                 @endif
-                <input type="number" name="quantity" value="1" min="1" max="{{ max(1, $product->inventory) }}">
-                <button type="submit" @disabled($product->inventory < 1)>{{ __('ui.add_to_cart') }}</button>
+                <input type="number" name="quantity" value="1" min="1" max="{{ max(1, $selectedInventory) }}" data-cart-quantity>
+                <button type="submit" @disabled($selectedInventory < 1) data-cart-submit>{{ __('ui.add_to_cart') }}</button>
             </form>
             @auth
                 <form action="{{ route('favorites.store', $product) }}" method="post">
