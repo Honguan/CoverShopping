@@ -14,12 +14,13 @@
 3. 商品有啟用 SKU 時必須選擇有效 SKU，並依該 SKU 限制數量；無 SKU 商品才使用主商品庫存。
 4. 購物車頁顯示狀態摘要：下架、SKU 失效、庫存不足、B2B 最低採購量。
 5. 清空購物車只會清目前 user 或 session scope。
+6. 加入與訪客合併會依商品鎖定後原子累加；資料庫強制單一 owner 與購物車 identity 唯一。
 
 ## 結帳與訂單
 
 1. `CheckoutController` 呼叫 `OrderCheckoutService::createOrderFromCart`。
 2. 結帳在 database transaction 內執行。
-3. 商品與 SKU 會在交易內 `lockForUpdate` 後重新驗證。
+3. 商品與 SKU 會在交易內 `lockForUpdate` 後重新驗證，購物車重複資料會按商品／SKU 累計數量後驗證庫存。
 4. 訂單會保留商品名稱、規格名稱、單價、小計、優惠券、配送方式與收件地址快照；訂單顯示及賣家履約只使用地址快照。
 5. 建立訂單後會扣庫存、寫入 `inventory_movements`，並清除購物車項目。
 6. 付款只能由 unpaid 轉為 paid 或 failed；paid 會進入 processing，failed 會取消訂單並恰好回補一次庫存。未出貨的 paid 訂單可作廢退款並回補一次；已收貨退貨轉為 refunded 時只同步付款狀態。

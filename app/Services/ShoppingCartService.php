@@ -34,36 +34,43 @@ class ShoppingCartService
 
     public function addAvailableQuantity(?User $user, string $sessionId, Product $product, int $quantity, ?ProductVariant $variant = null): int
     {
-        if ($variant && (! $variant->is_active || $variant->product_id !== $product->id)) {
-            throw new RuntimeException('Product variant is unavailable.');
-        }
+        return DB::transaction(function () use ($user, $sessionId, $product, $quantity, $variant): int {
+            // ponytail: product rows serialize cart writes; add cart-scope rows if contention becomes measurable.
+            $product = Product::query()->lockForUpdate()->findOrFail($product->id);
+            $variant = $variant
+                ? ProductVariant::query()->lockForUpdate()->findOrFail($variant->id)
+                : null;
 
-        if (! $variant && $product->variants()->exists()) {
-            throw new RuntimeException('Select a product variant.');
-        }
+            if ($variant && (! $variant->is_active || $variant->product_id !== $product->id)) {
+                throw new RuntimeException('Product variant is unavailable.');
+            }
 
-        $quantity = max(1, $quantity);
-        $availableInventory = $this->availableInventory($product, $variant);
+            if (! $variant && $product->variants()->exists()) {
+                throw new RuntimeException('Select a product variant.');
+            }
 
-        if ($availableInventory < 1) {
-            return 0;
-        }
+            $availableInventory = $this->availableInventory($product, $variant);
 
-        $item = CartItem::firstOrNew($this->cartIdentity($user, $sessionId) + [
-            'product_id' => $product->id,
-            'product_variant_id' => $variant?->id,
-        ]);
+            if ($availableInventory < 1) {
+                return 0;
+            }
 
-        $currentQuantity = $item->exists ? $item->quantity : 0;
-        $nextQuantity = min($availableInventory, $currentQuantity + $quantity);
-        $addedQuantity = max(0, $nextQuantity - $currentQuantity);
+            $identity = $this->cartIdentity($user, $sessionId) + [
+                'product_id' => $product->id,
+                'product_variant_id' => $variant?->id,
+            ];
+            $item = CartItem::query()->where($identity)->lockForUpdate()->first() ?? new CartItem($identity);
+            $currentQuantity = $item->exists ? $item->quantity : 0;
+            $nextQuantity = min($availableInventory, $currentQuantity + max(1, $quantity));
+            $addedQuantity = max(0, $nextQuantity - $currentQuantity);
 
-        if ($addedQuantity > 0) {
-            $item->quantity = $nextQuantity;
-            $item->save();
-        }
+            if ($addedQuantity > 0) {
+                $item->quantity = $nextQuantity;
+                $item->save();
+            }
 
-        return $addedQuantity;
+            return $addedQuantity;
+        }, 3);
     }
 
     public function updateQuantity(CartItem $cartItem, int $quantity): CartItem
@@ -78,6 +85,9 @@ class ShoppingCartService
     public function mergeGuestCartIntoUserCart(User $user, string $sessionId): void
     {
         DB::transaction(function () use ($user, $sessionId): void {
+            $productIds = CartItem::where('session_id', $sessionId)->pluck('product_id')->unique()->sort()->values();
+            Product::whereKey($productIds)->orderBy('id')->lockForUpdate()->get();
+
             $guestItems = CartItem::where('session_id', $sessionId)
                 ->with(['product', 'variant'])
                 ->lockForUpdate()
