@@ -23,9 +23,10 @@ class UserAuthController extends Controller
 
     public function loginUser(LoginUserRequest $request, ShoppingCartService $shoppingCartService)
     {
+        $guestSessionId = $request->session()->getId();
         $credentials = $request->validated();
 
-        if (!Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()->withErrors(['account' => 'Account or password is incorrect.'])->onlyInput('account');
         }
 
@@ -37,13 +38,14 @@ class UserAuthController extends Controller
             return back()->withErrors(['account' => 'This account is not active.']);
         }
 
-        $shoppingCartService->mergeGuestCartIntoUserCart($request->user(), $request->session()->getId());
+        $shoppingCartService->mergeGuestCartIntoUserCart($request->user(), $guestSessionId);
 
         return redirect()->intended(route('catalog.index'));
     }
 
     public function registerUser(RegisterUserRequest $request, ShoppingCartService $shoppingCartService)
     {
+        $guestSessionId = $request->session()->getId();
         $user = User::create($request->validated() + [
             'role' => 'customer',
             'status' => 'active',
@@ -51,7 +53,7 @@ class UserAuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
-        $shoppingCartService->mergeGuestCartIntoUserCart($user, $request->session()->getId());
+        $shoppingCartService->mergeGuestCartIntoUserCart($user, $guestSessionId);
 
         return redirect()->route('catalog.index');
     }
