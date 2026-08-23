@@ -29,7 +29,7 @@ npm.cmd run build
 5. 合併後必須等待 `main` 分支的 `Quality` workflow 再次成功。
 6. 更新本機 `main`，確認 merge commit 與 Issue 驗收條件後才關閉 Issue。
 
-`PR metadata` 會檢查分支命名、PR 標題、Issue 是否仍為 open，以及 PR body 不得提前使用自動關閉關鍵字。`Quality` 會執行 Pint check、前端 build、Larastan、PHPUnit、`git diff --check` 與 Docker smoke test。
+`PR metadata` 會檢查分支命名、PR 標題、Issue 是否仍為 open，以及 PR body 不得提前使用自動關閉關鍵字。`Quality` 會對本次變更的 PHP 檔執行 Pint check，並執行前端 build、Larastan、PHPUnit、`git diff --check` 與 Docker smoke test。
 
 ## 測試範圍
 

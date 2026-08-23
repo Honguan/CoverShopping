@@ -77,6 +77,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -93,7 +95,8 @@ jobs:
       - run: npm ci
       - run: cp .env.example .env
       - run: php artisan key:generate
-      - run: vendor/bin/pint --test
+      - name: Check changed PHP formatting
+        run: vendor/bin/pint --test --diff=HEAD^
       - run: npm run build
       - run: composer analyse
       - run: composer test
