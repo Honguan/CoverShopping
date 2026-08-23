@@ -20,7 +20,7 @@
 1. `CheckoutController` 呼叫 `OrderCheckoutService::createOrderFromCart`。
 2. 結帳在 database transaction 內執行。
 3. 商品與 SKU 會在交易內 `lockForUpdate` 後重新驗證。
-4. 訂單會保留商品名稱、規格名稱、單價、小計、優惠券與配送方式快照。
+4. 訂單會保留商品名稱、規格名稱、單價、小計、優惠券、配送方式與收件地址快照；訂單顯示及賣家履約只使用地址快照。
 5. 建立訂單後會扣庫存、寫入 `inventory_movements`，並清除購物車項目。
 6. 付款只能由 unpaid 轉為 paid 或 failed；paid 會進入 processing，failed 會取消訂單並恰好回補一次庫存。未出貨的 paid 訂單可作廢退款並回補一次；已收貨退貨轉為 refunded 時只同步付款狀態。
 7. 會員只可取消自己的未付款待處理訂單；取消時以 transaction 鎖定訂單與庫存並寫入回補紀錄。

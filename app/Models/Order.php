@@ -12,6 +12,7 @@ class Order extends Model
         'number',
         'user_id',
         'address_id',
+        'shipping_address_snapshot',
         'coupon_id',
         'shipping_method_id',
         'sales_channel',
@@ -36,6 +37,7 @@ class Order extends Model
             'shipping_fee' => 'integer',
             'total' => 'integer',
             'business_profile_snapshot' => 'array',
+            'shipping_address_snapshot' => 'array',
         ];
     }
 

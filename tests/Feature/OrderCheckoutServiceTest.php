@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Address;
 use App\Models\BusinessProfile;
 use App\Models\CartItem;
 use App\Models\Coupon;
@@ -9,8 +10,8 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShippingMethod;
 use App\Models\User;
-use App\Services\OrderCheckoutService;
 use App\Services\OrderCancellationService;
+use App\Services\OrderCheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
 use Tests\TestCase;
@@ -179,6 +180,48 @@ class OrderCheckoutServiceTest extends TestCase
         ]);
     }
 
+    public function test_shipping_address_snapshot_survives_address_changes_and_deletion(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Address Snapshot Product',
+            'price' => 100,
+            'inventory' => 1,
+            'status' => 'active',
+        ]);
+        $address = Address::create([
+            'user_id' => $buyer->id,
+            'recipient_name' => 'Original Recipient',
+            'phone' => '0911000000',
+            'postal_code' => '100',
+            'city' => 'Taipei',
+            'district' => 'Zhongzheng',
+            'address_line' => 'No. 1',
+        ]);
+        CartItem::create([
+            'user_id' => $buyer->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $order = app(OrderCheckoutService::class)->createOrderFromCart($buyer, null, $address->id);
+        $address->update(['recipient_name' => 'Changed Recipient', 'address_line' => 'No. 2']);
+        $address->delete();
+
+        $this->assertNull($order->fresh()->address_id);
+        $this->assertSame([
+            'recipient_name' => 'Original Recipient',
+            'phone' => '0911000000',
+            'postal_code' => '100',
+            'city' => 'Taipei',
+            'district' => 'Zhongzheng',
+            'address_line' => 'No. 1',
+        ], $order->fresh()->shipping_address_snapshot);
+        $this->actingAs($buyer)->get('/orders')->assertSee('Original Recipient')->assertSee('No. 1');
+        $this->actingAs($seller)->get('/seller/orders')->assertSee('Original Recipient')->assertSee('No. 1');
+    }
+
     public function test_approved_business_user_gets_business_price(): void
     {
         [$seller, $buyer] = $this->createSellerAndBuyer(['account_type' => 'b2b']);
@@ -224,14 +267,14 @@ class OrderCheckoutServiceTest extends TestCase
     {
         $seller = User::create([
             'name' => 'Seller',
-            'account' => 'seller-' . uniqid(),
+            'account' => 'seller-'.uniqid(),
             'password' => 'password',
             'role' => 'seller',
             'status' => 'active',
         ]);
         $buyer = User::create($buyerOverrides + [
             'name' => 'Buyer',
-            'account' => 'buyer-' . uniqid(),
+            'account' => 'buyer-'.uniqid(),
             'password' => 'password',
             'role' => 'customer',
             'status' => 'active',

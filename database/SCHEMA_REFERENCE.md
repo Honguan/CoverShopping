@@ -68,6 +68,7 @@
 - `payment_status`：`unpaid`、`paid`、`failed`、`refunded`。
 - `fulfillment_status`：`pending`、`processing`、`partially_shipped`、`completed`、`cancelled`。
 - `return_status`：`none`、`requested`、`approved`、`received`、`refunded`、`rejected`。
+- `shipping_address_snapshot`：結帳時保存收件人、電話與完整地址，不受地址簿後續修改或刪除影響。
 
 ### order_items
 
