@@ -27,7 +27,27 @@ class OrderCheckoutService
         $user->loadMissing('businessProfile');
 
         return DB::transaction(function () use ($user, $shippingMethodId, $addressId, $couponCode, $purchaseOrderNumber) {
+            $cartItemIds = CartItem::where('user_id', $user->id)->pluck('id');
+
+            if ($cartItemIds->isEmpty()) {
+                throw new RuntimeException('Cart is empty.');
+            }
+
+            $cartSnapshot = CartItem::whereKey($cartItemIds)->get();
+            $products = Product::whereKey($cartSnapshot->pluck('product_id')->unique())
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $variants = ProductVariant::whereKey($cartSnapshot->pluck('product_variant_id')->filter()->unique())
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
             $cartItems = CartItem::where('user_id', $user->id)
+                ->whereKey($cartItemIds)
                 ->lockForUpdate()
                 ->get();
 
@@ -35,20 +55,12 @@ class OrderCheckoutService
                 throw new RuntimeException('Cart is empty.');
             }
 
-            $products = Product::whereKey($cartItems->pluck('product_id')->unique())
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('id');
-
-            $variants = ProductVariant::whereKey($cartItems->pluck('product_variant_id')->filter()->unique())
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('id');
-
             $subtotal = 0;
             $lines = [];
 
-            foreach ($cartItems as $cartItem) {
+            foreach ($cartItems->groupBy(fn (CartItem $item) => $item->product_id.':'.($item->product_variant_id ?? 0)) as $items) {
+                $cartItem = $items->first();
+                $quantity = $items->sum('quantity');
                 $product = $products->get($cartItem->product_id);
                 $variant = $cartItem->product_variant_id ? $variants->get($cartItem->product_variant_id) : null;
 
@@ -61,12 +73,12 @@ class OrderCheckoutService
                 }
 
                 $availableInventory = $variant ? $variant->inventory : $product->inventory;
-                if ($availableInventory < $cartItem->quantity) {
+                if ($availableInventory < $quantity) {
                     throw new RuntimeException('Only '.$availableInventory.' in stock. Please update quantity.');
                 }
 
-                $unitPrice = $this->productPricingService->calculateUnitPrice($product, $variant, $user, $cartItem->quantity, true);
-                $lineSubtotal = $unitPrice * $cartItem->quantity;
+                $unitPrice = $this->productPricingService->calculateUnitPrice($product, $variant, $user, $quantity, true);
+                $lineSubtotal = $unitPrice * $quantity;
                 $subtotal += $lineSubtotal;
 
                 $lines[$cartItem->id] = [
@@ -74,6 +86,7 @@ class OrderCheckoutService
                     'product' => $product,
                     'variant' => $variant,
                     'unit_price' => $unitPrice,
+                    'quantity' => $quantity,
                     'subtotal' => $lineSubtotal,
                 ];
             }
@@ -123,11 +136,11 @@ class OrderCheckoutService
                 $variant = $line['variant'];
 
                 if ($variant) {
-                    $variant->inventory -= $cartItem->quantity;
+                    $variant->inventory -= $line['quantity'];
                     $variant->save();
                     $inventoryAfter = $variant->inventory;
                 } else {
-                    $product->inventory -= $cartItem->quantity;
+                    $product->inventory -= $line['quantity'];
                     $product->save();
                     $inventoryAfter = $product->inventory;
                 }
@@ -139,7 +152,7 @@ class OrderCheckoutService
                     'product_name' => $product->name,
                     'variant_name' => $variant?->displayName(),
                     'unit_price' => $line['unit_price'],
-                    'quantity' => $cartItem->quantity,
+                    'quantity' => $line['quantity'],
                     'subtotal' => $line['subtotal'],
                 ]);
 
@@ -148,7 +161,7 @@ class OrderCheckoutService
                     'product_variant_id' => $variant?->id,
                     'user_id' => $user->id,
                     'reason' => 'order_created',
-                    'quantity_delta' => -1 * $cartItem->quantity,
+                    'quantity_delta' => -1 * $line['quantity'],
                     'inventory_after' => $inventoryAfter,
                     'reference_type' => get_class($orderItem),
                     'reference_id' => $orderItem->id,

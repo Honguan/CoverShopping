@@ -48,6 +48,7 @@
 
 - 未登入使用 `session_id`，登入後使用 `user_id`。
 - 登入時將同一 session 的購物車合併到會員購物車。
+- owner 欄位必須恰有一個有值；生成的 scope/SKU keys 保證同一購物車、商品與 SKU（包含無 SKU）只有一列。
 
 ### coupons
 
