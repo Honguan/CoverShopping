@@ -63,6 +63,79 @@ class PublicEndpointFlowTest extends TestCase
         $this->assertAuthenticated();
     }
 
+    public function test_login_merges_guest_cart_from_the_pre_authentication_session(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Login Cart Product',
+            'price' => 250,
+            'inventory' => 10,
+            'status' => 'active',
+        ]);
+        CartItem::create([
+            'user_id' => $buyer->id,
+            'product_id' => $product->id,
+            'quantity' => 2,
+        ]);
+
+        $response = $this->post('/cart/items', [
+            'product_id' => $product->id,
+            'quantity' => 3,
+        ])->assertRedirect('/cart');
+        $guestItem = CartItem::whereNull('user_id')->firstOrFail();
+        $this->withCookie(config('session.cookie'), $response->getCookie(config('session.cookie'))->getValue());
+
+        $this->post('/login', [
+            'account' => $buyer->account,
+            'password' => 'password',
+        ])->assertRedirect('/');
+
+        $this->assertDatabaseHas('cart_items', [
+            'user_id' => $buyer->id,
+            'session_id' => null,
+            'product_id' => $product->id,
+            'quantity' => 5,
+        ]);
+        $this->assertDatabaseMissing('cart_items', ['id' => $guestItem->id]);
+    }
+
+    public function test_registration_merges_guest_cart_from_the_pre_authentication_session(): void
+    {
+        [$seller] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Registration Cart Product',
+            'price' => 250,
+            'inventory' => 10,
+            'status' => 'active',
+        ]);
+
+        $response = $this->post('/cart/items', [
+            'product_id' => $product->id,
+            'quantity' => 3,
+        ])->assertRedirect('/cart');
+        $guestItem = CartItem::whereNull('user_id')->firstOrFail();
+        $this->withCookie(config('session.cookie'), $response->getCookie(config('session.cookie'))->getValue());
+
+        $this->post('/register', [
+            'name' => 'Registered Cart Buyer',
+            'account' => 'registered-cart-buyer',
+            'email' => 'registered-cart@example.com',
+            'password' => 'Password12345',
+            'password_confirmation' => 'Password12345',
+        ])->assertRedirect('/');
+
+        $buyer = User::where('account', 'registered-cart-buyer')->firstOrFail();
+        $this->assertDatabaseHas('cart_items', [
+            'user_id' => $buyer->id,
+            'session_id' => null,
+            'product_id' => $product->id,
+            'quantity' => 3,
+        ]);
+        $this->assertDatabaseMissing('cart_items', ['id' => $guestItem->id]);
+    }
+
     public function test_login_attempts_are_rate_limited(): void
     {
         foreach (range(1, 5) as $attempt) {
@@ -228,14 +301,14 @@ class PublicEndpointFlowTest extends TestCase
     {
         $seller = User::create([
             'name' => 'Seller',
-            'account' => 'seller-' . uniqid(),
+            'account' => 'seller-'.uniqid(),
             'password' => 'password',
             'role' => 'seller',
             'status' => 'active',
         ]);
         $buyer = User::create([
             'name' => 'Buyer',
-            'account' => 'buyer-' . uniqid(),
+            'account' => 'buyer-'.uniqid(),
             'password' => 'password',
             'role' => 'customer',
             'status' => 'active',

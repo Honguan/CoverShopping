@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ShoppingCartService
 {
@@ -15,7 +16,7 @@ class ShoppingCartService
         return CartItem::query()
             ->with(['product.images', 'variant'])
             ->when($user, fn ($query) => $query->where('user_id', $user->id))
-            ->when(!$user, fn ($query) => $query->where('session_id', $sessionId))
+            ->when(! $user, fn ($query) => $query->where('session_id', $sessionId))
             ->get();
     }
 
@@ -67,39 +68,45 @@ class ShoppingCartService
 
     public function mergeGuestCartIntoUserCart(User $user, string $sessionId): void
     {
-        $guestItems = CartItem::where('session_id', $sessionId)->with(['product', 'variant'])->get();
+        DB::transaction(function () use ($user, $sessionId): void {
+            $guestItems = CartItem::where('session_id', $sessionId)
+                ->with(['product', 'variant'])
+                ->lockForUpdate()
+                ->get();
 
-        if ($guestItems->isEmpty()) {
-            return;
-        }
+            if ($guestItems->isEmpty()) {
+                return;
+            }
 
-        $existingItems = CartItem::where('user_id', $user->id)
-            ->whereIn('product_id', $guestItems->pluck('product_id')->unique())
-            ->get()
-            ->keyBy(fn (CartItem $item) => $this->cartKey($item->product_id, $item->product_variant_id));
+            $existingItems = CartItem::where('user_id', $user->id)
+                ->whereIn('product_id', $guestItems->pluck('product_id')->unique())
+                ->lockForUpdate()
+                ->get()
+                ->keyBy(fn (CartItem $item) => $this->cartKey($item->product_id, $item->product_variant_id));
 
-        $guestItems->each(function (CartItem $guestItem) use ($user, $existingItems) {
-            $key = $this->cartKey($guestItem->product_id, $guestItem->product_variant_id);
-            $existing = $existingItems->get($key) ?? new CartItem([
-                'user_id' => $user->id,
-                'product_id' => $guestItem->product_id,
-                'product_variant_id' => $guestItem->product_variant_id,
-            ]);
-            $existing->quantity = min(
-                $this->availableInventory($guestItem->product, $guestItem->variant),
-                ($existing->exists ? $existing->quantity : 0) + $guestItem->quantity
-            );
-            $existing->session_id = null;
-            $existing->save();
-            $guestItem->delete();
-        });
+            $guestItems->each(function (CartItem $guestItem) use ($user, $existingItems) {
+                $key = $this->cartKey($guestItem->product_id, $guestItem->product_variant_id);
+                $existing = $existingItems->get($key) ?? new CartItem([
+                    'user_id' => $user->id,
+                    'product_id' => $guestItem->product_id,
+                    'product_variant_id' => $guestItem->product_variant_id,
+                ]);
+                $existing->quantity = min(
+                    $this->availableInventory($guestItem->product, $guestItem->variant),
+                    ($existing->exists ? $existing->quantity : 0) + $guestItem->quantity
+                );
+                $existing->session_id = null;
+                $existing->save();
+                $guestItem->delete();
+            });
+        }, 3);
     }
 
     public function clearItemsForUserOrSession(?User $user, string $sessionId): int
     {
         return CartItem::query()
             ->when($user, fn ($query) => $query->where('user_id', $user->id))
-            ->when(!$user, fn ($query) => $query->where('session_id', $sessionId))
+            ->when(! $user, fn ($query) => $query->where('session_id', $sessionId))
             ->delete();
     }
 
@@ -109,11 +116,11 @@ class ShoppingCartService
         $variant = $cartItem->variant;
         $messages = [];
 
-        if (!$product || $product->status !== 'active') {
+        if (! $product || $product->status !== 'active') {
             return ['Product is inactive. Remove it before checkout.'];
         }
 
-        if ($cartItem->product_variant_id && (!$variant || !$variant->is_active || $variant->product_id !== $product->id)) {
+        if ($cartItem->product_variant_id && (! $variant || ! $variant->is_active || $variant->product_id !== $product->id)) {
             return ['Product variant is unavailable. Remove it and choose again.'];
         }
 
@@ -122,11 +129,11 @@ class ShoppingCartService
         if ($availableInventory < 1) {
             $messages[] = 'Out of stock. Remove it before checkout.';
         } elseif ($availableInventory < $cartItem->quantity) {
-            $messages[] = 'Only ' . $availableInventory . ' in stock. Please update quantity.';
+            $messages[] = 'Only '.$availableInventory.' in stock. Please update quantity.';
         }
 
         if ($user?->canUseBusinessPricing() && $product->business_price !== null && $cartItem->quantity < $product->business_min_quantity) {
-            $messages[] = 'Business minimum quantity: ' . $product->business_min_quantity;
+            $messages[] = 'Business minimum quantity: '.$product->business_min_quantity;
         }
 
         return $messages;
@@ -151,6 +158,6 @@ class ShoppingCartService
 
     private function cartKey(int $productId, ?int $variantId): string
     {
-        return $productId . ':' . ($variantId ?: 'default');
+        return $productId.':'.($variantId ?: 'default');
     }
 }
