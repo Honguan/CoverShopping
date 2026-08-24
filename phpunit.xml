@@ -18,6 +18,7 @@
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <env name="TRUSTED_PROXIES" value="10.0.0.1, 10.0.1.0/24"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
     </php>
 </phpunit>
