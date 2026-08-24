@@ -7,7 +7,7 @@
 | Method | Path | Route name | 說明 |
 | --- | --- | --- | --- |
 | GET | `/` | `catalog.index` | 商品列表、分類、熱門商品、最近瀏覽。 |
-| GET | `/products/{product}` | `catalog.show` | 商品詳情、多圖、SKU、評價、問答與相關商品。 |
+| GET | `/products/{product}` | `catalog.show` | 商品詳情、多圖、SKU、相關商品，以及各 10 筆分頁的評價與問答；頁碼參數為 `reviews_page`、`questions_page`。 |
 
 ## Auth
 

@@ -37,7 +37,9 @@ class ProductCatalogController extends Controller
         $recommendations->recordRecentlyViewed($product, $user?->id, $user ? null : $request->session()->getId());
 
         return view('catalog.show', [
-            'product' => $product->load(['images', 'variants', 'category', 'seller', 'reviews.user', 'questions.user', 'questions.answers.user']),
+            'product' => $product->load(['images', 'variants', 'category', 'seller']),
+            'reviews' => $product->reviews()->with('user')->paginate(10, ['*'], 'reviews_page')->withQueryString(),
+            'questions' => $product->questions()->with(['user', 'answers.user'])->paginate(10, ['*'], 'questions_page')->withQueryString(),
             'relatedProducts' => $recommendations->relatedProducts($product),
         ]);
     }
