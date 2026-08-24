@@ -49,7 +49,7 @@ class ShoppingCartController extends Controller
                 ->find($data['product_variant_id']);
 
             if (! $variant) {
-                return back()->withErrors(['product_variant_id' => 'Product variant is unavailable.'])->withInput();
+                return back()->withErrors(['product_variant_id' => __('ui.product_variant_unavailable')])->withInput();
             }
         }
 
@@ -60,10 +60,10 @@ class ShoppingCartController extends Controller
         }
 
         if ($addedQuantity < 1) {
-            return back()->withErrors(['product_id' => 'Product is out of stock.']);
+            return back()->withErrors(['product_id' => __('ui.product_out_of_stock')]);
         }
 
-        return redirect()->route('cart.index')->with('status', 'Added '.$addedQuantity.' item(s) to cart.');
+        return redirect()->route('cart.index')->with('status', __('ui.cart_item_added', ['quantity' => $addedQuantity]));
     }
 
     public function changeItemQuantity(UpdateCartItemRequest $request, CartItem $cartItem, ShoppingCartService $shoppingCartService)
@@ -72,14 +72,14 @@ class ShoppingCartController extends Controller
 
         $shoppingCartService->updateQuantity($cartItem->load(['product', 'variant']), $request->validated('quantity'));
 
-        return redirect()->route('cart.index')->with('status', 'Cart updated.');
+        return redirect()->route('cart.index')->with('status', __('ui.cart_updated'));
     }
 
     public function clearItems(Request $request, ShoppingCartService $shoppingCartService)
     {
         $shoppingCartService->clearItemsForUserOrSession($request->user(), $request->session()->getId());
 
-        return redirect()->route('cart.index')->with('status', 'Cart cleared.');
+        return redirect()->route('cart.index')->with('status', __('ui.cart_cleared'));
     }
 
     public function removeItem(CartItem $cartItem)
@@ -87,6 +87,6 @@ class ShoppingCartController extends Controller
         $this->authorize('manage', $cartItem);
         $cartItem->delete();
 
-        return redirect()->route('cart.index')->with('status', 'Item removed.');
+        return redirect()->route('cart.index')->with('status', __('ui.cart_item_removed'));
     }
 }

@@ -14,6 +14,6 @@ class ProductQuestionController extends Controller
 
         $questions->ask($request->user(), $product, $request->validated('question'), $request);
 
-        return back()->with('status', 'Question submitted.');
+        return back()->with('status', __('ui.question_submitted'));
     }
 }

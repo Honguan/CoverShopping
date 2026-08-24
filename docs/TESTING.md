@@ -75,6 +75,12 @@ npm.cmd run build
 - 管理員可建立優惠券與配送方式。
 - 管理員可更新退貨狀態並同步訂單 return_status。
 
+### 在地化
+
+- 五種支援語系的 `ui.*` key 與 placeholder 集合必須一致。
+- 結帳錯誤與成功訊息需依目前請求語系顯示。
+- 通知保存 translation key，並在接收者查看時依目前語系翻譯。
+
 ## 目前測試檔
 
 - `FavoriteAndReturnTest.php`：收藏、地址簿、預設地址唯一與接替、再次購買、購物車清空、退貨。

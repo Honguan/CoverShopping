@@ -27,7 +27,7 @@ class UserAuthController extends Controller
         $credentials = $request->validated();
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            return back()->withErrors(['account' => 'Account or password is incorrect.'])->onlyInput('account');
+            return back()->withErrors(['account' => __('ui.invalid_credentials')])->onlyInput('account');
         }
 
         $request->session()->regenerate();
@@ -35,7 +35,7 @@ class UserAuthController extends Controller
         if ($request->user()->status !== 'active') {
             Auth::logout();
 
-            return back()->withErrors(['account' => 'This account is not active.']);
+            return back()->withErrors(['account' => __('ui.account_not_active')]);
         }
 
         $shoppingCartService->mergeGuestCartIntoUserCart($request->user(), $guestSessionId);

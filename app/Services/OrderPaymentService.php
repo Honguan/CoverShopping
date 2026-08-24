@@ -43,7 +43,7 @@ class OrderPaymentService
                 && $order->return_status === 'received';
 
             if (! $isPaid && ! $isFailed && ! $isVoided && ! $isReturned) {
-                throw new RuntimeException('Invalid payment status transition.');
+                throw new RuntimeException(__('ui.invalid_payment_status_transition'));
             }
 
             if ($isFailed || $isVoided) {

@@ -32,7 +32,7 @@ class BusinessAccountController extends Controller
             Notification::create([
                 'user_id' => $admin->id,
                 'type' => 'business_profile_pending',
-                'title' => 'Business profile pending review.',
+                'title' => 'ui.notification_business_profile_pending',
                 'body' => $profile->company_name,
                 'url' => route('admin.dashboard'),
             ]);
@@ -40,6 +40,6 @@ class BusinessAccountController extends Controller
 
         $auditLogService->writeLog('business_profile.submitted', $profile, $data, $request);
 
-        return redirect()->route('business_profile.edit')->with('status', 'Business profile submitted.');
+        return redirect()->route('business_profile.edit')->with('status', __('ui.business_profile_submitted'));
     }
 }

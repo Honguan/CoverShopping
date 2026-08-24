@@ -258,10 +258,10 @@ class FavoriteAndReturnTest extends TestCase
         $response = $this->actingAs($buyer)->get('/cart');
 
         $response->assertOk()
-            ->assertSee('Product is inactive. Remove it before checkout.')
-            ->assertSee('Product variant is unavailable. Remove it and choose again.')
-            ->assertSee('Only 1 in stock. Please update quantity.')
-            ->assertSee('Business minimum quantity: 5')
+            ->assertSee(__('ui.product_inactive_checkout'))
+            ->assertSee(__('ui.product_variant_unavailable_checkout'))
+            ->assertSee(__('ui.stock_quantity_available', ['quantity' => 1]))
+            ->assertSee(__('ui.business_minimum_quantity_short', ['quantity' => 5]))
             ->assertSee('value="'.$address->id.'" selected', false)
             ->assertSee('value="'.$shippingMethod->id.'" selected', false);
     }
@@ -313,7 +313,7 @@ class FavoriteAndReturnTest extends TestCase
 
         $this->actingAs($buyer)->post("/orders/{$order->id}/reorder")
             ->assertRedirect('/cart')
-            ->assertSessionHas('status', 'Added 1 item(s), skipped 1 item(s).');
+            ->assertSessionHas('status', __('ui.reorder_summary', ['added' => 1, 'skipped' => 1]));
 
         $this->assertDatabaseHas('cart_items', [
             'user_id' => $buyer->id,

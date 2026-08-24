@@ -30,7 +30,7 @@ class OrderCheckoutService
             $cartItemIds = CartItem::where('user_id', $user->id)->pluck('id');
 
             if ($cartItemIds->isEmpty()) {
-                throw new RuntimeException('Cart is empty.');
+                throw new RuntimeException(__('ui.cart_empty'));
             }
 
             $cartSnapshot = CartItem::whereKey($cartItemIds)->get();
@@ -52,7 +52,7 @@ class OrderCheckoutService
                 ->get();
 
             if ($cartItems->isEmpty()) {
-                throw new RuntimeException('Cart is empty.');
+                throw new RuntimeException(__('ui.cart_empty'));
             }
 
             $subtotal = 0;
@@ -65,16 +65,16 @@ class OrderCheckoutService
                 $variant = $cartItem->product_variant_id ? $variants->get($cartItem->product_variant_id) : null;
 
                 if (! $product || $product->status !== 'active') {
-                    throw new RuntimeException('Product is inactive. Remove it before checkout.');
+                    throw new RuntimeException(__('ui.product_inactive_checkout'));
                 }
 
                 if ($cartItem->product_variant_id && (! $variant || ! $variant->is_active || $variant->product_id !== $product->id)) {
-                    throw new RuntimeException('Product variant is unavailable. Remove it and choose again.');
+                    throw new RuntimeException(__('ui.product_variant_unavailable_checkout'));
                 }
 
                 $availableInventory = $variant ? $variant->inventory : $product->inventory;
                 if ($availableInventory < $quantity) {
-                    throw new RuntimeException('Only '.$availableInventory.' in stock. Please update quantity.');
+                    throw new RuntimeException(__('ui.stock_quantity_available', ['quantity' => $availableInventory]));
                 }
 
                 $unitPrice = $this->productPricingService->calculateUnitPrice($product, $variant, $user, $quantity, true);

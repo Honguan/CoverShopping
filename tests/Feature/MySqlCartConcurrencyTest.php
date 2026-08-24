@@ -161,7 +161,7 @@ class MySqlCartConcurrencyTest extends TestCase
             app(OrderCheckoutService::class)->createOrderFromCart($user);
             $this->fail('Checkout should reject the cumulative quantity.');
         } catch (RuntimeException $exception) {
-            $this->assertSame('Only 3 in stock. Please update quantity.', $exception->getMessage());
+            $this->assertSame(__('ui.stock_quantity_available', ['quantity' => 3]), $exception->getMessage());
             $this->assertSame(3, $product->fresh()->inventory);
             $this->assertDatabaseCount('orders', 0);
             $this->assertDatabaseCount('cart_items', 2);

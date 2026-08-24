@@ -71,9 +71,9 @@ class ServiceLogicFlowTest extends TestCase
 
         $service = app(ShoppingCartService::class);
 
-        $this->assertSame(['Product is inactive. Remove it before checkout.'], $service->statusMessagesForItem($inactiveItem->load('product', 'variant'), $buyer));
-        $this->assertSame(['Only 1 in stock. Please update quantity.'], $service->statusMessagesForItem($lowStockItem->load('product', 'variant'), $buyer));
-        $this->assertSame(['Business minimum quantity: 5'], $service->statusMessagesForItem($businessItem->load('product', 'variant'), $buyer));
+        $this->assertSame([__('ui.product_inactive_checkout')], $service->statusMessagesForItem($inactiveItem->load('product', 'variant'), $buyer));
+        $this->assertSame([__('ui.stock_quantity_available', ['quantity' => 1])], $service->statusMessagesForItem($lowStockItem->load('product', 'variant'), $buyer));
+        $this->assertSame([__('ui.business_minimum_quantity_short', ['quantity' => 5])], $service->statusMessagesForItem($businessItem->load('product', 'variant'), $buyer));
     }
 
     public function test_coupon_promotion_and_business_price_services_calculate_totals(): void

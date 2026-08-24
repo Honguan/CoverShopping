@@ -52,7 +52,7 @@ class ReturnRequestService
             }
 
             if (! $this->canTransition($returnRequest->status, $status)) {
-                throw new RuntimeException('Invalid return status transition.');
+                throw new RuntimeException(__('ui.invalid_return_status_transition'));
             }
 
             $order = Order::query()->lockForUpdate()->with('items')->findOrFail($returnRequest->order_id);

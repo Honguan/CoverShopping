@@ -22,6 +22,6 @@ class ProductReviewController extends Controller
             $request
         );
 
-        return back()->with('status', 'Review submitted.');
+        return back()->with('status', __('ui.review_submitted'));
     }
 }

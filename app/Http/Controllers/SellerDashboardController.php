@@ -81,7 +81,7 @@ class SellerDashboardController extends Controller
             throw $exception;
         }
 
-        return redirect()->route('seller.products.index')->with('status', 'Product created.');
+        return redirect()->route('seller.products.index')->with('status', __('ui.product_created'));
     }
 
     public function updateProductInfo(CreateProductRequest $request, Product $product, AuditLogService $auditLogService, InventoryAdjustmentService $inventoryAdjustmentService)
@@ -100,7 +100,7 @@ class SellerDashboardController extends Controller
                 $product = Product::query()->lockForUpdate()->findOrFail($product->id);
 
                 if ($product->images()->count() + count($storedPaths) > 8) {
-                    throw ValidationException::withMessages(['images' => 'A product can have at most 8 images.']);
+                    throw ValidationException::withMessages(['images' => __('ui.product_image_limit')]);
                 }
 
                 $product->update($data + [
@@ -128,7 +128,7 @@ class SellerDashboardController extends Controller
             throw $exception;
         }
 
-        return redirect()->route('seller.products.index')->with('status', 'Product updated.');
+        return redirect()->route('seller.products.index')->with('status', __('ui.product_updated'));
     }
 
     public function deleteProductImage(Request $request, Product $product, ProductImage $productImage, AuditLogService $auditLogService)
@@ -156,7 +156,7 @@ class SellerDashboardController extends Controller
 
         Storage::disk('public')->delete($path);
 
-        return redirect()->route('seller.products.index')->with('status', 'Product image removed.');
+        return redirect()->route('seller.products.index')->with('status', __('ui.product_image_removed'));
     }
 
     public function createProductVariant(CreateProductVariantRequest $request, Product $product, AuditLogService $auditLogService)
@@ -175,7 +175,7 @@ class SellerDashboardController extends Controller
 
         $auditLogService->writeLog('seller.product_variant.created', $variant, $data, $request);
 
-        return redirect()->route('seller.products.index')->with('status', 'Product variant created.');
+        return redirect()->route('seller.products.index')->with('status', __('ui.product_variant_created'));
     }
 
     public function answerProductQuestion(AnswerProductQuestionRequest $request, ProductQuestion $productQuestion, AuditLogService $auditLogService)
@@ -193,14 +193,14 @@ class SellerDashboardController extends Controller
         Notification::create([
             'user_id' => $productQuestion->user_id,
             'type' => 'product_question_answered',
-            'title' => 'Your product question was answered.',
+            'title' => 'ui.notification_product_question_answered',
             'body' => $productQuestion->product->name,
             'url' => route('catalog.show', $productQuestion->product),
         ]);
 
         $auditLogService->writeLog('seller.question.answered', $answer, ['question' => $productQuestion->id], $request);
 
-        return redirect()->route('seller.products.index')->with('status', 'Question answered.');
+        return redirect()->route('seller.products.index')->with('status', __('ui.question_answered'));
     }
 
     public function showSellerOrders(Request $request)
@@ -266,7 +266,7 @@ class SellerDashboardController extends Controller
     {
         $shipments->markItemShipped($request->user(), $order, $orderItem, $request);
 
-        return redirect()->route('seller.orders.index')->with('status', 'Order item shipped.');
+        return redirect()->route('seller.orders.index')->with('status', __('ui.order_item_shipped'));
     }
 
     private function storeProductImages(array $images): array
@@ -278,7 +278,7 @@ class SellerDashboardController extends Controller
                 $path = $image->store('products', 'public');
 
                 if (! is_string($path)) {
-                    throw new RuntimeException('Product image storage failed.');
+                    throw new RuntimeException(__('ui.product_image_storage_failed'));
                 }
 
                 $paths[] = $path;

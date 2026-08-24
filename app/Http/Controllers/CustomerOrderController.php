@@ -61,7 +61,7 @@ class CustomerOrderController extends Controller
 
         return redirect()
             ->route('cart.index')
-            ->with('status', 'Added '.$addedQuantity.' item(s), skipped '.$skippedItems.' item(s).');
+            ->with('status', __('ui.reorder_summary', ['added' => $addedQuantity, 'skipped' => $skippedItems]));
     }
 
     public function cancel(Request $request, Order $order, OrderCancellationService $orderCancellationService)

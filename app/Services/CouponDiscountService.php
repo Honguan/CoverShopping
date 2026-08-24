@@ -17,28 +17,28 @@ class CouponDiscountService
 
         $coupon = Coupon::where('code', $code)->lockForUpdate()->first();
 
-        if (!$coupon || !$coupon->is_active) {
-            throw new RuntimeException('Coupon is not available.');
+        if (! $coupon || ! $coupon->is_active) {
+            throw new RuntimeException(__('ui.coupon_unavailable'));
         }
 
         if ($coupon->starts_at && $coupon->starts_at->isFuture()) {
-            throw new RuntimeException('Coupon is not active yet.');
+            throw new RuntimeException(__('ui.coupon_not_active'));
         }
 
         if ($coupon->ends_at && $coupon->ends_at->isPast()) {
-            throw new RuntimeException('Coupon has expired.');
+            throw new RuntimeException(__('ui.coupon_expired'));
         }
 
         if ($coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit) {
-            throw new RuntimeException('Coupon usage limit has been reached.');
+            throw new RuntimeException(__('ui.coupon_usage_limit_reached'));
         }
 
         if ($subtotal < $coupon->minimum_subtotal) {
-            throw new RuntimeException('Order subtotal does not meet coupon minimum.');
+            throw new RuntimeException(__('ui.coupon_minimum_not_met'));
         }
 
         if ($coupon->redemptions()->where('user_id', $user->id)->exists()) {
-            throw new RuntimeException('Coupon has already been used by this user.');
+            throw new RuntimeException(__('ui.coupon_already_used'));
         }
 
         return $coupon;
