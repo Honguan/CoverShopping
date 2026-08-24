@@ -64,7 +64,7 @@
 
     <section class="panel">
         <h2>{{ __('ui.product_reviews') }}</h2>
-        @forelse($product->reviews as $review)
+        @forelse($reviews as $review)
             <article>
                 <strong>{{ $review->user->name }}</strong>
                 <span>{{ str_repeat('★', $review->rating) }}</span>
@@ -73,6 +73,7 @@
         @empty
             <p>{{ __('ui.no_reviews') }}</p>
         @endforelse
+        {{ $reviews->links() }}
     </section>
 
     <section class="panel">
@@ -84,7 +85,7 @@
                 <button type="submit">{{ __('ui.submit_question') }}</button>
             </form>
         @endauth
-        @forelse($product->questions as $question)
+        @forelse($questions as $question)
             <article>
                 <strong>{{ $question->user->name }}</strong>
                 <p>{{ $question->question }}</p>
@@ -95,5 +96,6 @@
         @empty
             <p>{{ __('ui.no_questions') }}</p>
         @endforelse
+        {{ $questions->links() }}
     </section>
 @endsection

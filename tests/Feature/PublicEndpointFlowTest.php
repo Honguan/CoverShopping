@@ -7,8 +7,12 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductQuestion;
+use App\Models\ProductQuestionAnswer;
+use App\Models\ProductReview;
 use App\Models\ProductVariant;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -40,6 +44,65 @@ class PublicEndpointFlowTest extends TestCase
             'product_id' => $product->id,
             'quantity' => 2,
         ]);
+    }
+
+    public function test_product_detail_paginates_reviews_and_questions_independently(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Paginated Feedback Product',
+            'price' => 250,
+            'inventory' => 8,
+            'status' => 'active',
+        ]);
+
+        foreach (range(1, 11) as $index) {
+            ProductReview::create([
+                'product_id' => $product->id,
+                'user_id' => $buyer->id,
+                'rating' => 5,
+                'content' => "Review {$index}",
+                'status' => 'published',
+            ]);
+            $question = ProductQuestion::create([
+                'product_id' => $product->id,
+                'user_id' => $buyer->id,
+                'question' => "Question {$index}",
+                'status' => 'answered',
+            ]);
+            ProductQuestionAnswer::create([
+                'product_question_id' => $question->id,
+                'user_id' => $seller->id,
+                'answer' => "Answer {$index}",
+            ]);
+        }
+
+        $response = $this->get("/products/{$product->id}?reviews_page=2&questions_page=2")->assertOk();
+
+        /** @var LengthAwarePaginator<int, ProductReview> $reviews */
+        $reviews = $response->viewData('reviews');
+        /** @var LengthAwarePaginator<int, ProductQuestion> $questions */
+        $questions = $response->viewData('questions');
+        /** @var ProductReview $review */
+        $review = collect($reviews->items())->first();
+        /** @var ProductQuestion $question */
+        $question = collect($questions->items())->first();
+        /** @var ProductQuestionAnswer $answer */
+        $answer = $question->answers->first();
+
+        $this->assertSame(11, $reviews->total());
+        $this->assertSame(11, $questions->total());
+        $this->assertSame(2, $reviews->currentPage());
+        $this->assertSame(2, $questions->currentPage());
+        $this->assertCount(1, $reviews->items());
+        $this->assertCount(1, $questions->items());
+        $this->assertTrue($review->relationLoaded('user'));
+        $this->assertTrue($question->relationLoaded('user'));
+        $this->assertTrue($question->relationLoaded('answers'));
+        $this->assertTrue($answer->relationLoaded('user'));
+        $this->assertStringContainsString('questions_page=2', $reviews->url(1));
+        $this->assertStringContainsString('reviews_page=2', $questions->url(1));
     }
 
     public function test_cart_rejects_a_missing_variant_for_a_product_with_active_variants(): void
