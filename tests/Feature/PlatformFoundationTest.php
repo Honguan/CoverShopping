@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\AuditLogService;
 use App\Services\OrderCheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -34,14 +35,36 @@ class PlatformFoundationTest extends TestCase
             ->assertHeader('Permissions-Policy', 'camera=(), geolocation=(), microphone=()');
     }
 
-    public function test_trusted_proxy_headers_produce_https_urls(): void
+    public function test_trusted_proxy_headers_control_client_ip_and_https_state(): void
     {
-        $this->get('/', [
+        $response = $this->withServerVariables(['REMOTE_ADDR' => '10.0.1.20'])->get('/', [
             'HTTP_HOST' => 'shop.example.test',
+            'HTTP_X_FORWARDED_FOR' => '203.0.113.10',
             'HTTP_X_FORWARDED_PROTO' => 'https',
-        ])->assertOk();
+        ]);
 
+        $response->assertOk()->assertHeader('Strict-Transport-Security');
+        $this->assertSame('203.0.113.10', request()->ip());
         $this->assertTrue(request()->isSecure());
+    }
+
+    public function test_untrusted_proxy_headers_cannot_spoof_audit_ip_or_https_state(): void
+    {
+        $response = $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.20'])->get('/', [
+            'HTTP_X_FORWARDED_FOR' => '203.0.113.10',
+            'HTTP_X_FORWARDED_PROTO' => 'https',
+        ]);
+
+        $response->assertOk()->assertHeaderMissing('Strict-Transport-Security');
+        $this->assertSame('198.51.100.20', request()->ip());
+        $this->assertFalse(request()->isSecure());
+
+        app(AuditLogService::class)->writeLog('proxy.audit', request: request());
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'proxy.audit',
+            'ip' => '198.51.100.20',
+        ]);
     }
 
     public function test_liveness_does_not_require_application_dependencies(): void
