@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Address;
 use App\Models\CartItem;
 use App\Models\Category;
+use App\Models\Coupon;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Queries\ProductCatalogQuery;
@@ -163,10 +165,138 @@ class MySqlCartConcurrencyTest extends TestCase
             $this->assertSame(3, $product->fresh()->inventory);
             $this->assertDatabaseCount('orders', 0);
             $this->assertDatabaseCount('cart_items', 2);
+            $this->assertDatabaseCount('inventory_movements', 0);
+            $this->assertDatabaseCount('coupon_redemptions', 0);
         } finally {
             $duplicate->delete();
             DB::statement('ALTER TABLE cart_items ADD UNIQUE INDEX cart_identity_unique (scope_key, product_id, variant_key)');
         }
+    }
+
+    public function test_mysql_concurrent_checkouts_create_one_order_and_inventory_movement(): void
+    {
+        $this->requireMySql();
+        [$product, $user] = $this->createProductAndUser();
+        $product->update(['inventory' => 2]);
+        CartItem::create(['user_id' => $user->id, 'product_id' => $product->id, 'quantity' => 2]);
+
+        $this->runConcurrently([
+            [PHP_BINARY, base_path('tests/Support/checkout_worker.php'), (string) $user->id, '-'],
+            [PHP_BINARY, base_path('tests/Support/checkout_worker.php'), (string) $user->id, '-'],
+        ], 1);
+
+        $this->assertDatabaseCount('orders', 1);
+        $this->assertDatabaseCount('order_items', 1);
+        $this->assertDatabaseCount('inventory_movements', 1);
+        $this->assertDatabaseCount('cart_items', 0);
+        $this->assertSame(0, $product->fresh()->inventory);
+    }
+
+    public function test_mysql_concurrent_return_requests_create_one_request(): void
+    {
+        $this->requireMySql();
+        [$product, $user] = $this->createProductAndUser();
+        $order = Order::create([
+            'number' => 'MR-'.uniqid(),
+            'user_id' => $user->id,
+            'subtotal' => 100,
+            'shipping_fee' => 0,
+            'total' => 100,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'completed',
+        ]);
+
+        $this->runConcurrently([
+            [PHP_BINARY, base_path('tests/Support/return_request_worker.php'), (string) $user->id, (string) $order->id],
+            [PHP_BINARY, base_path('tests/Support/return_request_worker.php'), (string) $user->id, (string) $order->id],
+        ], 1);
+
+        $this->assertDatabaseCount('return_requests', 1);
+        $this->assertDatabaseCount('audit_logs', 1);
+        $this->assertDatabaseHas('orders', ['id' => $order->id, 'return_status' => 'requested']);
+        $this->assertSame(10, $product->fresh()->inventory);
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
+    public function test_mysql_concurrent_coupon_checkouts_honor_the_usage_limit(): void
+    {
+        $this->requireMySql();
+        [$firstProduct, $firstUser] = $this->createProductAndUser();
+        $secondUser = User::create([
+            'name' => 'Second Buyer',
+            'account' => 'mysql-second-buyer-'.uniqid(),
+            'password' => 'password',
+            'role' => 'customer',
+            'status' => 'active',
+        ]);
+        $secondProduct = Product::create([
+            'seller_id' => $firstProduct->seller_id,
+            'name' => 'Second Concurrent Product',
+            'price' => 100,
+            'inventory' => 10,
+            'status' => 'active',
+        ]);
+        $coupon = Coupon::create([
+            'code' => 'MYSQL-ONE-'.strtoupper(uniqid()),
+            'name' => 'One use',
+            'type' => 'fixed',
+            'value' => 10,
+            'usage_limit' => 1,
+            'is_active' => true,
+        ]);
+        CartItem::create(['user_id' => $firstUser->id, 'product_id' => $firstProduct->id, 'quantity' => 1]);
+        CartItem::create(['user_id' => $secondUser->id, 'product_id' => $secondProduct->id, 'quantity' => 1]);
+
+        $this->runConcurrently([
+            [PHP_BINARY, base_path('tests/Support/checkout_worker.php'), (string) $firstUser->id, $coupon->code],
+            [PHP_BINARY, base_path('tests/Support/checkout_worker.php'), (string) $secondUser->id, $coupon->code],
+        ], 1);
+
+        $order = Order::query()->firstOrFail();
+        $losingUser = $order->user_id === $firstUser->id ? $secondUser : $firstUser;
+        $losingProduct = $order->user_id === $firstUser->id ? $secondProduct : $firstProduct;
+
+        $this->assertDatabaseCount('orders', 1);
+        $this->assertDatabaseCount('coupon_redemptions', 1);
+        $this->assertDatabaseCount('inventory_movements', 1);
+        $this->assertDatabaseHas('coupons', ['id' => $coupon->id, 'used_count' => 1]);
+        $this->assertDatabaseMissing('orders', ['user_id' => $losingUser->id]);
+        $this->assertDatabaseHas('cart_items', ['user_id' => $losingUser->id, 'product_id' => $losingProduct->id]);
+        $this->assertDatabaseMissing('inventory_movements', ['user_id' => $losingUser->id]);
+        $this->assertSame(10, $losingProduct->fresh()->inventory);
+    }
+
+    public function test_mysql_checkout_rolls_back_all_writes_after_a_movement_failure(): void
+    {
+        $this->requireMySql();
+        [$product, $user] = $this->createProductAndUser();
+        $coupon = Coupon::create([
+            'code' => 'MYSQL-ROLLBACK-'.strtoupper(uniqid()),
+            'name' => 'Rollback',
+            'type' => 'fixed',
+            'value' => 10,
+            'usage_limit' => 1,
+            'is_active' => true,
+        ]);
+        CartItem::create(['user_id' => $user->id, 'product_id' => $product->id, 'quantity' => 2]);
+        DB::statement('ALTER TABLE inventory_movements ADD CONSTRAINT force_checkout_rollback CHECK (quantity_delta >= 0)');
+
+        try {
+            app(OrderCheckoutService::class)->createOrderFromCart($user, couponCode: $coupon->code);
+            $this->fail('Checkout should fail while writing the inventory movement.');
+        } catch (QueryException) {
+            $this->addToAssertionCount(1);
+        } finally {
+            DB::statement('ALTER TABLE inventory_movements DROP CHECK force_checkout_rollback');
+        }
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('order_items', 0);
+        $this->assertDatabaseCount('inventory_movements', 0);
+        $this->assertDatabaseCount('coupon_redemptions', 0);
+        $this->assertDatabaseHas('coupons', ['id' => $coupon->id, 'used_count' => 0]);
+        $this->assertDatabaseHas('cart_items', ['user_id' => $user->id, 'product_id' => $product->id, 'quantity' => 2]);
+        $this->assertSame(10, $product->fresh()->inventory);
     }
 
     private function requireMySql(): void
@@ -191,7 +321,7 @@ class MySqlCartConcurrencyTest extends TestCase
         return sys_get_temp_dir().DIRECTORY_SEPARATOR.'cart-test-'.bin2hex(random_bytes(8));
     }
 
-    private function runConcurrently(array $commands): void
+    private function runConcurrently(array $commands, int $expectedFailures = 0): void
     {
         $barrier = $this->temporaryPath();
         $readyFiles = array_map(fn () => $this->temporaryPath(), $commands);
@@ -211,10 +341,15 @@ class MySqlCartConcurrencyTest extends TestCase
         }
         touch($barrier);
 
+        $failures = [];
         foreach ($processes as $process) {
             $process->wait();
-            $this->assertTrue($process->isSuccessful(), $process->getErrorOutput());
+            if (! $process->isSuccessful()) {
+                $failures[] = $process->getErrorOutput();
+            }
         }
+
+        $this->assertCount($expectedFailures, $failures, implode(PHP_EOL, $failures));
 
         foreach ([$barrier, ...$readyFiles] as $path) {
             @unlink($path);

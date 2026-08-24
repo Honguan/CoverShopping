@@ -87,4 +87,4 @@ npm.cmd run build
 
 CI 的 Docker smoke test 會寫入 `uploads` volume、替換 app 容器，再確認同一檔案仍可由 `/storage/...` 讀取。
 MySQL 工作流會實際並發切換預設地址，驗證會員鎖與唯一索引。
-MySQL 8.4 `EXPLAIN` 搜尋測試確認商品關鍵字查詢使用 `type=fulltext`，且 SQL 不含 `LIKE '%keyword%'`。
+MySQL 8.4 workflow 會驗證購物車唯一性、雙重結帳、重複退貨、優惠券使用上限、交易 rollback、預設地址競態與 full-text `EXPLAIN`；這些測試是 PR 與 `main` 的必要合併條件。

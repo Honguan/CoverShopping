@@ -115,7 +115,7 @@ jobs:
       - run: npm run build
       - run: composer analyse
       - run: composer test
-      - name: Run MySQL cart identity and concurrency tests
+      - name: Run MySQL integration and concurrency tests
         env:
           APP_ENV: testing
           DB_CONNECTION: mysql
