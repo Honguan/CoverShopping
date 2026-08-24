@@ -127,14 +127,28 @@ jobs:
       - run: docker compose up --detach --build
       - run: |
           for attempt in {1..30}; do
-            if curl --fail --silent --show-error http://127.0.0.1:8080/health; then
-              docker compose exec -T app php artisan migrate --force
-              curl --fail --silent --show-error http://127.0.0.1:8080/health
+            if curl --fail --silent --show-error http://127.0.0.1:8080/health/live; then
               break
             fi
             sleep 2
           done
-          curl --fail --silent --show-error http://127.0.0.1:8080/health || {
+          curl --fail --silent --show-error http://127.0.0.1:8080/health/live || {
+            docker compose ps
+            docker compose logs app
+            exit 1
+          }
+          if curl --fail --silent http://127.0.0.1:8080/health/ready; then
+            echo "Readiness unexpectedly succeeded before migrations."
+            exit 1
+          fi
+          docker compose exec -T app php artisan migrate --force
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/health/ready; then
+              break
+            fi
+            sleep 2
+          done
+          curl --fail --silent --show-error http://127.0.0.1:8080/health/ready || {
             docker compose ps
             docker compose logs app
             exit 1
@@ -144,7 +158,7 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:8080/storage/ci-storage-check.txt | grep --fixed-strings storage-ok
           docker compose up --detach --no-deps --force-recreate app
           for attempt in {1..30}; do
-            if curl --fail --silent --show-error http://127.0.0.1:8080/health; then
+            if curl --fail --silent --show-error http://127.0.0.1:8080/health/ready; then
               curl --fail --silent --show-error http://127.0.0.1:8080/storage/ci-storage-check.txt | grep --fixed-strings storage-ok
               exit 0
             fi

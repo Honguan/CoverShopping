@@ -2,6 +2,13 @@
 
 目前沒有 `routes/api.php`；本文件描述 `routes/web.php` 的現行 Web endpoints。這些端點回傳 Blade 頁面或 redirect，不是 JSON REST API。
 
+## Operations
+
+| Method | Path | 說明 |
+| --- | --- | --- |
+| GET | `/health/live` | Liveness；Laravel 可啟動即回傳 200，不檢查外部依賴。 |
+| GET | `/health/ready` | Readiness；migration、核心 schema 與啟用中的 cache/session 依賴可用時回傳 200，否則回傳 503。 |
+
 ## Catalog
 
 | Method | Path | Route name | 說明 |

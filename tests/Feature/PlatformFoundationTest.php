@@ -14,6 +14,8 @@ use App\Services\OrderCheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -42,11 +44,80 @@ class PlatformFoundationTest extends TestCase
         $this->assertTrue(request()->isSecure());
     }
 
-    public function test_dependency_health_endpoint_is_available(): void
+    public function test_liveness_does_not_require_application_dependencies(): void
     {
-        $this->get('/health')
+        config([
+            'cache.default' => 'redis',
+            'session.driver' => 'redis',
+        ]);
+        Redis::shouldReceive('connection')->never();
+
+        $this->getJson('/health/live')
             ->assertOk()
-            ->assertJson(['status' => 'ok']);
+            ->assertJson(['status' => 'up']);
+    }
+
+    public function test_readiness_is_available_after_migrations(): void
+    {
+        $this->getJson('/health/ready')
+            ->assertOk()
+            ->assertJson(['status' => 'ready']);
+    }
+
+    public function test_readiness_rejects_missing_required_schema(): void
+    {
+        Schema::drop('orders');
+
+        $this->getJson('/health/ready')
+            ->assertStatus(503)
+            ->assertExactJson(['status' => 'unavailable']);
+    }
+
+    public function test_readiness_rejects_missing_database_cache_lock_table(): void
+    {
+        config(['cache.default' => 'database']);
+        Schema::drop('cache_locks');
+
+        $this->getJson('/health/ready')
+            ->assertStatus(503)
+            ->assertExactJson(['status' => 'unavailable']);
+    }
+
+    public function test_readiness_rejects_missing_database_session_table(): void
+    {
+        config(['session.driver' => 'database']);
+        Schema::drop('sessions');
+
+        $this->getJson('/health/ready')
+            ->assertStatus(503)
+            ->assertExactJson(['status' => 'unavailable']);
+    }
+
+    public function test_readiness_rejects_unavailable_redis_cache(): void
+    {
+        config([
+            'cache.default' => 'redis',
+            'session.driver' => 'array',
+        ]);
+        Redis::shouldReceive('connection')->once()->with('cache')->andThrow(new RuntimeException('Redis unavailable'));
+
+        $this->getJson('/health/ready')
+            ->assertStatus(503)
+            ->assertExactJson(['status' => 'unavailable']);
+    }
+
+    public function test_readiness_rejects_unavailable_redis_session(): void
+    {
+        config([
+            'cache.default' => 'array',
+            'session.driver' => 'redis',
+            'session.connection' => 'default',
+        ]);
+        Redis::shouldReceive('connection')->once()->with('default')->andThrow(new RuntimeException('Redis unavailable'));
+
+        $this->getJson('/health/ready')
+            ->assertStatus(503)
+            ->assertExactJson(['status' => 'unavailable']);
     }
 
     public function test_visitor_can_switch_to_a_supported_locale(): void
