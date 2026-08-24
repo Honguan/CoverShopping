@@ -81,6 +81,12 @@ npm.cmd run build
 - 結帳錯誤與成功訊息需依目前請求語系顯示。
 - 通知保存 translation key，並在接收者查看時依目前語系翻譯。
 
+### 健康檢查
+
+- Liveness 不依賴資料庫、cache 或 session，外部依賴失敗時仍回傳 200。
+- Readiness 在 migration 或核心 schema 缺失時回傳 503，migration 完成後回傳 200。
+- 實際啟用的 Redis／database cache 與 session 依賴失敗時，readiness 回傳 503。
+
 ## 目前測試檔
 
 - `FavoriteAndReturnTest.php`：收藏、地址簿、預設地址唯一與接替、再次購買、購物車清空、退貨。

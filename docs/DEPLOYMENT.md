@@ -15,6 +15,6 @@
 
 請定期備份 `uploads` volume，並在還原演練中確認 `/storage/...` 可讀取。此本機 volume 方案只適用單一 app 主機；多主機或多副本部署必須將 Laravel `public` disk 改為所有副本共用的物件儲存，不能各自使用本機 volume。
 
-正式環境請將 MySQL、Redis、檔案儲存與 Queue worker 改為受管服務或獨立可水平擴充的工作程序。部署前後使用 `/health` 健康檢查，它會驗證資料庫與正式 Redis 快取，並由 CI 執行 `composer analyse`、`composer test` 與 `npm run build`。
+正式環境請將 MySQL、Redis、檔案儲存與 Queue worker 改為受管服務或獨立可水平擴充的工作程序。`/health/live` 只確認 Laravel 可啟動，供平台判斷是否重啟容器；`/health/ready` 會驗證 migration、核心資料表，以及目前啟用的 cache/session driver，只有回傳 200 才可導入流量。
 
-Compose 的 `app` 服務會自行以 `/health` 執行健康檢查，編排平台可據此等待可用實例後再導入流量。
+部署時先等待 `/health/live`，再由單一工作程序執行 migration，最後等待 `/health/ready` 成功。Compose 的 `app` healthcheck 使用 readiness；migration 前回傳 503 是預期行為。CI 會自動驗證 migration 前失敗、migration 後成功與 cache/session 依賴失敗情境。
