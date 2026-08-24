@@ -14,13 +14,13 @@ class ProductFavoriteController extends Controller
 
         $favorites->add($request->user(), $product);
 
-        return back()->with('status', 'Product added to favorites.');
+        return back()->with('status', __('ui.product_added_to_favorites'));
     }
 
     public function removeProductFromFavorites(Request $request, Product $product, ProductFavoriteService $favorites)
     {
         $favorites->remove($request->user(), $product);
 
-        return back()->with('status', 'Product removed from favorites.');
+        return back()->with('status', __('ui.product_removed_from_favorites'));
     }
 }

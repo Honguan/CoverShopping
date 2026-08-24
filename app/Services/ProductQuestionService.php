@@ -10,9 +10,7 @@ use Illuminate\Http\Request;
 
 class ProductQuestionService
 {
-    public function __construct(private AuditLogService $auditLogService)
-    {
-    }
+    public function __construct(private AuditLogService $auditLogService) {}
 
     public function ask(User $user, Product $product, string $questionText, ?Request $request = null): ProductQuestion
     {
@@ -25,7 +23,7 @@ class ProductQuestionService
         Notification::create([
             'user_id' => $product->seller_id,
             'type' => 'product_question',
-            'title' => 'New product question.',
+            'title' => 'ui.notification_new_product_question',
             'body' => $product->name,
             'url' => route('seller.products.index'),
         ]);

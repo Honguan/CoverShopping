@@ -2,16 +2,19 @@
 
 namespace Tests\Feature;
 
-use App\Models\Category;
-use App\Models\CartItem;
 use App\Models\BusinessProfile;
+use App\Models\CartItem;
+use App\Models\Category;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\OrderCheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Tests\TestCase;
 
 class PlatformFoundationTest extends TestCase
@@ -68,6 +71,42 @@ class PlatformFoundationTest extends TestCase
             $translations = require lang_path("{$locale}/ui.php");
 
             $this->assertSame(array_keys($source), array_keys($translations));
+
+            foreach ($source as $key => $message) {
+                preg_match_all('/:[a-z_]+/i', $message, $sourcePlaceholders);
+                preg_match_all('/:[a-z_]+/i', $translations[$key], $translatedPlaceholders);
+                $this->assertSame($sourcePlaceholders[0], $translatedPlaceholders[0], "Placeholder mismatch for {$locale}.{$key}");
+            }
+        }
+    }
+
+    public function test_each_supported_locale_translates_transaction_feedback(): void
+    {
+        $user = User::create([
+            'name' => 'Localized Checkout User',
+            'account' => 'localized-checkout-user',
+            'password' => 'password',
+            'role' => 'customer',
+            'status' => 'active',
+        ]);
+
+        foreach ([
+            'zh_TW' => ['購物車是空的。', '訂單已建立。'],
+            'en' => ['Cart is empty.', 'Order created.'],
+            'ja' => ['カートは空です。', '注文を作成しました。'],
+            'ko' => ['장바구니가 비어 있습니다.', '주문이 생성되었습니다.'],
+            'es' => ['El carrito está vacío.', 'Pedido creado.'],
+        ] as $locale => [$error, $success]) {
+            app()->setLocale($locale);
+
+            try {
+                app(OrderCheckoutService::class)->createOrderFromCart($user);
+                $this->fail('Empty cart checkout should fail.');
+            } catch (RuntimeException $exception) {
+                $this->assertSame($error, $exception->getMessage());
+            }
+
+            $this->assertSame($success, __('ui.order_created'));
         }
     }
 
@@ -457,18 +496,25 @@ class PlatformFoundationTest extends TestCase
             'role' => 'customer',
             'status' => 'active',
         ]);
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'business_profile_reviewed',
+            'title' => 'ui.notification_business_profile_reviewed',
+            'body' => 'ui.status_approved',
+        ]);
 
         foreach ([
-            'zh_TW' => ['通知中心', '目前沒有通知。'],
-            'en' => ['Notification center', 'No notifications yet.'],
-            'ja' => ['通知センター', '通知はまだありません。'],
-            'ko' => ['알림 센터', '알림이 없습니다.'],
-            'es' => ['Centro de notificaciones', 'Aún no hay notificaciones.'],
-        ] as $locale => [$title, $empty]) {
+            'zh_TW' => ['通知中心', '企業會員資料已審核。', '已核准'],
+            'en' => ['Notification center', 'Business profile reviewed.', 'Approved'],
+            'ja' => ['通知センター', '法人プロフィールが審査されました。', '承認済み'],
+            'ko' => ['알림 센터', '비즈니스 프로필 검토가 완료되었습니다.', '승인됨'],
+            'es' => ['Centro de notificaciones', 'Perfil empresarial revisado.', 'Aprobado'],
+        ] as $locale => [$title, $notificationTitle, $status]) {
             $this->get("/locale/{$locale}")->assertRedirect('/');
             $this->actingAs($user)->get('/notifications')
                 ->assertSee("<h1>{$title}</h1>", false)
-                ->assertSee($empty);
+                ->assertSee($notificationTitle)
+                ->assertSee($status);
         }
     }
 

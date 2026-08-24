@@ -118,7 +118,7 @@ class BackOfficeFlowTest extends TestCase
             $payments->transition($admin, $order, 'failed');
             $this->fail('Expected an invalid payment transition exception.');
         } catch (RuntimeException $exception) {
-            $this->assertSame('Invalid payment status transition.', $exception->getMessage());
+            $this->assertSame(__('ui.invalid_payment_status_transition'), $exception->getMessage());
         }
 
         $this->assertSame('paid', $order->fresh()->payment_status);
@@ -363,7 +363,7 @@ class BackOfficeFlowTest extends TestCase
             ]);
             $this->fail('Expected the simulated storage failure.');
         } catch (RuntimeException $exception) {
-            $this->assertSame('Product image storage failed.', $exception->getMessage());
+            $this->assertSame(__('ui.product_image_storage_failed'), $exception->getMessage());
         }
 
         $this->assertDatabaseMissing('products', ['name' => 'Storage Failed Product']);

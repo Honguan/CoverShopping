@@ -6,8 +6,8 @@
         @forelse($notifications as $notification)
             <article class="row">
                 <div>
-                    <strong>{{ $notification->title }}</strong>
-                    <p>{{ $notification->body }}</p>
+                    <strong>{{ str_starts_with($notification->title, 'ui.') ? __($notification->title) : $notification->title }}</strong>
+                    <p>{{ is_string($notification->body) && str_starts_with($notification->body, 'ui.') ? __($notification->body) : $notification->body }}</p>
                     <small>{{ $notification->created_at }}</small>
                 </div>
                 @if(!$notification->read_at)

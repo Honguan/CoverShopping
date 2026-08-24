@@ -42,11 +42,11 @@ class ShoppingCartService
                 : null;
 
             if ($variant && (! $variant->is_active || $variant->product_id !== $product->id)) {
-                throw new RuntimeException('Product variant is unavailable.');
+                throw new RuntimeException(__('ui.product_variant_unavailable'));
             }
 
             if (! $variant && $product->variants()->exists()) {
-                throw new RuntimeException('Select a product variant.');
+                throw new RuntimeException(__('ui.select_product_variant'));
             }
 
             $availableInventory = $this->availableInventory($product, $variant);
@@ -136,23 +136,23 @@ class ShoppingCartService
         $messages = [];
 
         if (! $product || $product->status !== 'active') {
-            return ['Product is inactive. Remove it before checkout.'];
+            return [__('ui.product_inactive_checkout')];
         }
 
         if ($cartItem->product_variant_id && (! $variant || ! $variant->is_active || $variant->product_id !== $product->id)) {
-            return ['Product variant is unavailable. Remove it and choose again.'];
+            return [__('ui.product_variant_unavailable_checkout')];
         }
 
         $availableInventory = $this->availableInventory($product, $variant);
 
         if ($availableInventory < 1) {
-            $messages[] = 'Out of stock. Remove it before checkout.';
+            $messages[] = __('ui.out_of_stock_checkout');
         } elseif ($availableInventory < $cartItem->quantity) {
-            $messages[] = 'Only '.$availableInventory.' in stock. Please update quantity.';
+            $messages[] = __('ui.stock_quantity_available', ['quantity' => $availableInventory]);
         }
 
         if ($user?->canUseBusinessPricing() && $product->business_price !== null && $cartItem->quantity < $product->business_min_quantity) {
-            $messages[] = 'Business minimum quantity: '.$product->business_min_quantity;
+            $messages[] = __('ui.business_minimum_quantity_short', ['quantity' => $product->business_min_quantity]);
         }
 
         return $messages;

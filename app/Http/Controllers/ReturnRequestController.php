@@ -12,6 +12,6 @@ class ReturnRequestController extends Controller
     {
         $returns->request($request->user(), $order, $request->validated('reason'), $request);
 
-        return back()->with('status', 'Return requested.');
+        return back()->with('status', __('ui.return_requested_message'));
     }
 }
