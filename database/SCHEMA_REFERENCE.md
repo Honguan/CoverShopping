@@ -119,7 +119,6 @@
 ### audit_logs
 
 - 後台與交易關鍵操作紀錄。
-- 可逐步改由 `spatie/laravel-activitylog` 接手。
 
 ## 結帳交易流程
 
