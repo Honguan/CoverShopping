@@ -18,3 +18,5 @@
 正式環境請將 MySQL、Redis、檔案儲存與 Queue worker 改為受管服務或獨立可水平擴充的工作程序。`/health/live` 只確認 Laravel 可啟動，供平台判斷是否重啟容器；`/health/ready` 會驗證 migration、核心資料表，以及目前啟用的 cache/session driver，只有回傳 200 才可導入流量。
 
 部署時先等待 `/health/live`，再由單一工作程序執行 migration，最後等待 `/health/ready` 成功。Compose 的 `app` healthcheck 使用 readiness；migration 前回傳 503 是預期行為。CI 會自動驗證 migration 前失敗、migration 後成功與 cache/session 依賴失敗情境。
+
+MySQL 的 healthcheck 必須使用應用程式帳密，以 TCP 連線至目標資料庫並執行 `SELECT 1`。初始化期間的暫時伺服器只開放 Unix socket，不能用 localhost 的 `mysqladmin ping` 當作就緒判斷；帳密錯誤或資料庫不存在時也必須保持 unhealthy。
