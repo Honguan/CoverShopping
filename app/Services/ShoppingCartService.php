@@ -15,7 +15,7 @@ class ShoppingCartService
     public function getItemsForUserOrSession(?User $user, string $sessionId): Collection
     {
         return CartItem::query()
-            ->with(['product.images', 'variant'])
+            ->with(['product' => fn ($query) => $query->withExists('variants'), 'product.images', 'variant'])
             ->when($user, fn ($query) => $query->where('user_id', $user->id))
             ->when(! $user, fn ($query) => $query->where('session_id', $sessionId))
             ->get();
@@ -110,10 +110,10 @@ class ShoppingCartService
                     'product_id' => $guestItem->product_id,
                     'product_variant_id' => $guestItem->product_variant_id,
                 ]);
-                $existing->quantity = min(
+                $existing->quantity = max(1, min(
                     $this->availableInventory($guestItem->product, $guestItem->variant),
                     ($existing->exists ? $existing->quantity : 0) + $guestItem->quantity
-                );
+                ));
                 $existing->session_id = null;
                 $existing->save();
                 $guestItem->delete();
@@ -141,6 +141,14 @@ class ShoppingCartService
 
         if ($cartItem->product_variant_id && (! $variant || ! $variant->is_active || $variant->product_id !== $product->id)) {
             return [__('ui.product_variant_unavailable_checkout')];
+        }
+
+        if (! $cartItem->product_variant_id && ($product->getAttribute('variants_exists') ?? $product->variants()->exists())) {
+            return [__('ui.select_product_variant')];
+        }
+
+        if ($cartItem->quantity < 1) {
+            $messages[] = __('ui.cart_invalid_quantity');
         }
 
         $availableInventory = $this->availableInventory($product, $variant);

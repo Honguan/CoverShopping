@@ -214,6 +214,7 @@ return [
     'coupon_minimum_not_met' => 'El subtotal del pedido no alcanza el mínimo del cupón.',
     'coupon_already_used' => 'Este usuario ya ha utilizado el cupón.',
     'cart_empty' => 'El carrito está vacío.',
+    'cart_invalid_quantity' => 'Establezca la cantidad de cada artículo del carrito en al menos 1.',
     'product_inactive_checkout' => 'El producto está inactivo. Elimínelo antes de finalizar la compra.',
     'product_variant_unavailable_checkout' => 'La variante del producto no está disponible. Elimínela y vuelva a elegir.',
     'stock_quantity_available' => 'Solo quedan :quantity unidades. Actualice la cantidad.',

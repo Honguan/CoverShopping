@@ -214,6 +214,7 @@ return [
     'coupon_minimum_not_met' => '訂單小計未達優惠券最低金額。',
     'coupon_already_used' => '此使用者已使用過該優惠券。',
     'cart_empty' => '購物車是空的。',
+    'cart_invalid_quantity' => '請將每項購物車商品的數量設為至少 1。',
     'product_inactive_checkout' => '商品未上架，請在結帳前移除。',
     'product_variant_unavailable_checkout' => '商品規格無法使用，請移除後重新選擇。',
     'stock_quantity_available' => '庫存僅剩 :quantity 件，請更新數量。',

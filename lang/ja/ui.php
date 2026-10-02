@@ -214,6 +214,7 @@ return [
     'coupon_minimum_not_met' => '注文小計がクーポンの最低金額に達していません。',
     'coupon_already_used' => 'このクーポンはすでに利用済みです。',
     'cart_empty' => 'カートは空です。',
+    'cart_invalid_quantity' => 'カート内の各商品の数量を1以上にしてください。',
     'product_inactive_checkout' => '商品は無効です。購入手続き前に削除してください。',
     'product_variant_unavailable_checkout' => '商品バリエーションは利用できません。削除して選び直してください。',
     'stock_quantity_available' => '在庫は:quantity点のみです。数量を更新してください。',

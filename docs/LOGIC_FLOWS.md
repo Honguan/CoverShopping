@@ -16,9 +16,9 @@
 ## 購物車
 
 1. 訪客購物車用 `session_id`，會員購物車用 `user_id`。
-2. 登入或註冊後，`ShoppingCartService::mergeGuestCartIntoUserCart` 合併訪客購物車。
+2. 登入或註冊後，`ShoppingCartService::mergeGuestCartIntoUserCart` 合併訪客購物車；缺貨項目保留數量 1 供調整或移除，不產生數量 0。
 3. 商品有啟用 SKU 時必須選擇有效 SKU，並依該 SKU 限制數量；無 SKU 商品才使用主商品庫存。
-4. 購物車頁顯示狀態摘要：下架、SKU 失效、庫存不足、B2B 最低採購量。
+4. 購物車頁顯示狀態摘要：下架、漏選或失效 SKU、無效數量、庫存不足、B2B 最低採購量；商品查詢一併取得啟用 SKU 是否存在，避免逐項查詢。
 5. 清空購物車只會清目前 user 或 session scope。
 6. 加入與訪客合併會依商品鎖定後原子累加；資料庫強制單一 owner 與購物車 identity 唯一。
 
@@ -26,7 +26,7 @@
 
 1. `CheckoutController` 呼叫 `OrderCheckoutService::createOrderFromCart`。
 2. 結帳在 database transaction 內執行。
-3. 商品與 SKU 會在交易內 `lockForUpdate` 後重新驗證，購物車重複資料會按商品／SKU 累計數量後驗證庫存。
+3. 商品與 SKU 會在交易內 `lockForUpdate` 後重新驗證；新增 SKU 後的舊購物車也必須選擇規格。先拒絕任一數量小於 1 的項目，再按商品／SKU 累計重複資料並驗證庫存；不合法時不寫入訂單、庫存或優惠券，也不刪除購物車。
 4. 訂單會保留商品名稱、規格名稱、單價、小計、優惠券、配送方式與收件地址快照；訂單顯示及賣家履約只使用地址快照。
 5. 建立訂單後會扣庫存、寫入 `inventory_movements`，並清除購物車項目。
 6. 付款只能由 unpaid 轉為 paid 或 failed；paid 會進入 processing，failed 會取消訂單並恰好回補一次庫存。未出貨的 paid 訂單可作廢退款並回補一次；已收貨退貨轉為 refunded 時只同步付款狀態。
