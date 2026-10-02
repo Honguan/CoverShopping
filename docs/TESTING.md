@@ -9,6 +9,7 @@ composer install
 composer analyse
 composer test
 npm run build
+npm audit --audit-level=high
 git diff --check
 ```
 
@@ -32,6 +33,8 @@ npm.cmd run build
 `PR metadata` 會檢查分支命名、PR 標題、Issue 是否仍為 open，以及 PR body 不得提前使用自動關閉關鍵字。`Quality` 會對本次變更的 PHP 檔執行 Pint check，並執行前端 build、Larastan、PHPUnit、`git diff --check` 與 Docker smoke test。
 
 `Quality` 另執行 `python3 tests/Support/mysql_healthcheck.py`（Python 3.10+ 與 Docker）。此測試使用 Compose 的實際健康檢查指令，在隔離且無對外 port 的暫存 MySQL 容器中暫停初始化，驗證 socket-only 階段不可就緒、正式 TCP 啟動後才成功，以及錯誤帳密／缺少資料庫會失敗。容器與暫存資料會在測試結束時清除；Windows 可用 `python` 執行。
+
+前端相依套件含開發／建置工具；`Quality` 在 `npm ci` 後執行 `npm audit --audit-level=high`，high／critical 已知弱點會阻止合併。更新時先維持 `package.json` 的既有主版本範圍，驗證乾淨安裝與建置，不以 `--force` 或 overrides 略過相容性。
 
 ## 測試範圍
 

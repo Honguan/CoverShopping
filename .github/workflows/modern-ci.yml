@@ -108,6 +108,8 @@ jobs:
 
       - run: composer install --no-interaction --prefer-dist
       - run: npm ci
+      - name: Audit frontend build dependencies
+        run: npm audit --audit-level=high
       - run: cp .env.example .env
       - run: php artisan key:generate
       - name: Check changed PHP formatting
