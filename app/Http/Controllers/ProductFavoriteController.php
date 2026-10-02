@@ -3,11 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Queries\ProductCatalogQuery;
 use App\Services\ProductFavoriteService;
 use Illuminate\Http\Request;
 
 class ProductFavoriteController extends Controller
 {
+    public function showFavoriteList(Request $request, ProductCatalogQuery $products)
+    {
+        return view('favorites.index', [
+            'products' => $products->paginateFavorites($request->user()),
+        ]);
+    }
+
     public function addProductToFavorites(Request $request, Product $product, ProductFavoriteService $favorites)
     {
         abort_unless($product->status === 'active', 404);

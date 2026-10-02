@@ -49,6 +49,7 @@
 | PATCH | `/addresses/{address}/default` | `addresses.default` | 原子切換預設地址；每位會員最多一筆。 |
 | DELETE | `/addresses/{address}` | `addresses.destroy` | 刪除自己的地址；刪除預設地址時由最新剩餘地址接替。 |
 | POST | `/products/{product}/favorite` | `favorites.store` | 收藏商品。 |
+| GET | `/favorites` | `favorites.index` | 登入會員自己的收藏清單，每頁 24 筆、依收藏時間與 ID 遞減排序；下架商品保留移除功能，不提供購買控制。 |
 | DELETE | `/products/{product}/favorite` | `favorites.destroy` | 取消收藏。 |
 | POST | `/products/{product}/reviews` | `reviews.store` | 對已完成訂單商品評價。 |
 | POST | `/products/{product}/questions` | `questions.store` | 對商品提問。 |

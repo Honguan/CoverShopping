@@ -22,7 +22,7 @@
         <form action="{{ route('cart.items.store') }}" method="post">
             @csrf
             <input type="hidden" name="product_id" value="{{ $product->id }}">
-            <input type="number" name="quantity" value="1" min="1" max="{{ max(1, $inventory) }}">
+            <input type="number" name="quantity" aria-label="{{ __('ui.quantity') }}" value="1" min="1" max="{{ max(1, $inventory) }}">
             <button type="submit" @disabled($inventory < 1)>{{ __('ui.add_to_cart') }}</button>
         </form>
     @endif

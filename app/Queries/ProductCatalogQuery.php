@@ -4,12 +4,25 @@ namespace App\Queries;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ProductCatalogQuery
 {
+    public function paginateFavorites(User $user): LengthAwarePaginator
+    {
+        return Product::query()
+            ->select('products.*')
+            ->join('favorites', 'favorites.product_id', '=', 'products.id')
+            ->where('favorites.user_id', $user->id)
+            ->with(['primaryImage', 'variants'])
+            ->orderByDesc('favorites.created_at')
+            ->orderByDesc('favorites.id')
+            ->paginate(24);
+    }
+
     public function paginate(Request $request, int $perPage = 24): LengthAwarePaginator
     {
         $keyword = trim((string) $request->string('q'));

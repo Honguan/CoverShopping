@@ -46,6 +46,7 @@ Route::get('/addresses', [AddressController::class, 'showAddresses'])->middlewar
 Route::post('/addresses', [AddressController::class, 'storeAddress'])->middleware('auth')->name('addresses.store');
 Route::patch('/addresses/{address}/default', [AddressController::class, 'setDefaultAddress'])->middleware('auth')->name('addresses.default');
 Route::delete('/addresses/{address}', [AddressController::class, 'deleteAddress'])->middleware('auth')->name('addresses.destroy');
+Route::get('/favorites', [ProductFavoriteController::class, 'showFavoriteList'])->middleware('auth')->name('favorites.index');
 Route::post('/products/{product}/favorite', [ProductFavoriteController::class, 'addProductToFavorites'])->middleware('auth')->name('favorites.store');
 Route::delete('/products/{product}/favorite', [ProductFavoriteController::class, 'removeProductFromFavorites'])->middleware('auth')->name('favorites.destroy');
 Route::post('/products/{product}/reviews', [ProductReviewController::class, 'createProductReview'])->middleware('auth')->name('reviews.store');

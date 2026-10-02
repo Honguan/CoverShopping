@@ -19,6 +19,7 @@
             @endforeach
             <a href="{{ route('cart.index') }}">{{ __('ui.cart') }}</a>
             @auth
+                <a href="{{ route('favorites.index') }}">{{ __('ui.favorites') }}</a>
                 <a href="{{ route('notifications.index') }}">{{ __('ui.notifications') }}</a>
                 <a href="{{ route('addresses.index') }}">{{ __('ui.addresses') }}</a>
                 <a href="{{ route('business_profile.edit') }}">{{ __('ui.business_account') }}</a>
