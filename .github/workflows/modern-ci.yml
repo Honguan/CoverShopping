@@ -80,7 +80,7 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -pcovershopping-root"
+          --health-cmd="mysql --protocol=TCP -h127.0.0.1 -ucovershopping -pcovershopping covershopping_test --execute='SELECT 1'"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=20
@@ -124,6 +124,8 @@ jobs:
           DB_DATABASE: covershopping_test
         run: php artisan test tests/Feature/MySqlCartConcurrencyTest.php
       - run: git diff --check
+      - name: Verify MySQL readiness during initialization
+        run: python3 tests/Support/mysql_healthcheck.py
       - run: docker compose up --detach --build
       - run: |
           for attempt in {1..30}; do
