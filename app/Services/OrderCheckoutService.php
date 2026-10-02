@@ -35,6 +35,7 @@ class OrderCheckoutService
 
             $cartSnapshot = CartItem::whereKey($cartItemIds)->get();
             $products = Product::whereKey($cartSnapshot->pluck('product_id')->unique())
+                ->withExists('variants')
                 ->orderBy('id')
                 ->lockForUpdate()
                 ->get()
@@ -55,6 +56,10 @@ class OrderCheckoutService
                 throw new RuntimeException(__('ui.cart_empty'));
             }
 
+            if ($cartItems->contains(fn (CartItem $item) => $item->quantity < 1)) {
+                throw new RuntimeException(__('ui.cart_invalid_quantity'));
+            }
+
             $subtotal = 0;
             $lines = [];
 
@@ -70,6 +75,10 @@ class OrderCheckoutService
 
                 if ($cartItem->product_variant_id && (! $variant || ! $variant->is_active || $variant->product_id !== $product->id)) {
                     throw new RuntimeException(__('ui.product_variant_unavailable_checkout'));
+                }
+
+                if (! $cartItem->product_variant_id && $product->getAttribute('variants_exists')) {
+                    throw new RuntimeException(__('ui.select_product_variant'));
                 }
 
                 $availableInventory = $variant ? $variant->inventory : $product->inventory;

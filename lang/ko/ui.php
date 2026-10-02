@@ -214,6 +214,7 @@ return [
     'coupon_minimum_not_met' => '주문 소계가 쿠폰 최소 금액에 미달합니다.',
     'coupon_already_used' => '이 사용자는 이미 쿠폰을 사용했습니다.',
     'cart_empty' => '장바구니가 비어 있습니다.',
+    'cart_invalid_quantity' => '장바구니에 있는 각 상품의 수량을 1개 이상으로 설정하세요.',
     'product_inactive_checkout' => '상품이 비활성 상태입니다. 결제 전에 제거하세요.',
     'product_variant_unavailable_checkout' => '상품 옵션을 사용할 수 없습니다. 제거한 뒤 다시 선택하세요.',
     'stock_quantity_available' => '재고가 :quantity개만 남았습니다. 수량을 수정하세요.',

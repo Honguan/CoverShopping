@@ -214,6 +214,7 @@ return [
     'coupon_minimum_not_met' => 'Order subtotal does not meet coupon minimum.',
     'coupon_already_used' => 'Coupon has already been used by this user.',
     'cart_empty' => 'Cart is empty.',
+    'cart_invalid_quantity' => 'Set each cart item quantity to at least 1.',
     'product_inactive_checkout' => 'Product is inactive. Remove it before checkout.',
     'product_variant_unavailable_checkout' => 'Product variant is unavailable. Remove it and choose again.',
     'stock_quantity_available' => 'Only :quantity in stock. Please update quantity.',
