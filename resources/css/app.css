@@ -49,18 +49,20 @@ label {
     color: #fff;
     display: grid;
     gap: 16px;
-    grid-template-columns: auto minmax(220px, 1fr) auto;
+    grid-template-columns: auto minmax(220px, 1fr) minmax(0, 2fr);
     padding: 14px 24px;
 }
 
 .topbar a,
 .topbar button {
     color: #fff;
+    white-space: nowrap;
 }
 
 .topbar nav {
     align-items: center;
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
 }
 
@@ -218,6 +220,29 @@ label {
     width: auto;
 }
 
+.pagination {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pagination a,
+.pagination span {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+.pagination [aria-current="page"] {
+    background: #155eef;
+    color: #fff;
+}
+
+.pagination [aria-disabled="true"] {
+    color: #64748b;
+}
+
 @media (max-width: 760px) {
     .topbar,
     .product-detail,
@@ -225,7 +250,6 @@ label {
         grid-template-columns: 1fr;
     }
 
-    .topbar nav,
     .row,
     .filters {
         align-items: stretch;

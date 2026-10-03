@@ -23,6 +23,7 @@
                     <button type="submit">{{ __('ui.update') }}</button>
                 </form>
             @endforeach
+            {{ $users->links() }}
         </div>
         <div class="panel">
             <h2>{{ __('ui.business_profile_review') }}</h2>
@@ -40,6 +41,7 @@
                     <button type="submit">{{ __('ui.update') }}</button>
                 </form>
             @endforeach
+            {{ $businessProfiles->links() }}
         </div>
         <div class="panel">
             <h2>{{ __('ui.product_approval') }}</h2>
@@ -56,6 +58,7 @@
                     <button type="submit">{{ __('ui.update') }}</button>
                 </form>
             @endforeach
+            {{ $products->links() }}
         </div>
         <div class="panel">
             <h2>{{ __('ui.payment_status') }}</h2>
@@ -81,6 +84,7 @@
                     <button type="submit">{{ __('ui.update') }}</button>
                 </form>
             @endforeach
+            {{ $orders->links() }}
         </div>
         <div class="panel">
             <h2>{{ __('ui.coupon') }}</h2>
@@ -101,6 +105,7 @@
             @foreach($coupons as $coupon)
                 <p>{{ $coupon->code }}：{{ $coupon->name }}，{{ __('ui.used_count', ['count' => $coupon->used_count]) }}</p>
             @endforeach
+            {{ $coupons->links() }}
         </div>
         <div class="panel">
             <h2>{{ __('ui.return_requests') }}</h2>
@@ -118,6 +123,7 @@
                     <button type="submit">{{ __('ui.update') }}</button>
                 </form>
             @endforeach
+            {{ $returnRequests->links() }}
         </div>
         <div class="panel">
             <h2>{{ __('ui.shipping_method') }}</h2>
@@ -132,6 +138,7 @@
             @foreach($shippingMethods as $shippingMethod)
                 <p>{{ $shippingMethod->name }}：${{ number_format($shippingMethod->fee) }}</p>
             @endforeach
+            {{ $shippingMethods->links() }}
         </div>
     </section>
 @endsection
