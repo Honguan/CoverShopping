@@ -8,5 +8,6 @@
         <label>{{ __('ui.password') }}<input name="password" type="password" required></label>
         <label class="inline"><input name="remember" type="checkbox" value="1"> {{ __('ui.remember_me') }}</label>
         <button type="submit">{{ __('ui.login') }}</button>
+        <a href="{{ route('password.request') }}">{{ __('passwords.forgot_title') }}</a>
     </form>
 @endsection

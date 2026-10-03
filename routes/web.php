@@ -6,6 +6,7 @@ use App\Http\Controllers\BusinessAccountController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CustomerOrderController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProductCatalogController;
 use App\Http\Controllers\ProductFavoriteController;
 use App\Http\Controllers\ProductQuestionController;
@@ -28,6 +29,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [UserAuthController::class, 'loginUser'])->middleware('throttle:login')->name('login.store');
     Route::get('/register', [UserAuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [UserAuthController::class, 'registerUser'])->middleware('throttle:register')->name('register.store');
+    Route::get('/forgot-password', [PasswordResetController::class, 'showForgotPasswordForm'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetPasswordForm'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('throttle:5,1')->name('password.update');
 });
 
 Route::post('/logout', [UserAuthController::class, 'logoutUser'])->middleware('auth')->name('logout');
