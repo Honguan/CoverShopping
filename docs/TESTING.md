@@ -103,7 +103,16 @@ npm.cmd run build
 - `ServiceLogicFlowTest.php`：購物車狀態、價格、促銷、推薦。
 - `RoleMiddlewareTest.php`：角色 middleware 基本阻擋。
 - `ProductCatalogSearchTest.php`：Meilisearch 的 active、分類、價格與排序合約。
+- `AccountMaintenanceTest.php`：地址編輯擁有者與輸入驗證、預設狀態與歷史快照保留，以及通知重訪與首次已讀時間。
+- `AdminDashboardPaginationTest.php`：七組獨立分頁、同時間穩定排序、查詢參數保留與角色權限。
+- `PaginationRenderingTest.php`：共用分頁的五語系文字、頁碼與查詢參數、首末頁停用方向，以及單頁不顯示導覽。
+- `PasswordRecoveryTest.php`：訪客表單與登入阻擋、申請提示一致性、一次性與過期 token、密碼規則、敏感 old input 排除、節流、五語系實際郵件內容與固定 APP_URL。
+
+`Tests\TestCase::actingAs()` 會同步設定原生 Session 密碼雜湊，使測試切換使用者等同重新登入。需要驗證舊登入失效時，請保存並還原原 Session，而非再次 `actingAs()`；`PasswordRecoveryTest` 已覆蓋此情境與登入／註冊尚未跟隨 redirect 的初始化。
+- `CouponCreationTest.php`：正規化後的重複優惠碼驗證、正常新增與錯誤型別拒絕。
+- `ProductReviewSubmissionTest.php`：重複評價保留首次內容、audit 一次、權限與訂單頁 eager loading。
+- `ReturnRefundConsistencyTest.php`：兩個退款入口同步、既有不一致狀態補齊、庫存與 audit 冪等、非法轉移回滾。
 
 CI 的 Docker smoke test 會寫入 `uploads` volume、替換 app 容器，再確認同一檔案仍可由 `/storage/...` 讀取。
 MySQL 工作流會實際並發切換預設地址，驗證會員鎖與唯一索引。
-MySQL 8.4 workflow 會驗證購物車唯一性、雙重結帳、重複退貨、優惠券使用上限、交易 rollback、預設地址競態與 full-text `EXPLAIN`；這些測試是 PR 與 `main` 的必要合併條件。
+MySQL 8.4 workflow 會驗證購物車唯一性、雙重結帳、重複退貨、優惠券使用上限、交易 rollback、預設地址競態、併發評價與退款同步，以及 full-text `EXPLAIN`；這些測試是 PR 與 `main` 的必要合併條件。

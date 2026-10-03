@@ -24,6 +24,10 @@
 | POST | `/login` | `login.store` | 登入並合併訪客購物車。 |
 | GET | `/register` | `register` | 註冊頁。 |
 | POST | `/register` | `register.store` | 建立 customer 帳號並登入。 |
+| GET | `/forgot-password` | `password.request` | 訪客申請密碼復原。 |
+| POST | `/forgot-password` | `password.email` | 依 email 寄送復原連結；成功與不存在帳號使用同一提示，並限制頻率。 |
+| GET | `/reset-password/{token}` | `password.reset` | 訪客輸入新密碼。 |
+| POST | `/reset-password` | `password.update` | 驗證一次性 token、新密碼與確認欄位；成功後返回登入頁。 |
 | POST | `/logout` | `logout` | 登出並重建 session token。 |
 
 ## Cart / Checkout / Orders
@@ -46,16 +50,17 @@
 | --- | --- | --- | --- |
 | GET | `/addresses` | `addresses.index` | 地址簿。 |
 | POST | `/addresses` | `addresses.store` | 新增地址，可設為預設。 |
+| PATCH | `/addresses/{address}` | `addresses.update` | 編輯自己的既有地址；保留預設狀態及歷史訂單地址快照。 |
 | PATCH | `/addresses/{address}/default` | `addresses.default` | 原子切換預設地址；每位會員最多一筆。 |
 | DELETE | `/addresses/{address}` | `addresses.destroy` | 刪除自己的地址；刪除預設地址時由最新剩餘地址接替。 |
 | POST | `/products/{product}/favorite` | `favorites.store` | 收藏商品。 |
 | GET | `/favorites` | `favorites.index` | 登入會員自己的收藏清單，每頁 24 筆、依收藏時間與 ID 遞減排序；下架商品保留移除功能，不提供購買控制。 |
 | DELETE | `/products/{product}/favorite` | `favorites.destroy` | 取消收藏。 |
-| POST | `/products/{product}/reviews` | `reviews.store` | 對已完成訂單商品評價。 |
+| POST | `/products/{product}/reviews` | `reviews.store` | 對已出貨或完成訂單商品評價；重送保留首次評價，不新增或覆寫。 |
 | POST | `/products/{product}/questions` | `questions.store` | 對商品提問。 |
 | POST | `/orders/{order}/returns` | `returns.store` | 對已出貨或完成訂單申請退貨。 |
 | GET | `/notifications` | `notifications.index` | 會員通知列表。 |
-| PATCH | `/notifications/{notification}/read` | `notifications.read` | 標記自己的通知為已讀。 |
+| PATCH | `/notifications/{notification}/read` | `notifications.read` | 標記自己的通知為已讀，保留首次讀取時間；已讀通知可從列表重新開啟。 |
 | GET | `/business-profile` | `business_profile.edit` | 企業資料頁。 |
 | POST | `/business-profile` | `business_profile.store` | 送出 B2B 企業審核資料。 |
 
@@ -81,7 +86,7 @@
 
 | Method | Path | Route name | 說明 |
 | --- | --- | --- | --- |
-| GET | `/admin/dashboard` | `admin.dashboard` | 管理員總覽。 |
+| GET | `/admin/dashboard` | `admin.dashboard` | 七組管理清單各自每頁 10 筆；使用 `users_page`、`products_page`、`orders_page`、`coupons_page`、`shipping_methods_page`、`returns_page`、`business_profiles_page` 獨立頁碼。 |
 | PATCH | `/admin/users/{user}/status` | `admin.users.status` | 更新會員狀態或角色。 |
 | PATCH | `/admin/business-profiles/{businessProfile}` | `admin.business_profiles.status` | 審核企業資料。 |
 | PATCH | `/admin/products/{product}/status` | `admin.products.status` | 審核商品狀態。 |
