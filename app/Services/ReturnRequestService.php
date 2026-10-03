@@ -45,7 +45,8 @@ class ReturnRequestService
         abort_unless($admin->isRole('admin'), 403);
 
         return DB::transaction(function () use ($admin, $returnRequest, $status, $request) {
-            $returnRequest = ReturnRequest::query()->lockForUpdate()->findOrFail($returnRequest->id);
+            $order = Order::query()->lockForUpdate()->with('items')->findOrFail($returnRequest->order_id);
+            $returnRequest = $order->returnRequests()->lockForUpdate()->findOrFail($returnRequest->id);
 
             if ($returnRequest->status === $status) {
                 return $returnRequest;
@@ -55,10 +56,10 @@ class ReturnRequestService
                 throw new RuntimeException(__('ui.invalid_return_status_transition'));
             }
 
-            $order = Order::query()->lockForUpdate()->with('items')->findOrFail($returnRequest->order_id);
-
             if ($status === 'refunded') {
                 $this->orderPaymentService->transition($admin, $order, 'refunded', $request);
+
+                return $returnRequest->refresh();
             }
 
             $returnUpdates = ['status' => $status];
