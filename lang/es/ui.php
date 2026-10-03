@@ -163,6 +163,7 @@ return [
     'contact_phone' => 'Teléfono de contacto',
     'billing_email' => 'Correo de facturación',
     'add_shipping_address' => 'Añadir dirección de envío',
+    'edit_address' => 'Editar dirección',
     'recipient_name' => 'Nombre del destinatario',
     'phone' => 'Teléfono',
     'postal_code' => 'Código postal',

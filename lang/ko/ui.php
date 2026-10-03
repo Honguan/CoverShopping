@@ -163,6 +163,7 @@ return [
     'contact_phone' => '연락처 전화번호',
     'billing_email' => '청구 이메일',
     'add_shipping_address' => '배송지 주소 추가',
+    'edit_address' => '주소 수정',
     'recipient_name' => '수령인 이름',
     'phone' => '전화번호',
     'postal_code' => '우편번호',

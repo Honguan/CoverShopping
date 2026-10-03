@@ -27,6 +27,17 @@ class AddressController extends Controller
         return redirect()->route('addresses.index')->with('status', __('ui.address_saved'));
     }
 
+    public function updateAddress(StoreAddressRequest $request, Address $address, AddressBookService $addressBookService)
+    {
+        abort_unless($address->user_id === $request->user()->id, 403);
+
+        $data = $request->validated();
+        unset($data['is_default']);
+        $addressBookService->updateAddress($request->user(), $address, $data);
+
+        return redirect()->route('addresses.index')->with('status', __('ui.address_saved'));
+    }
+
     public function setDefaultAddress(Request $request, Address $address, AddressBookService $addressBookService)
     {
         abort_unless($address->user_id === $request->user()->id, 403);

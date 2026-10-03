@@ -163,6 +163,7 @@ return [
     'contact_phone' => '連絡先電話番号',
     'billing_email' => '請求先メールアドレス',
     'add_shipping_address' => '配送先住所を追加',
+    'edit_address' => '住所を編集',
     'recipient_name' => '受取人名',
     'phone' => '電話番号',
     'postal_code' => '郵便番号',

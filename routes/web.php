@@ -44,6 +44,7 @@ Route::post('/orders/{order}/reorder', [CustomerOrderController::class, 'reorder
 Route::post('/orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->middleware('auth')->name('orders.cancel');
 Route::get('/addresses', [AddressController::class, 'showAddresses'])->middleware('auth')->name('addresses.index');
 Route::post('/addresses', [AddressController::class, 'storeAddress'])->middleware('auth')->name('addresses.store');
+Route::patch('/addresses/{address}', [AddressController::class, 'updateAddress'])->middleware('auth')->name('addresses.update');
 Route::patch('/addresses/{address}/default', [AddressController::class, 'setDefaultAddress'])->middleware('auth')->name('addresses.default');
 Route::delete('/addresses/{address}', [AddressController::class, 'deleteAddress'])->middleware('auth')->name('addresses.destroy');
 Route::get('/favorites', [ProductFavoriteController::class, 'showFavoriteList'])->middleware('auth')->name('favorites.index');

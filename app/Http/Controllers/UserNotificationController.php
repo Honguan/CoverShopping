@@ -18,7 +18,7 @@ class UserNotificationController extends Controller
     {
         $this->authorize('view', $notification);
 
-        $notification->update(['read_at' => now()]);
+        Notification::whereKey($notification->id)->whereNull('read_at')->update(['read_at' => now()]);
 
         return redirect($notification->url ?: route('notifications.index'));
     }

@@ -16,6 +16,8 @@
                         @method('PATCH')
                         <button type="submit">{{ __('ui.view_notification') }}</button>
                     </form>
+                @elseif($notification->url)
+                    <a href="{{ $notification->url }}">{{ __('ui.view_notification') }}</a>
                 @endif
             </article>
         @empty

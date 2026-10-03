@@ -24,6 +24,18 @@ class AddressBookService
         }, 3);
     }
 
+    public function updateAddress(User $user, Address $address, array $data): void
+    {
+        DB::transaction(function () use ($user, $address, $data): void {
+            User::query()->lockForUpdate()->findOrFail($user->id);
+            Address::query()
+                ->where('user_id', $user->id)
+                ->lockForUpdate()
+                ->findOrFail($address->id)
+                ->update($data);
+        }, 3);
+    }
+
     public function setDefaultAddress(User $user, Address $address): void
     {
         DB::transaction(function () use ($user, $address): void {

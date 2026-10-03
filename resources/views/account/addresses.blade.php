@@ -27,6 +27,20 @@
                         <span class="badge">{{ __('ui.default_address') }}</span>
                     @endif
                 </div>
+                <details>
+                    <summary>{{ __('ui.edit_address') }}</summary>
+                    <form class="stack" action="{{ route('addresses.update', $address) }}" method="post">
+                        @csrf
+                        @method('PATCH')
+                        <label>{{ __('ui.recipient_name') }}<input name="recipient_name" value="{{ $address->recipient_name }}" maxlength="80" required></label>
+                        <label>{{ __('ui.phone') }}<input name="phone" value="{{ $address->phone }}" maxlength="40" required></label>
+                        <label>{{ __('ui.postal_code') }}<input name="postal_code" value="{{ $address->postal_code }}" maxlength="20"></label>
+                        <label>{{ __('ui.city') }}<input name="city" value="{{ $address->city }}" maxlength="80" required></label>
+                        <label>{{ __('ui.district') }}<input name="district" value="{{ $address->district }}" maxlength="80"></label>
+                        <label>{{ __('ui.address_line') }}<input name="address_line" value="{{ $address->address_line }}" maxlength="255" required></label>
+                        <button type="submit">{{ __('ui.update') }}</button>
+                    </form>
+                </details>
                 <div class="inline">
                     @unless($address->is_default)
                         <form action="{{ route('addresses.default', $address) }}" method="post">

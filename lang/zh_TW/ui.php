@@ -163,6 +163,7 @@ return [
     'contact_phone' => '聯絡電話',
     'billing_email' => '帳務 Email',
     'add_shipping_address' => '新增收件地址',
+    'edit_address' => '編輯地址',
     'recipient_name' => '收件人',
     'phone' => '電話',
     'postal_code' => '郵遞區號',

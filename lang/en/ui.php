@@ -163,6 +163,7 @@ return [
     'contact_phone' => 'Contact phone',
     'billing_email' => 'Billing email',
     'add_shipping_address' => 'Add shipping address',
+    'edit_address' => 'Edit address',
     'recipient_name' => 'Recipient name',
     'phone' => 'Phone',
     'postal_code' => 'Postal code',
