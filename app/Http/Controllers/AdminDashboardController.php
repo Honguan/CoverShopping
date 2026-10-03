@@ -95,7 +95,6 @@ class AdminDashboardController extends Controller
     public function createCoupon(CreateCouponRequest $request, AuditLogService $auditLogService)
     {
         $data = $request->validated();
-        $data['code'] = strtoupper($data['code']);
         $data['minimum_subtotal'] = $data['minimum_subtotal'] ?? 0;
         $data['is_active'] = $request->boolean('is_active', true);
 
