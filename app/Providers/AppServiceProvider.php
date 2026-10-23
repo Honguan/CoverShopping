@@ -37,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
             ->salutation(__('passwords.mail_salutation', ['name' => config('app.name')])));
 
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by(strtolower((string) $request->input('account')).'|'.$request->ip()));
-        RateLimiter::for('register', fn (Request $request) => Limit::perMinute(3)->by($request->ip()));
+        RateLimiter::for('product-question', fn (Request $request) => Limit::perMinute(5)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
+        RateLimiter::for('register',fn (Request $request) => Limit::perMinute(3)->by($request->ip()));
     }
 }

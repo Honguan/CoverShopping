@@ -274,6 +274,19 @@ class BackOfficeFlowTest extends TestCase
         $this->assertSame(12, $product->fresh()->inventory);
     }
 
+    public function test_product_questions_are_rate_limited_per_member(): void
+    {
+        [$seller, $buyer] = $this->createUsers();
+        $product = Product::create(['seller_id' => $seller->id, 'name' => 'Chatty', 'price' => 100, 'inventory' => 1, 'status' => 'active']);
+
+        foreach (range(1, 5) as $attempt) {
+            $this->actingAs($buyer)->post("/products/{$product->id}/questions", ['question' => "Q{$attempt}"])->assertRedirect();
+        }
+
+        $this->actingAs($buyer)->post("/products/{$product->id}/questions", ['question' => 'Q6'])->assertStatus(429);
+        $this->assertSame(5, ProductQuestion::where('product_id', $product->id)->count());
+    }
+
     public function test_business_price_cannot_exceed_the_retail_price(): void
     {
         [$seller] = $this->createUsers();

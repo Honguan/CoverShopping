@@ -26,6 +26,8 @@
 - **出貨授權**：`OrderItemPolicy::ship` 要求已付款、訂單處理中或部分出貨、項目待出貨，且為該賣家或管理員。
 - **賣家庫存編輯覆寫（已修正）**：庫存表單原本直接覆寫，賣家開啟表單後若有訂單扣庫存，再送出舊數字會把已售出的數量加回。現在表單帶入 `expected_inventory`，`setProductInventory` 在鎖定商品後比對，不一致時回傳驗證錯誤 `product_inventory_changed`（五語系），請賣家重新整理後再調整；未帶該欄位的呼叫（例如建立商品）維持原行為。測試：`BackOfficeFlowTest`。
 - **B2B 價格**：已新增 `business_price` 不得高於 `price` 的驗證；規格價差與 `max(0, …)` 保留，負價差過大時單價會被夾為 0，未額外限制。
+- **提問頻率（已修正）**：商品提問原本沒有頻率限制，單一會員可連續對賣家製造通知；現在每位會員每分鐘最多 5 次（`product-question` limiter），測試於 `BackOfficeFlowTest`。評價有唯一約束與訂單資格，未另加限制。
+- **退貨、地址簿、登入**：退貨狀態機（requested→approved→received→refunded，另可 rejected）在鎖定訂單後轉換並只回補一次庫存；地址簿操作皆鎖定會員列；登入有節流、驗證後檢查帳號狀態並重生 Session，未發現需修改處。
 - **搜尋**：有關鍵字時，預設「最新」排序仍以 `created_at` 排序，會蓋掉搜尋引擎的相關度排序，是否改為預設依相關度屬產品決定；搜尋範圍只含商品名稱與描述，不含規格 SKU；Meilisearch 路徑的同價格排序穩定性由引擎處理，未加次要排序（資料庫路徑已加 `id`）。
 - **前端相依弱點**：`npm audit` 對 `vite`、`source-map-js` 的 high 弱點會讓所有 PR 的 `Quality` 在最前面失敗，已另開 Issue #48／PR #49 處理（僅更新 lockfile）；該 PR 合併後本 PR 需同步 `main` 再重跑檢查。
 

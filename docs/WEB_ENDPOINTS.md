@@ -57,7 +57,7 @@
 | GET | `/favorites` | `favorites.index` | 登入會員自己的收藏清單，每頁 24 筆、依收藏時間與 ID 遞減排序；下架商品保留移除功能，不提供購買控制。 |
 | DELETE | `/products/{product}/favorite` | `favorites.destroy` | 取消收藏。 |
 | POST | `/products/{product}/reviews` | `reviews.store` | 對已出貨或完成訂單商品評價；重送保留首次評價，不新增或覆寫。 |
-| POST | `/products/{product}/questions` | `questions.store` | 對商品提問。 |
+| POST | `/products/{product}/questions` | `questions.store` | 對商品提問；每位會員每分鐘最多 5 次，超過回傳 429。 |
 | POST | `/orders/{order}/returns` | `returns.store` | 對已出貨或完成訂單申請退貨。 |
 | GET | `/notifications` | `notifications.index` | 會員通知列表。 |
 | PATCH | `/notifications/{notification}/read` | `notifications.read` | 標記自己的通知為已讀，保留首次讀取時間；已讀通知可從列表重新開啟。 |

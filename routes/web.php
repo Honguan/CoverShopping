@@ -56,7 +56,7 @@ Route::get('/favorites', [ProductFavoriteController::class, 'showFavoriteList'])
 Route::post('/products/{product}/favorite', [ProductFavoriteController::class, 'addProductToFavorites'])->middleware('auth')->name('favorites.store');
 Route::delete('/products/{product}/favorite', [ProductFavoriteController::class, 'removeProductFromFavorites'])->middleware('auth')->name('favorites.destroy');
 Route::post('/products/{product}/reviews', [ProductReviewController::class, 'createProductReview'])->middleware('auth')->name('reviews.store');
-Route::post('/products/{product}/questions', [ProductQuestionController::class, 'askProductQuestion'])->middleware('auth')->name('questions.store');
+Route::post('/products/{product}/questions', [ProductQuestionController::class, 'askProductQuestion'])->middleware(['auth', 'throttle:product-question'])->name('questions.store');
 Route::post('/orders/{order}/returns', [ReturnRequestController::class, 'requestOrderReturn'])->middleware('auth')->name('returns.store');
 Route::get('/notifications', [UserNotificationController::class, 'showNotifications'])->middleware('auth')->name('notifications.index');
 Route::patch('/notifications/{notification}/read', [UserNotificationController::class, 'markNotificationRead'])->middleware('auth')->name('notifications.read');
