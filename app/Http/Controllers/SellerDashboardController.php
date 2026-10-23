@@ -32,6 +32,7 @@ class SellerDashboardController extends Controller
             'products' => Product::where('seller_id', $sellerId)
                 ->with(['images', 'variants'])
                 ->latest()
+                ->latest('id')
                 ->paginate(20),
             'lowStockProducts' => Product::where('seller_id', $sellerId)
                 ->where('inventory', '<=', $lowStockThreshold)
@@ -209,6 +210,7 @@ class SellerDashboardController extends Controller
             'items' => OrderItem::where('seller_id', $request->user()->id)
                 ->with(['order.user', 'product'])
                 ->latest()
+                ->latest('id')
                 ->paginate(30),
         ]);
     }

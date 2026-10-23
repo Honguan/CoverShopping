@@ -10,7 +10,7 @@ class UserNotificationController extends Controller
     public function showNotifications(Request $request)
     {
         return view('notifications.index', [
-            'notifications' => Notification::where('user_id', $request->user()->id)->latest()->paginate(30),
+            'notifications' => Notification::where('user_id', $request->user()->id)->latest()->latest('id')->paginate(30),
         ]);
     }
 

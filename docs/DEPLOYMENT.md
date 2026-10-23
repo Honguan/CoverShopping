@@ -30,3 +30,7 @@
 部署時先等待 `/health/live`，再由單一工作程序執行 migration，最後等待 `/health/ready` 成功。Compose 的 `app` healthcheck 使用 readiness；migration 前回傳 503 是預期行為。CI 會自動驗證 migration 前失敗、migration 後成功與 cache/session 依賴失敗情境。
 
 MySQL 的 healthcheck 必須使用應用程式帳密，以 TCP 連線至目標資料庫並執行 `SELECT 1`。初始化期間的暫時伺服器只開放 Unix socket，不能用 localhost 的 `mysqladmin ping` 當作就緒判斷；帳密錯誤或資料庫不存在時也必須保持 unhealthy。
+
+### 排程
+
+`shopping:prune-guest-data` 每日清理訪客購物車與最近瀏覽，保留天數由 `GUEST_DATA_RETENTION_DAYS`（預設 30）控制。需要有程序持續執行排程，例如在單一工作程序執行 `php artisan schedule:work`，或每分鐘由 cron 執行 `php artisan schedule:run`；排程使用 `onOneServer()`，多副本時需共用的 Redis cache。目前 Compose 沒有排程服務，未安排前訪客資料不會被清理，但不影響結帳。

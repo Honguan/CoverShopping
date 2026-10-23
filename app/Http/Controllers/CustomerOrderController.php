@@ -13,7 +13,7 @@ class CustomerOrderController extends Controller
     public function showCustomerOrders(Request $request)
     {
         return view('orders.index', [
-            'orders' => $request->user()->orders()->with('items.review')->latest()->paginate(20),
+            'orders' => $request->user()->orders()->with('items.review')->latest()->latest('id')->paginate(20),
         ]);
     }
 

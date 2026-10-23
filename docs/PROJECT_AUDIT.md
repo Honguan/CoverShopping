@@ -14,6 +14,8 @@
 | 優惠碼 | 建立前先正規化，再驗證唯一性，避免大小寫重複造成 500。 | `CreateCouponRequest`、`CouponCreationTest` |
 | 共用介面 | 修正缺少 Tailwind 樣式造成的巨大分頁箭頭與未翻譯鍵；五語系共用原生分頁。導覽列可換行，手機地址編輯表單維持完整寬度。 | `pagination.blade.php`、`app.css`、`PaginationRenderingTest` |
 | 賣家後台效能 | 商品頁原本多載入畫面未使用的每件商品全部問答與回答，改為只查詢頁面顯示的待答問題；新增 `orders.created_at` 與 `order_items(seller_id, created_at)` 索引，支援後台訂單與賣家訂單依時間排序。 | `SellerDashboardController`、`2026_10_23_000010_add_listing_sort_indexes`、`BackOfficeFlowTest` |
+| 分頁順序 | 商品目錄、會員訂單、通知與賣家清單原本只依價格或時間排序；同價格或同時間的資料在分頁間可能重複或漏掉。現在固定加入 `id` 作為次要排序。 | `ProductCatalogQuery`、`CustomerOrderController`、`UserNotificationController`、`SellerDashboardController`、`ProductCatalogSearchTest` |
+| 訪客資料清理 | 訪客購物車與最近瀏覽只增不減；新增每日排程 `shopping:prune-guest-data`，刪除超過 `GUEST_DATA_RETENTION_DAYS`（預設 30）天未更新的訪客購物車與最近瀏覽，會員購物車不受影響。 | `PruneGuestShoppingData`、`routes/console.php`、`PruneGuestShoppingDataTest` |
 | 帳號復原 | 補上原生 password broker 流程、五語系復原郵件與一次性 token；連結來源固定使用 `APP_URL`，已變更密碼的舊登入由原生 Session 驗證拒絕。 | `PasswordResetController`、`UserAuthController`、`PasswordRecoveryTest` |
 
 ## 驗證範圍與限制

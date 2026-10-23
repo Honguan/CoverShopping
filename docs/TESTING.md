@@ -102,7 +102,8 @@ npm.cmd run build
 - `BackOfficeFlowTest.php`：商家後台、管理員後台與角色阻擋；賣家商品頁問答只查詢一次，避免多載入未使用資料。
 - `ServiceLogicFlowTest.php`：購物車狀態、價格、促銷、推薦。
 - `RoleMiddlewareTest.php`：角色 middleware 基本阻擋。
-- `ProductCatalogSearchTest.php`：Meilisearch 的 active、分類、價格與排序合約。
+- `ProductCatalogSearchTest.php`：Meilisearch 的 active、分類、價格與排序合約；同價格商品跨頁順序固定。
+- `PruneGuestShoppingDataTest.php`：只清除過期訪客購物車與最近瀏覽，保留未過期資料與會員購物車。
 - `AccountMaintenanceTest.php`：地址編輯擁有者與輸入驗證、預設狀態與歷史快照保留，以及通知重訪與首次已讀時間。
 - `AdminDashboardPaginationTest.php`：七組獨立分頁、同時間穩定排序、查詢參數保留與角色權限。
 - `PaginationRenderingTest.php`：共用分頁的五語系文字、頁碼與查詢參數、首末頁停用方向，以及單頁不顯示導覽。
