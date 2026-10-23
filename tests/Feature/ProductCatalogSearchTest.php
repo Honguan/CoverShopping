@@ -66,9 +66,9 @@ class ProductCatalogSearchTest extends TestCase
         $seen = collect();
         foreach ([1, 2, 3] as $page) {
             Paginator::currentPageResolver(fn () => $page);
-            $seen = $seen->merge(app(ProductCatalogQuery::class)
+            $seen = $seen->merge(collect(app(ProductCatalogQuery::class)
                 ->paginate(Request::create('/', 'GET', ['sort' => 'price_asc']), 2)
-                ->pluck('id'));
+                ->items())->pluck('id'));
         }
 
         $this->assertSame($ids->sort()->values()->all(), $seen->all());
