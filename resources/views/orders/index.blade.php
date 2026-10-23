@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('ui.orders'))
+
 @section('content')
     <h1>{{ __('ui.orders') }}</h1>
     <section class="list">

@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('ui.catalog_title'))
+
 @section('content')
     <section class="toolbar">
         <div>

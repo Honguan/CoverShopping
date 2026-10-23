@@ -197,6 +197,7 @@ return [
     'return_requested_message' => '退貨申請已送出。',
     'product_created' => '商品已建立。',
     'product_image_limit' => '每項商品最多可有 8 張圖片。',
+    'main_navigation' => '主要導覽',
     'product_updated' => '商品已更新。',
     'product_inventory_changed' => '編輯期間庫存已變動，請重新整理頁面後再試。',
     'cannot_change_own_account' => '不能停權或降級自己的帳號。',

@@ -3,17 +3,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name') }}</title>
+    <title>@hasSection('title'){{ trim($__env->yieldContent('title')) }} · @endif{{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
     <header class="topbar">
         <a class="brand" href="{{ route('catalog.index') }}">CoverShopping</a>
         <form class="search" action="{{ route('catalog.index') }}" method="get">
-            <input name="q" value="{{ request('q') }}" placeholder="{{ __('ui.search_products') }}">
+            <input name="q" value="{{ request('q') }}" placeholder="{{ __('ui.search_products') }}" aria-label="{{ __('ui.search_products') }}">
             <button type="submit">{{ __('ui.search') }}</button>
         </form>
-        <nav>
+        <nav aria-label="{{ __('ui.main_navigation') }}">
             @foreach(config('app.supported_locales') as $locale => $label)
                 <a href="{{ route('locale.update', $locale) }}" @class(['active' => app()->getLocale() === $locale])>{{ $label }}</a>
             @endforeach

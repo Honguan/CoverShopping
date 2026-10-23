@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('ui.favorites'))
+
 @section('content')
     <h1>{{ __('ui.favorites') }}</h1>
 

@@ -197,6 +197,7 @@ return [
     'return_requested_message' => '返品を申請しました。',
     'product_created' => '商品を作成しました。',
     'product_image_limit' => '商品画像は最大8枚までです。',
+    'main_navigation' => 'メインナビゲーション',
     'product_updated' => '商品を更新しました。',
     'product_inventory_changed' => '編集中に在庫が変更されました。ページを再読み込みしてもう一度お試しください。',
     'cannot_change_own_account' => '自分のアカウントを停止または降格することはできません。',

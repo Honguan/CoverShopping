@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('ui.notification_center'))
+
 @section('content')
     <h1>{{ __('ui.notification_center') }}</h1>
     <section class="list">

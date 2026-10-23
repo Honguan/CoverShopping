@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('ui.seller_orders'))
+
 @section('content')
     <h1>{{ __('ui.seller_orders') }}</h1>
     <a class="button" href="{{ route('seller.orders.export') }}">{{ __('ui.export_csv') }}</a>

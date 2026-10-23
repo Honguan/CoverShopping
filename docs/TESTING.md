@@ -106,6 +106,7 @@ npm.cmd run build
 - `PruneGuestShoppingDataTest.php`：只清除過期訪客購物車與最近瀏覽，保留未過期資料與會員購物車。
 - `AccountMaintenanceTest.php`：地址編輯擁有者與輸入驗證、預設狀態與歷史快照保留，以及通知重訪與首次已讀時間。
 - `AdminDashboardPaginationTest.php`：七組獨立分頁、同時間穩定排序、查詢參數保留與角色權限。
+- `PageAccessibilityTest.php`：各頁標題為「頁面 · 站名」、搜尋框與導覽列的可近用名稱，以及五語系導覽列標籤。
 - `PaginationRenderingTest.php`：共用分頁的五語系文字、頁碼與查詢參數、首末頁停用方向，以及單頁不顯示導覽。
 - `PasswordRecoveryTest.php`：訪客表單與登入阻擋、申請提示一致性、一次性與過期 token、密碼規則、敏感 old input 排除、節流、五語系實際郵件內容與固定 APP_URL。
 

@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('ui.admin_dashboard'))
+
 @section('content')
     <h1>{{ __('ui.admin_dashboard') }}</h1>
     <section class="columns">

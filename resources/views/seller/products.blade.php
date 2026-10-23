@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('ui.seller_products'))
+
 @section('content')
     <h1>{{ __('ui.seller_products') }}</h1>
 
