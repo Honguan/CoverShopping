@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('ui.business_profile_details'))
+
 @section('content')
     <form class="panel" action="{{ route('business_profile.store') }}" method="post">
         @csrf

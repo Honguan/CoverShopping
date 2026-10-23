@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('ui.addresses'))
+
 @section('content')
     <h1>{{ __('ui.addresses') }}</h1>
 

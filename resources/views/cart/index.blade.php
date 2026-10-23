@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('ui.shopping_cart'))
+
 @section('content')
     <h1>{{ __('ui.shopping_cart') }}</h1>
 

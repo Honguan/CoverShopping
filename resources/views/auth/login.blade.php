@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('ui.login_title'))
+
 @section('content')
     <form class="panel" action="{{ route('login.store') }}" method="post">
         @csrf
