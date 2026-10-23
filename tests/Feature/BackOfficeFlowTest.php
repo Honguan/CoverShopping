@@ -258,6 +258,26 @@ class BackOfficeFlowTest extends TestCase
         $this->assertSame('completed', $order->fresh()->fulfillment_status);
     }
 
+    public function test_business_price_cannot_exceed_the_retail_price(): void
+    {
+        [$seller] = $this->createUsers();
+
+        $this->actingAs($seller)->post('/seller/products', [
+            'name' => 'Overpriced Business',
+            'price' => 500,
+            'business_price' => 501,
+            'inventory' => 1,
+        ])->assertSessionHasErrors('business_price');
+        $this->assertDatabaseMissing('products', ['name' => 'Overpriced Business']);
+
+        $this->actingAs($seller)->post('/seller/products', [
+            'name' => 'Fair Business',
+            'price' => 500,
+            'business_price' => 500,
+            'inventory' => 1,
+        ])->assertRedirect('/seller/products');
+    }
+
     public function test_seller_products_page_loads_questions_once(): void
     {
         [$seller, $buyer] = $this->createUsers();

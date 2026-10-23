@@ -12,7 +12,7 @@ class CreateProductRequest extends FormRequest
             'name' => ['required', 'string', 'max:160'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'integer', 'min:0'],
-            'business_price' => ['nullable', 'integer', 'min:0'],
+            'business_price' => ['nullable', 'integer', 'min:0', 'lte:price'],
             'business_min_quantity' => ['nullable', 'integer', 'min:1'],
             'inventory' => ['required', 'integer', 'min:0'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
