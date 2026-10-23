@@ -13,6 +13,7 @@
 | 管理後台 | 原本七組清單只有最新十筆；現在各自分頁、保留其他頁碼，舊資料可操作。 | `AdminDashboardController`、`AdminDashboardPaginationTest` |
 | 優惠碼 | 建立前先正規化，再驗證唯一性，避免大小寫重複造成 500。 | `CreateCouponRequest`、`CouponCreationTest` |
 | 共用介面 | 修正缺少 Tailwind 樣式造成的巨大分頁箭頭與未翻譯鍵；五語系共用原生分頁。導覽列可換行，手機地址編輯表單維持完整寬度。 | `pagination.blade.php`、`app.css`、`PaginationRenderingTest` |
+| 賣家後台效能 | 商品頁原本多載入畫面未使用的每件商品全部問答與回答，改為只查詢頁面顯示的待答問題；新增 `orders.created_at` 與 `order_items(seller_id, created_at)` 索引，支援後台訂單與賣家訂單依時間排序。 | `SellerDashboardController`、`2026_10_23_000010_add_listing_sort_indexes`、`BackOfficeFlowTest` |
 | 帳號復原 | 補上原生 password broker 流程、五語系復原郵件與一次性 token；連結來源固定使用 `APP_URL`，已變更密碼的舊登入由原生 Session 驗證拒絕。 | `PasswordResetController`、`UserAuthController`、`PasswordRecoveryTest` |
 
 ## 驗證範圍與限制

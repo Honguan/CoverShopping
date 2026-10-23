@@ -15,6 +15,7 @@ use App\Services\AuditLogService;
 use App\Services\OrderPaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Mockery\Expectation;
 use RuntimeException;
@@ -255,6 +256,20 @@ class BackOfficeFlowTest extends TestCase
         $this->assertSame('answered', $question->fresh()->status);
         $this->assertSame('shipped', $orderItem->fresh()->shipping_status);
         $this->assertSame('completed', $order->fresh()->fulfillment_status);
+    }
+
+    public function test_seller_products_page_loads_questions_once(): void
+    {
+        [$seller, $buyer] = $this->createUsers();
+        $product = Product::create(['seller_id' => $seller->id, 'name' => 'Asked', 'price' => 100, 'inventory' => 5, 'status' => 'active']);
+        ProductQuestion::create(['product_id' => $product->id, 'user_id' => $buyer->id, 'question' => 'Size?', 'status' => 'open']);
+
+        DB::enableQueryLog();
+        $this->actingAs($seller)->get(route('seller.products.index'))->assertOk();
+        $questionQueries = collect(DB::getQueryLog())->filter(fn (array $log) => str_contains($log['query'], 'from "product_questions"'));
+        DB::disableQueryLog();
+
+        $this->assertCount(1, $questionQueries);
     }
 
     public function test_seller_cannot_upload_more_than_eight_product_images(): void

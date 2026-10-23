@@ -30,7 +30,7 @@ class SellerDashboardController extends Controller
 
         return view('seller.products', [
             'products' => Product::where('seller_id', $sellerId)
-                ->with(['images', 'variants', 'questions.answers'])
+                ->with(['images', 'variants'])
                 ->latest()
                 ->paginate(20),
             'lowStockProducts' => Product::where('seller_id', $sellerId)
