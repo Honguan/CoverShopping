@@ -287,6 +287,20 @@ class BackOfficeFlowTest extends TestCase
         $this->assertSame(5, ProductQuestion::where('product_id', $product->id)->count());
     }
 
+    public function test_admin_cannot_suspend_or_demote_their_own_account(): void
+    {
+        [, $buyer, $admin] = $this->createUsers();
+
+        $this->actingAs($admin)->patch("/admin/users/{$admin->id}/status", ['status' => 'suspended'])->assertSessionHasErrors('status');
+        $this->actingAs($admin)->patch("/admin/users/{$admin->id}/status", ['status' => 'active', 'role' => 'customer'])->assertSessionHasErrors('status');
+        $this->assertSame('admin', $admin->fresh()->role);
+        $this->assertSame('active', $admin->fresh()->status);
+
+        $this->actingAs($admin)->patch("/admin/users/{$admin->id}/status", ['status' => 'active', 'role' => 'admin'])->assertRedirect('/admin/dashboard');
+        $this->actingAs($admin)->patch("/admin/users/{$buyer->id}/status", ['status' => 'suspended', 'role' => 'seller'])->assertRedirect('/admin/dashboard');
+        $this->assertSame('suspended', $buyer->fresh()->status);
+    }
+
     public function test_business_price_cannot_exceed_the_retail_price(): void
     {
         [$seller] = $this->createUsers();

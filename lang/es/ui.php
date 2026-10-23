@@ -200,6 +200,7 @@ return [
     'main_navigation' => 'Navegación principal',
     'product_updated' => 'Producto actualizado.',
     'product_inventory_changed' => 'El inventario cambió mientras editabas. Recarga la página e inténtalo de nuevo.',
+    'cannot_change_own_account' => 'No puedes suspender ni degradar tu propia cuenta.',
     'product_image_removed' => 'Imagen del producto eliminada.',
     'product_variant_created' => 'Variante del producto creada.',
     'question_answered' => 'Pregunta respondida.',

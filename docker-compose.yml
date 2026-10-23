@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    environment:
+    environment: &app-environment
       APP_ENV: production
       APP_DEBUG: "false"
       APP_KEY: ${APP_KEY:?Set APP_KEY in .env}
@@ -37,6 +37,19 @@ services:
     restart: unless-stopped
     volumes:
       - uploads:/var/www/html/storage/app/public
+
+  # 排程不依賴 app 的 readiness：migration 在 app 啟動後才由單一工作程序執行。
+  # 以 www-data 執行，避免在共用的 storage 建立 root 擁有的檔案。
+  scheduler:
+    build: .
+    command: ["su", "-s", "/bin/sh", "www-data", "-c", "exec php artisan schedule:work"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
   db:
     image: mysql:8.4

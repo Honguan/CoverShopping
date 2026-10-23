@@ -200,6 +200,7 @@ return [
     'main_navigation' => '主要導覽',
     'product_updated' => '商品已更新。',
     'product_inventory_changed' => '編輯期間庫存已變動，請重新整理頁面後再試。',
+    'cannot_change_own_account' => '不能停權或降級自己的帳號。',
     'product_image_removed' => '商品圖片已移除。',
     'product_variant_created' => '商品規格已建立。',
     'question_answered' => '問題已回覆。',
