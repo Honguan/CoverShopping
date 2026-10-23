@@ -18,6 +18,14 @@
 | 訪客資料清理 | 訪客購物車與最近瀏覽只增不減；新增每日排程 `shopping:prune-guest-data`，刪除超過 `GUEST_DATA_RETENTION_DAYS`（預設 30）天未更新的訪客購物車與最近瀏覽，會員購物車不受影響。 | `PruneGuestShoppingData`、`routes/console.php`、`PruneGuestShoppingDataTest` |
 | 帳號復原 | 補上原生 password broker 流程、五語系復原郵件與一次性 token；連結來源固定使用 `APP_URL`，已變更密碼的舊登入由原生 Session 驗證拒絕。 | `PasswordResetController`、`UserAuthController`、`PasswordRecoveryTest` |
 
+## 已審查但未變更的設計
+
+- **結帳可不選地址與配送方式**：`CheckoutCartRequest` 兩者皆為選填，畫面也提供「不選擇」選項。不選配送方式時運費為 0，等同繞過運費；是否改為必填（或僅在有啟用配送方式時必填）屬商業規則，未自行改動。
+- **購物車服務**：加入、合併與結帳都在交易內鎖定商品／規格並重新驗證庫存；數量調整只做上限夾取，真正的庫存把關在結帳交易，未發現會超賣的路徑。
+- **安全標頭**：正式環境使用嚴格 CSP、HSTS（僅 HTTPS）、`X-Frame-Options: DENY` 與 `nosniff`；local 環境刻意放寬 CSP 供 Vite 使用。
+- **出貨授權**：`OrderItemPolicy::ship` 要求已付款、訂單處理中或部分出貨、項目待出貨，且為該賣家或管理員。
+- **前端相依弱點**：`npm audit` 對 `vite`、`source-map-js` 的 high 弱點會讓所有 PR 的 `Quality` 在最前面失敗，已另開 Issue #48／PR #49 處理（僅更新 lockfile）；該 PR 合併後本 PR 需同步 `main` 再重跑檢查。
+
 ## 驗證範圍與限制
 
 - 完整 PHPUnit 驗證商品搜尋與收藏、角色權限、訪客購物車合併、價格／促銷、結帳交易、出貨、地址、通知、退貨及後台。MySQL 專用測試另於隔離 MySQL 8.4 容器執行，涵蓋唯一索引、資料列鎖、交易回滾、評價與退款競態。
