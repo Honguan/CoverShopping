@@ -50,7 +50,7 @@
 
 1. `ProductPricingService` 判斷 B2C / B2B 價格。
 2. 企業價格只在會員 `account_type=b2b` 且 business profile 為 `approved` 時可用。
-3. `CouponDiscountService` 驗證優惠券狀態、時間、使用上限、最低金額與重複使用。
+3. `CouponDiscountService` 驗證優惠券狀態、時間、使用上限、最低金額與重複使用；訂單取消、付款失敗或出貨前整單退款時由 `releaseForOrder` 在同一交易內歸還次數與使用紀錄。
 4. `PromotionService` 計算滿額折扣、免運門檻與剩餘免運金額。
 5. 新建優惠碼在唯一驗證前統一轉為大寫，避免驗證與儲存代碼不同。
 

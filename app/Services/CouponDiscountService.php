@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Coupon;
+use App\Models\CouponRedemption;
+use App\Models\Order;
 use App\Models\User;
 use RuntimeException;
 
@@ -42,6 +44,21 @@ class CouponDiscountService
         }
 
         return $coupon;
+    }
+
+    /** 訂單取消或付款失敗時歸還優惠券次數；已歸還的訂單不會重複扣減。 */
+    public function releaseForOrder(Order $order): void
+    {
+        if (! $order->coupon_id) {
+            return;
+        }
+
+        $coupon = Coupon::whereKey($order->coupon_id)->lockForUpdate()->first();
+        $released = CouponRedemption::where('order_id', $order->id)->delete();
+
+        if ($coupon && $released > 0) {
+            $coupon->update(['used_count' => max(0, $coupon->used_count - $released)]);
+        }
     }
 
     public function calculateDiscount(Coupon $coupon, int $subtotal): int

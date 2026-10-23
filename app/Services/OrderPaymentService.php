@@ -14,7 +14,10 @@ use RuntimeException;
 
 class OrderPaymentService
 {
-    public function __construct(private AuditLogService $auditLogService) {}
+    public function __construct(
+        private AuditLogService $auditLogService,
+        private CouponDiscountService $couponDiscountService
+    ) {}
 
     public function transition(User $admin, Order $order, string $status, ?Request $request = null): Order
     {
@@ -49,6 +52,7 @@ class OrderPaymentService
 
             if ($isFailed || $isVoided) {
                 $this->restoreInventory($admin, $order, $isFailed ? 'payment_failed' : 'payment_refunded');
+                $this->couponDiscountService->releaseForOrder($order);
             }
 
             $orderUpdates = [

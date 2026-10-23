@@ -97,7 +97,7 @@ npm.cmd run build
 ## 目前測試檔
 
 - `FavoriteAndReturnTest.php`：收藏、地址簿、預設地址唯一與接替、再次購買、購物車清空、退貨。
-- `OrderCheckoutServiceTest.php`：結帳、庫存、優惠券、配送、B2B 價格。
+- `OrderCheckoutServiceTest.php`：結帳、庫存、優惠券（含取消與付款失敗時歸還且不重複）、配送、B2B 價格。
 - `PublicEndpointFlowTest.php`：公開端點、會員互動、通知與登入保護。
 - `BackOfficeFlowTest.php`：商家後台、管理員後台與角色阻擋。
 - `ServiceLogicFlowTest.php`：購物車狀態、價格、促銷、推薦。
