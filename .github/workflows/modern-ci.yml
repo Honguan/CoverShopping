@@ -157,6 +157,8 @@ jobs:
             docker compose logs app
             exit 1
           }
+          docker compose exec -T scheduler php artisan schedule:list | grep --fixed-strings shopping:prune-guest-data
+          test "$(docker compose ps --status running --services | grep --line-regexp --count scheduler)" = 1
           docker compose exec -T app test -L public/storage
           docker compose exec -T --user www-data app sh -c 'printf storage-ok > storage/app/public/ci-storage-check.txt'
           curl --fail --silent --show-error http://127.0.0.1:8080/storage/ci-storage-check.txt | grep --fixed-strings storage-ok
