@@ -14,7 +14,10 @@ use RuntimeException;
 
 class OrderPaymentService
 {
-    public function __construct(private AuditLogService $auditLogService) {}
+    public function __construct(
+        private AuditLogService $auditLogService,
+        private CouponDiscountService $couponDiscountService
+    ) {}
 
     public function transition(User $admin, Order $order, string $status, ?Request $request = null): Order
     {
@@ -23,7 +26,13 @@ class OrderPaymentService
         return DB::transaction(function () use ($admin, $order, $status, $request) {
             $order = Order::query()->lockForUpdate()->with('items')->findOrFail($order->id);
 
-            if ($order->payment_status === $status) {
+            $isReturned = in_array($order->payment_status, ['paid', 'refunded'], true)
+                && $status === 'refunded'
+                && in_array($order->fulfillment_status, ['shipped', 'completed'], true)
+                && $order->return_status === 'received';
+            $paymentChanged = $order->payment_status !== $status;
+
+            if (! $paymentChanged && ! $isReturned) {
                 return $order;
             }
 
@@ -37,28 +46,41 @@ class OrderPaymentService
                 && $status === 'refunded'
                 && in_array($order->fulfillment_status, ['pending', 'processing'], true)
                 && $order->return_status === 'none';
-            $isReturned = $order->payment_status === 'paid'
-                && $status === 'refunded'
-                && in_array($order->fulfillment_status, ['shipped', 'completed'], true)
-                && $order->return_status === 'received';
-
             if (! $isPaid && ! $isFailed && ! $isVoided && ! $isReturned) {
                 throw new RuntimeException(__('ui.invalid_payment_status_transition'));
             }
 
             if ($isFailed || $isVoided) {
                 $this->restoreInventory($admin, $order, $isFailed ? 'payment_failed' : 'payment_refunded');
+                $this->couponDiscountService->releaseForOrder($order);
             }
 
-            $order->update([
+            $orderUpdates = [
                 'payment_status' => $status,
                 'fulfillment_status' => match (true) {
                     $isPaid => 'processing',
                     $isFailed, $isVoided => 'cancelled',
                     default => $order->fulfillment_status,
                 },
-            ]);
-            $this->auditLogService->writeLog('admin.order.payment_updated', $order, ['payment_status' => $status], $request);
+            ];
+
+            if ($isReturned) {
+                $returnRequest = $order->returnRequests()->lockForUpdate()->firstOrFail();
+
+                if ($returnRequest->status !== 'received') {
+                    throw new RuntimeException(__('ui.invalid_return_status_transition'));
+                }
+
+                $returnRequest->update(['status' => 'refunded']);
+                $orderUpdates['return_status'] = 'refunded';
+                $this->auditLogService->writeLog('admin.return.updated', $returnRequest, ['status' => 'refunded'], $request);
+            }
+
+            $order->update($orderUpdates);
+
+            if ($paymentChanged) {
+                $this->auditLogService->writeLog('admin.order.payment_updated', $order, ['payment_status' => $status], $request);
+            }
 
             return $order->refresh();
         }, 3);

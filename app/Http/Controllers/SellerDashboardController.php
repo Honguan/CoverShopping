@@ -30,8 +30,9 @@ class SellerDashboardController extends Controller
 
         return view('seller.products', [
             'products' => Product::where('seller_id', $sellerId)
-                ->with(['images', 'variants', 'questions.answers'])
+                ->with(['images', 'variants'])
                 ->latest()
+                ->latest('id')
                 ->paginate(20),
             'lowStockProducts' => Product::where('seller_id', $sellerId)
                 ->where('inventory', '<=', $lowStockThreshold)
@@ -51,7 +52,7 @@ class SellerDashboardController extends Controller
         $data = $request->validated();
         $images = $request->file('images', []);
         $inventory = $data['inventory'];
-        unset($data['images'], $data['inventory']);
+        unset($data['images'], $data['inventory'], $data['expected_inventory']);
 
         $storedPaths = $this->storeProductImages($images);
 
@@ -91,12 +92,13 @@ class SellerDashboardController extends Controller
         $data = $request->validated();
         $images = $request->file('images', []);
         $inventory = $data['inventory'];
-        unset($data['images'], $data['inventory']);
+        $expectedInventory = isset($data['expected_inventory']) ? (int) $data['expected_inventory'] : null;
+        unset($data['images'], $data['inventory'], $data['expected_inventory']);
 
         $storedPaths = $this->storeProductImages($images);
 
         try {
-            DB::transaction(function () use ($request, $product, $data, $inventory, $storedPaths, $inventoryAdjustmentService, $auditLogService): void {
+            DB::transaction(function () use ($request, $product, $data, $inventory, $expectedInventory, $storedPaths, $inventoryAdjustmentService, $auditLogService): void {
                 $product = Product::query()->lockForUpdate()->findOrFail($product->id);
 
                 if ($product->images()->count() + count($storedPaths) > 8) {
@@ -107,7 +109,7 @@ class SellerDashboardController extends Controller
                     'status' => $product->status === 'active' ? 'active' : 'pending',
                     'business_min_quantity' => $data['business_min_quantity'] ?? 1,
                 ]);
-                $inventoryAdjustmentService->setProductInventory($product, $request->user(), $inventory, 'seller_adjustment');
+                $inventoryAdjustmentService->setProductInventory($product, $request->user(), $inventory, 'seller_adjustment', $expectedInventory);
 
                 $hasPrimaryImage = $product->images()->where('is_primary', true)->exists();
                 $nextSortOrder = ($product->images()->max('sort_order') ?? -1) + 1;
@@ -209,6 +211,7 @@ class SellerDashboardController extends Controller
             'items' => OrderItem::where('seller_id', $request->user()->id)
                 ->with(['order.user', 'product'])
                 ->latest()
+                ->latest('id')
                 ->paginate(30),
         ]);
     }

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Queries\ProductCatalogQuery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 use Laravel\Scout\Builder;
 use Laravel\Scout\EngineManager;
 use Laravel\Scout\Engines\NullEngine;
@@ -49,6 +50,28 @@ class ProductCatalogSearchTest extends TestCase
             config(['scout.driver' => 'database']);
             $manager->forgetDrivers();
         }
+    }
+
+    public function test_equal_price_products_keep_a_stable_order_across_pages(): void
+    {
+        $seller = User::create(['name' => 'Seller', 'account' => 'stable-seller', 'password' => 'password', 'role' => 'seller', 'status' => 'active']);
+        $ids = collect(range(1, 5))->map(fn (int $number) => Product::create([
+            'seller_id' => $seller->id,
+            'name' => "Same price {$number}",
+            'price' => 100,
+            'inventory' => 1,
+            'status' => 'active',
+        ])->id);
+
+        $seen = collect();
+        foreach ([1, 2, 3] as $page) {
+            Paginator::currentPageResolver(fn () => $page);
+            $seen = $seen->merge(collect(app(ProductCatalogQuery::class)
+                ->paginate(Request::create('/', 'GET', ['sort' => 'price_asc']), 2)
+                ->items())->pluck('id'));
+        }
+
+        $this->assertSame($ids->sort()->values()->all(), $seen->all());
     }
 
     public function test_sqlite_database_search_fallback_preserves_catalog_filters(): void

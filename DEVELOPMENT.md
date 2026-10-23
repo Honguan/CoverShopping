@@ -18,7 +18,7 @@ CoverShopping 是 Laravel 單體電商系統。第一階段優先保證會員、
 
 ## 開發流程
 
-1. 從目前正式新版 Laravel 根目錄工作：`C:\Users\666dd\Documents\GitHub\html\CoverShopping`。
+1. 從專案根目錄工作（含 `artisan` 與 `composer.json` 的目錄）。
 2. 修改前先確認工作樹：`git status --short`。
 3. 新功能先補 Feature 或 Service 測試，再實作。
 4. Controller 保持薄層，複雜邏輯放 Service / Policy / FormRequest。

@@ -122,5 +122,8 @@ class ProductCatalogQuery
             'oldest' => $query->oldest(),
             default => $query->latest(),
         };
+
+        // 同價格或同時間的商品需要固定順序，否則分頁會重複或漏掉商品。
+        $query->orderBy('id', in_array($sort, ['price_asc', 'oldest'], true) ? 'asc' : 'desc');
     }
 }

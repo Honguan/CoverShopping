@@ -6,6 +6,7 @@ use App\Http\Controllers\BusinessAccountController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CustomerOrderController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProductCatalogController;
 use App\Http\Controllers\ProductFavoriteController;
 use App\Http\Controllers\ProductQuestionController;
@@ -28,6 +29,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [UserAuthController::class, 'loginUser'])->middleware('throttle:login')->name('login.store');
     Route::get('/register', [UserAuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [UserAuthController::class, 'registerUser'])->middleware('throttle:register')->name('register.store');
+    Route::get('/forgot-password', [PasswordResetController::class, 'showForgotPasswordForm'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetPasswordForm'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('throttle:5,1')->name('password.update');
 });
 
 Route::post('/logout', [UserAuthController::class, 'logoutUser'])->middleware('auth')->name('logout');
@@ -44,13 +49,14 @@ Route::post('/orders/{order}/reorder', [CustomerOrderController::class, 'reorder
 Route::post('/orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->middleware('auth')->name('orders.cancel');
 Route::get('/addresses', [AddressController::class, 'showAddresses'])->middleware('auth')->name('addresses.index');
 Route::post('/addresses', [AddressController::class, 'storeAddress'])->middleware('auth')->name('addresses.store');
+Route::patch('/addresses/{address}', [AddressController::class, 'updateAddress'])->middleware('auth')->name('addresses.update');
 Route::patch('/addresses/{address}/default', [AddressController::class, 'setDefaultAddress'])->middleware('auth')->name('addresses.default');
 Route::delete('/addresses/{address}', [AddressController::class, 'deleteAddress'])->middleware('auth')->name('addresses.destroy');
 Route::get('/favorites', [ProductFavoriteController::class, 'showFavoriteList'])->middleware('auth')->name('favorites.index');
 Route::post('/products/{product}/favorite', [ProductFavoriteController::class, 'addProductToFavorites'])->middleware('auth')->name('favorites.store');
 Route::delete('/products/{product}/favorite', [ProductFavoriteController::class, 'removeProductFromFavorites'])->middleware('auth')->name('favorites.destroy');
 Route::post('/products/{product}/reviews', [ProductReviewController::class, 'createProductReview'])->middleware('auth')->name('reviews.store');
-Route::post('/products/{product}/questions', [ProductQuestionController::class, 'askProductQuestion'])->middleware('auth')->name('questions.store');
+Route::post('/products/{product}/questions', [ProductQuestionController::class, 'askProductQuestion'])->middleware(['auth', 'throttle:product-question'])->name('questions.store');
 Route::post('/orders/{order}/returns', [ReturnRequestController::class, 'requestOrderReturn'])->middleware('auth')->name('returns.store');
 Route::get('/notifications', [UserNotificationController::class, 'showNotifications'])->middleware('auth')->name('notifications.index');
 Route::patch('/notifications/{notification}/read', [UserNotificationController::class, 'markNotificationRead'])->middleware('auth')->name('notifications.read');

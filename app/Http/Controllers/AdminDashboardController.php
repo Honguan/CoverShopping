@@ -27,13 +27,13 @@ class AdminDashboardController extends Controller
     public function showDashboard()
     {
         return view('admin.dashboard', [
-            'users' => User::latest()->limit(10)->get(),
-            'products' => Product::latest()->limit(10)->get(),
-            'orders' => Order::latest()->limit(10)->get(),
-            'coupons' => Coupon::latest()->limit(10)->get(),
-            'shippingMethods' => ShippingMethod::orderBy('sort_order')->latest()->limit(10)->get(),
-            'returnRequests' => ReturnRequest::with(['order.user'])->latest()->limit(10)->get(),
-            'businessProfiles' => BusinessProfile::latest()->limit(10)->get(),
+            'users' => User::latest()->orderByDesc('id')->paginate(10, ['*'], 'users_page')->withQueryString(),
+            'products' => Product::latest()->orderByDesc('id')->paginate(10, ['*'], 'products_page')->withQueryString(),
+            'orders' => Order::latest()->orderByDesc('id')->paginate(10, ['*'], 'orders_page')->withQueryString(),
+            'coupons' => Coupon::latest()->orderByDesc('id')->paginate(10, ['*'], 'coupons_page')->withQueryString(),
+            'shippingMethods' => ShippingMethod::orderBy('sort_order')->latest()->orderByDesc('id')->paginate(10, ['*'], 'shipping_methods_page')->withQueryString(),
+            'returnRequests' => ReturnRequest::with(['order.user'])->latest()->orderByDesc('id')->paginate(10, ['*'], 'returns_page')->withQueryString(),
+            'businessProfiles' => BusinessProfile::latest()->orderByDesc('id')->paginate(10, ['*'], 'business_profiles_page')->withQueryString(),
         ]);
     }
 
@@ -95,7 +95,6 @@ class AdminDashboardController extends Controller
     public function createCoupon(CreateCouponRequest $request, AuditLogService $auditLogService)
     {
         $data = $request->validated();
-        $data['code'] = strtoupper($data['code']);
         $data['minimum_subtotal'] = $data['minimum_subtotal'] ?? 0;
         $data['is_active'] = $request->boolean('is_active', true);
 

@@ -15,6 +15,7 @@ use App\Services\AuditLogService;
 use App\Services\OrderPaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Mockery\Expectation;
 use RuntimeException;
@@ -255,6 +256,69 @@ class BackOfficeFlowTest extends TestCase
         $this->assertSame('answered', $question->fresh()->status);
         $this->assertSame('shipped', $orderItem->fresh()->shipping_status);
         $this->assertSame('completed', $order->fresh()->fulfillment_status);
+    }
+
+    public function test_stale_inventory_form_cannot_overwrite_stock_sold_in_the_meantime(): void
+    {
+        [$seller] = $this->createUsers();
+        $product = Product::create(['seller_id' => $seller->id, 'name' => 'Racing', 'price' => 100, 'inventory' => 10, 'status' => 'active']);
+        $form = ['name' => 'Racing', 'price' => 100, 'inventory' => 10, 'expected_inventory' => 10];
+
+        $product->update(['inventory' => 7]);
+
+        $this->actingAs($seller)->patch("/seller/products/{$product->id}", $form)->assertSessionHasErrors('inventory');
+        $this->assertSame(7, $product->fresh()->inventory);
+
+        $this->actingAs($seller)->patch("/seller/products/{$product->id}", ['inventory' => 12, 'expected_inventory' => 7] + $form)
+            ->assertRedirect('/seller/products');
+        $this->assertSame(12, $product->fresh()->inventory);
+    }
+
+    public function test_product_questions_are_rate_limited_per_member(): void
+    {
+        [$seller, $buyer] = $this->createUsers();
+        $product = Product::create(['seller_id' => $seller->id, 'name' => 'Chatty', 'price' => 100, 'inventory' => 1, 'status' => 'active']);
+
+        foreach (range(1, 5) as $attempt) {
+            $this->actingAs($buyer)->post("/products/{$product->id}/questions", ['question' => "Q{$attempt}"])->assertRedirect();
+        }
+
+        $this->actingAs($buyer)->post("/products/{$product->id}/questions", ['question' => 'Q6'])->assertStatus(429);
+        $this->assertSame(5, ProductQuestion::where('product_id', $product->id)->count());
+    }
+
+    public function test_business_price_cannot_exceed_the_retail_price(): void
+    {
+        [$seller] = $this->createUsers();
+
+        $this->actingAs($seller)->post('/seller/products', [
+            'name' => 'Overpriced Business',
+            'price' => 500,
+            'business_price' => 501,
+            'inventory' => 1,
+        ])->assertSessionHasErrors('business_price');
+        $this->assertDatabaseMissing('products', ['name' => 'Overpriced Business']);
+
+        $this->actingAs($seller)->post('/seller/products', [
+            'name' => 'Fair Business',
+            'price' => 500,
+            'business_price' => 500,
+            'inventory' => 1,
+        ])->assertRedirect('/seller/products');
+    }
+
+    public function test_seller_products_page_loads_questions_once(): void
+    {
+        [$seller, $buyer] = $this->createUsers();
+        $product = Product::create(['seller_id' => $seller->id, 'name' => 'Asked', 'price' => 100, 'inventory' => 5, 'status' => 'active']);
+        ProductQuestion::create(['product_id' => $product->id, 'user_id' => $buyer->id, 'question' => 'Size?', 'status' => 'open']);
+
+        DB::enableQueryLog();
+        $this->actingAs($seller)->get(route('seller.products.index'))->assertOk();
+        $questionQueries = collect(DB::getQueryLog())->filter(fn (array $log) => str_contains($log['query'], 'from "product_questions"'));
+        DB::disableQueryLog();
+
+        $this->assertCount(1, $questionQueries);
     }
 
     public function test_seller_cannot_upload_more_than_eight_product_images(): void

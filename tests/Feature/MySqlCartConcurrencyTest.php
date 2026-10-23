@@ -3,11 +3,16 @@
 namespace Tests\Feature;
 
 use App\Models\Address;
+use App\Models\AuditLog;
 use App\Models\CartItem;
 use App\Models\Category;
 use App\Models\Coupon;
+use App\Models\InventoryMovement;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductReview;
+use App\Models\ReturnRequest;
 use App\Models\User;
 use App\Queries\ProductCatalogQuery;
 use App\Services\OrderCheckoutService;
@@ -218,6 +223,117 @@ class MySqlCartConcurrencyTest extends TestCase
         $this->assertDatabaseCount('inventory_movements', 0);
     }
 
+    public function test_mysql_concurrent_reviews_preserve_one_review_and_one_audit_log(): void
+    {
+        $this->requireMySql();
+        [$product, $user] = $this->createProductAndUser();
+        $order = Order::create([
+            'number' => 'REV-'.uniqid(),
+            'user_id' => $user->id,
+            'subtotal' => 100,
+            'total' => 100,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'completed',
+        ]);
+        $item = OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'seller_id' => $product->seller_id,
+            'product_name' => $product->name,
+            'unit_price' => 100,
+            'quantity' => 1,
+            'subtotal' => 100,
+        ]);
+
+        $outputs = $this->runConcurrently([
+            [PHP_BINARY, base_path('tests/Support/review_create_worker.php'), (string) $user->id, (string) $product->id, (string) $item->id, '5', 'First review'],
+            [PHP_BINARY, base_path('tests/Support/review_create_worker.php'), (string) $user->id, (string) $product->id, (string) $item->id, '1', 'Second review'],
+        ]);
+
+        $reviews = array_map(fn (string $output) => json_decode($output, true, flags: JSON_THROW_ON_ERROR), $outputs);
+        $this->assertSame($reviews[0], $reviews[1]);
+        $this->assertContains($reviews[0], [[5, 'First review'], [1, 'Second review']]);
+        $this->assertDatabaseCount('product_reviews', 1);
+        $review = ProductReview::query()->firstOrFail();
+        $this->assertSame($reviews[0], [$review->rating, $review->content]);
+        $this->assertDatabaseHas('product_reviews', [
+            'id' => $review->id,
+            'product_id' => $product->id,
+            'user_id' => $user->id,
+            'order_item_id' => $item->id,
+            'status' => 'published',
+        ]);
+        $this->assertDatabaseCount('audit_logs', 1);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'product.review.created',
+            'auditable_type' => ProductReview::class,
+            'auditable_id' => $review->id,
+        ]);
+    }
+
+    public function test_mysql_concurrent_refund_endpoints_synchronize_statuses_without_restocking(): void
+    {
+        $this->requireMySql();
+        [$product, $user] = $this->createProductAndUser();
+        $admin = User::create([
+            'name' => 'Admin',
+            'account' => 'mysql-refund-admin-'.uniqid(),
+            'password' => 'password',
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+        $order = Order::create([
+            'number' => 'REF-'.uniqid(),
+            'user_id' => $user->id,
+            'subtotal' => 200,
+            'total' => 200,
+            'payment_status' => 'paid',
+            'fulfillment_status' => 'completed',
+            'return_status' => 'received',
+        ]);
+        $item = OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'seller_id' => $product->seller_id,
+            'product_name' => $product->name,
+            'unit_price' => 100,
+            'quantity' => 2,
+            'subtotal' => 200,
+        ]);
+        $returnRequest = ReturnRequest::create([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'reason' => 'Concurrent refund',
+            'status' => 'received',
+            'inventory_restocked_at' => now(),
+        ]);
+        InventoryMovement::create([
+            'product_id' => $product->id,
+            'user_id' => $admin->id,
+            'reason' => 'return_received',
+            'quantity_delta' => 2,
+            'inventory_after' => $product->inventory,
+            'reference_type' => OrderItem::class,
+            'reference_id' => $item->id,
+        ]);
+
+        $this->runConcurrently([
+            [PHP_BINARY, base_path('tests/Support/return_refund_worker.php'), (string) $admin->id, (string) $returnRequest->id, 'payment'],
+            [PHP_BINARY, base_path('tests/Support/return_refund_worker.php'), (string) $admin->id, (string) $returnRequest->id, 'return'],
+        ]);
+
+        $this->assertSame('refunded', $order->fresh()->payment_status);
+        $this->assertSame('refunded', $order->fresh()->return_status);
+        $this->assertSame('completed', $order->fresh()->fulfillment_status);
+        $this->assertSame('refunded', $returnRequest->fresh()->status);
+        $this->assertEquals($returnRequest->inventory_restocked_at, $returnRequest->fresh()->inventory_restocked_at);
+        $this->assertSame(10, $product->fresh()->inventory);
+        $this->assertDatabaseCount('inventory_movements', 1);
+        $this->assertDatabaseCount('audit_logs', 2);
+        $this->assertSame(1, AuditLog::query()->where('action', 'admin.order.payment_updated')->count());
+        $this->assertSame(1, AuditLog::query()->where('action', 'admin.return.updated')->count());
+    }
+
     public function test_mysql_concurrent_coupon_checkouts_honor_the_usage_limit(): void
     {
         $this->requireMySql();
@@ -321,7 +437,7 @@ class MySqlCartConcurrencyTest extends TestCase
         return sys_get_temp_dir().DIRECTORY_SEPARATOR.'cart-test-'.bin2hex(random_bytes(8));
     }
 
-    private function runConcurrently(array $commands, int $expectedFailures = 0): void
+    private function runConcurrently(array $commands, int $expectedFailures = 0): array
     {
         $barrier = $this->temporaryPath();
         $readyFiles = array_map(fn () => $this->temporaryPath(), $commands);
@@ -354,6 +470,8 @@ class MySqlCartConcurrencyTest extends TestCase
         foreach ([$barrier, ...$readyFiles] as $path) {
             @unlink($path);
         }
+
+        return array_map(fn (Process $process) => $process->getOutput(), $processes);
     }
 
     private function createProductAndUser(): array

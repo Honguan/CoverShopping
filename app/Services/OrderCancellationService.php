@@ -15,9 +15,10 @@ use RuntimeException;
 
 class OrderCancellationService
 {
-    public function __construct(private AuditLogService $auditLogService)
-    {
-    }
+    public function __construct(
+        private AuditLogService $auditLogService,
+        private CouponDiscountService $couponDiscountService
+    ) {}
 
     public function cancel(User $user, Order $order, ?Request $request = null): Order
     {
@@ -73,6 +74,7 @@ class OrderCancellationService
                 ]);
             }
 
+            $this->couponDiscountService->releaseForOrder($order);
             $order->update(['fulfillment_status' => 'cancelled']);
             $this->auditLogService->writeLog('order.cancelled', $order, ['number' => $order->number], $request);
 

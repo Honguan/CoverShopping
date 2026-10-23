@@ -6,6 +6,15 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class CreateCouponRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $code = $this->input('code');
+
+        if (is_string($code)) {
+            $this->merge(['code' => strtoupper($code)]);
+        }
+    }
+
     public function rules(): array
     {
         return [

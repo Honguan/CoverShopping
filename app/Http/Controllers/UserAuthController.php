@@ -38,6 +38,7 @@ class UserAuthController extends Controller
             return back()->withErrors(['account' => __('ui.account_not_active')]);
         }
 
+        $request->session()->put('password_hash_'.Auth::getDefaultDriver(), $request->user()->getAuthPassword());
         $shoppingCartService->mergeGuestCartIntoUserCart($request->user(), $guestSessionId);
 
         return redirect()->intended(route('catalog.index'));
@@ -53,6 +54,7 @@ class UserAuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $request->session()->put('password_hash_'.Auth::getDefaultDriver(), $user->getAuthPassword());
         $shoppingCartService->mergeGuestCartIntoUserCart($user, $guestSessionId);
 
         return redirect()->route('catalog.index');

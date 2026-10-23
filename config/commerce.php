@@ -5,4 +5,5 @@ return [
     'order_discount_threshold' => env('ORDER_DISCOUNT_THRESHOLD', 3000),
     'order_discount_amount' => env('ORDER_DISCOUNT_AMOUNT', 200),
     'low_stock_threshold' => env('LOW_STOCK_THRESHOLD', 5),
+    'guest_data_retention_days' => env('GUEST_DATA_RETENTION_DAYS', 30),
 ];

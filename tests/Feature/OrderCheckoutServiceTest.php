@@ -10,8 +10,10 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShippingMethod;
 use App\Models\User;
+use App\Services\CouponDiscountService;
 use App\Services\OrderCancellationService;
 use App\Services\OrderCheckoutService;
+use App\Services\OrderPaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
 use Tests\TestCase;
@@ -134,6 +136,50 @@ class OrderCheckoutServiceTest extends TestCase
             'quantity_delta' => 2,
             'inventory_after' => 2,
         ]);
+    }
+
+    public function test_cancelling_or_failing_payment_releases_the_coupon_once(): void
+    {
+        [$seller, $buyer] = $this->createSellerAndBuyer();
+        $admin = User::create([
+            'name' => 'Admin',
+            'account' => 'admin-coupon',
+            'password' => 'password',
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'name' => 'Coupon Product',
+            'price' => 500,
+            'inventory' => 5,
+            'status' => 'active',
+        ]);
+        $coupon = Coupon::create([
+            'code' => 'ONCE',
+            'name' => 'Once',
+            'type' => 'fixed',
+            'value' => 50,
+            'minimum_subtotal' => 0,
+            'usage_limit' => 1,
+            'is_active' => true,
+        ]);
+        $checkout = fn () => app(OrderCheckoutService::class)->createOrderFromCart($buyer, null, null, 'ONCE');
+
+        CartItem::create(['user_id' => $buyer->id, 'product_id' => $product->id, 'quantity' => 1]);
+        $cancelled = app(OrderCancellationService::class)->cancel($buyer, $checkout());
+        $this->assertSame(0, $coupon->fresh()->used_count);
+        $this->assertDatabaseMissing('coupon_redemptions', ['order_id' => $cancelled->id]);
+
+        CartItem::create(['user_id' => $buyer->id, 'product_id' => $product->id, 'quantity' => 1]);
+        $second = $checkout();
+        $this->assertSame(1, $coupon->fresh()->used_count);
+
+        app(OrderPaymentService::class)->transition($admin, $second, 'failed');
+        $this->assertSame(0, $coupon->fresh()->used_count);
+
+        app(CouponDiscountService::class)->releaseForOrder($second->fresh());
+        $this->assertSame(0, $coupon->fresh()->used_count);
     }
 
     public function test_checkout_uses_variant_inventory_and_shipping_method_snapshot(): void
