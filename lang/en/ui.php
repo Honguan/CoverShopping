@@ -199,6 +199,7 @@ return [
     'product_image_limit' => 'A product can have at most 8 images.',
     'product_updated' => 'Product updated.',
     'product_inventory_changed' => 'Inventory changed while you were editing. Reload the page and try again.',
+    'cannot_change_own_account' => 'You cannot suspend or demote your own account.',
     'product_image_removed' => 'Product image removed.',
     'product_variant_created' => 'Product variant created.',
     'question_answered' => 'Question answered.',

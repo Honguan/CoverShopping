@@ -87,7 +87,7 @@
 | Method | Path | Route name | 說明 |
 | --- | --- | --- | --- |
 | GET | `/admin/dashboard` | `admin.dashboard` | 七組管理清單各自每頁 10 筆；使用 `users_page`、`products_page`、`orders_page`、`coupons_page`、`shipping_methods_page`、`returns_page`、`business_profiles_page` 獨立頁碼。 |
-| PATCH | `/admin/users/{user}/status` | `admin.users.status` | 更新會員狀態或角色。 |
+| PATCH | `/admin/users/{user}/status` | `admin.users.status` | 更新會員狀態或角色；管理員不得停權或降級自己的帳號（回傳驗證錯誤）。 |
 | PATCH | `/admin/business-profiles/{businessProfile}` | `admin.business_profiles.status` | 審核企業資料。 |
 | PATCH | `/admin/products/{product}/status` | `admin.products.status` | 審核商品狀態。 |
 | PATCH | `/admin/orders/{order}/payment` | `admin.orders.payment` | 依合法狀態機更新付款狀態；失敗付款會取消訂單並回補庫存。 |
