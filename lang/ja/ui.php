@@ -199,6 +199,7 @@ return [
     'product_image_limit' => '商品画像は最大8枚までです。',
     'product_updated' => '商品を更新しました。',
     'product_inventory_changed' => '編集中に在庫が変更されました。ページを再読み込みしてもう一度お試しください。',
+    'cannot_change_own_account' => '自分のアカウントを停止または降格することはできません。',
     'product_image_removed' => '商品画像を削除しました。',
     'product_variant_created' => '商品バリエーションを作成しました。',
     'question_answered' => '質問に回答しました。',

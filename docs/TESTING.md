@@ -99,7 +99,7 @@ npm.cmd run build
 - `FavoriteAndReturnTest.php`：收藏、地址簿、預設地址唯一與接替、再次購買、購物車清空、退貨。
 - `OrderCheckoutServiceTest.php`：結帳、庫存、優惠券（含取消與付款失敗時歸還且不重複）、配送、B2B 價格。
 - `PublicEndpointFlowTest.php`：公開端點、會員互動、通知與登入保護。
-- `BackOfficeFlowTest.php`：商家後台、管理員後台與角色阻擋；賣家商品頁問答只查詢一次，避免多載入未使用資料；B2B 價格不得高於售價；過期的庫存表單不得覆寫期間售出的庫存。
+- `BackOfficeFlowTest.php`：商家後台、管理員後台與角色阻擋；賣家商品頁問答只查詢一次，避免多載入未使用資料；B2B 價格不得高於售價；過期的庫存表單不得覆寫期間售出的庫存；管理員不得停權或降級自己。
 - `ServiceLogicFlowTest.php`：購物車狀態、價格、促銷、推薦。
 - `RoleMiddlewareTest.php`：角色 middleware 基本阻擋。
 - `ProductCatalogSearchTest.php`：Meilisearch 的 active、分類、價格與排序合約；同價格商品跨頁順序固定。

@@ -199,6 +199,7 @@ return [
     'product_image_limit' => '상품 이미지는 최대 8개까지 등록할 수 있습니다.',
     'product_updated' => '상품이 업데이트되었습니다.',
     'product_inventory_changed' => '편집하는 동안 재고가 변경되었습니다. 페이지를 새로고침한 후 다시 시도하세요.',
+    'cannot_change_own_account' => '자신의 계정을 정지하거나 강등할 수 없습니다.',
     'product_image_removed' => '상품 이미지가 제거되었습니다.',
     'product_variant_created' => '상품 옵션이 생성되었습니다.',
     'question_answered' => '질문에 답변했습니다.',
