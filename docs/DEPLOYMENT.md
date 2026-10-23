@@ -33,4 +33,4 @@ MySQL 的 healthcheck 必須使用應用程式帳密，以 TCP 連線至目標�
 
 ### 排程
 
-`shopping:prune-guest-data` 每日清理訪客購物車與最近瀏覽，保留天數由 `GUEST_DATA_RETENTION_DAYS`（預設 30）控制。需要有程序持續執行排程，例如在單一工作程序執行 `php artisan schedule:work`，或每分鐘由 cron 執行 `php artisan schedule:run`；排程使用 `onOneServer()`，多副本時需共用的 Redis cache。目前 Compose 沒有排程服務，未安排前訪客資料不會被清理，但不影響結帳。
+`shopping:prune-guest-data` 每日清理訪客購物車與最近瀏覽，保留天數由 `GUEST_DATA_RETENTION_DAYS`（預設 30）控制。Compose 的 `scheduler` 服務以 `www-data` 執行 `php artisan schedule:work`，與 `app` 共用映像與環境；它只等待 `db`、`redis` 健康，不等待 `app` readiness，migration 前排程指令若執行會失敗並記錄，不影響 `app`。排程使用 `onOneServer()`，多副本時需共用的 Redis cache，且每套部署只需執行一個 `scheduler`。非 Compose 部署請自行以 `schedule:work` 或每分鐘 cron 執行 `php artisan schedule:run`。
