@@ -24,7 +24,7 @@
 - **購物車服務**：加入、合併與結帳都在交易內鎖定商品／規格並重新驗證庫存；數量調整只做上限夾取，真正的庫存把關在結帳交易，未發現會超賣的路徑。
 - **安全標頭**：正式環境使用嚴格 CSP、HSTS（僅 HTTPS）、`X-Frame-Options: DENY` 與 `nosniff`；local 環境刻意放寬 CSP 供 Vite 使用。
 - **出貨授權**：`OrderItemPolicy::ship` 要求已付款、訂單處理中或部分出貨、項目待出貨，且為該賣家或管理員。
-- **賣家庫存編輯為覆寫**：`InventoryAdjustmentService::setProductInventory` 將表單數字直接設為庫存。賣家開啟表單後若有訂單扣庫存，再送出舊數字會把已售出的數量加回（庫存流水仍記錄差額）。要根治需在表單帶入原庫存並於交易內比對（樂觀鎖），會改動表單與流程，未自行改動；賣家在大量下單期間應重新整理後再調整庫存。
+- **賣家庫存編輯覆寫（已修正）**：庫存表單原本直接覆寫，賣家開啟表單後若有訂單扣庫存，再送出舊數字會把已售出的數量加回。現在表單帶入 `expected_inventory`，`setProductInventory` 在鎖定商品後比對，不一致時回傳驗證錯誤 `product_inventory_changed`（五語系），請賣家重新整理後再調整；未帶該欄位的呼叫（例如建立商品）維持原行為。測試：`BackOfficeFlowTest`。
 - **B2B 價格**：已新增 `business_price` 不得高於 `price` 的驗證；規格價差與 `max(0, …)` 保留，負價差過大時單價會被夾為 0，未額外限制。
 - **前端相依弱點**：`npm audit` 對 `vite`、`source-map-js` 的 high 弱點會讓所有 PR 的 `Quality` 在最前面失敗，已另開 Issue #48／PR #49 處理（僅更新 lockfile）；該 PR 合併後本 PR 需同步 `main` 再重跑檢查。
 

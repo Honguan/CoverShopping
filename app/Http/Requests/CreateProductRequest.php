@@ -15,6 +15,7 @@ class CreateProductRequest extends FormRequest
             'business_price' => ['nullable', 'integer', 'min:0', 'lte:price'],
             'business_min_quantity' => ['nullable', 'integer', 'min:1'],
             'inventory' => ['required', 'integer', 'min:0'],
+            'expected_inventory' => ['nullable', 'integer', 'min:0'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'images' => ['nullable', 'array', 'max:8'],
             'images.*' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:2048'],

@@ -258,6 +258,22 @@ class BackOfficeFlowTest extends TestCase
         $this->assertSame('completed', $order->fresh()->fulfillment_status);
     }
 
+    public function test_stale_inventory_form_cannot_overwrite_stock_sold_in_the_meantime(): void
+    {
+        [$seller] = $this->createUsers();
+        $product = Product::create(['seller_id' => $seller->id, 'name' => 'Racing', 'price' => 100, 'inventory' => 10, 'status' => 'active']);
+        $form = ['name' => 'Racing', 'price' => 100, 'inventory' => 10, 'expected_inventory' => 10];
+
+        $product->update(['inventory' => 7]);
+
+        $this->actingAs($seller)->patch("/seller/products/{$product->id}", $form)->assertSessionHasErrors('inventory');
+        $this->assertSame(7, $product->fresh()->inventory);
+
+        $this->actingAs($seller)->patch("/seller/products/{$product->id}", ['inventory' => 12, 'expected_inventory' => 7] + $form)
+            ->assertRedirect('/seller/products');
+        $this->assertSame(12, $product->fresh()->inventory);
+    }
+
     public function test_business_price_cannot_exceed_the_retail_price(): void
     {
         [$seller] = $this->createUsers();

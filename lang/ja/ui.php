@@ -198,6 +198,7 @@ return [
     'product_created' => '商品を作成しました。',
     'product_image_limit' => '商品画像は最大8枚までです。',
     'product_updated' => '商品を更新しました。',
+    'product_inventory_changed' => '編集中に在庫が変更されました。ページを再読み込みしてもう一度お試しください。',
     'product_image_removed' => '商品画像を削除しました。',
     'product_variant_created' => '商品バリエーションを作成しました。',
     'question_answered' => '質問に回答しました。',

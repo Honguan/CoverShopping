@@ -41,6 +41,7 @@
                     <input name="business_price" type="number" min="0" value="{{ $product->business_price }}" placeholder="{{ __('ui.business_price') }}">
                     <input name="business_min_quantity" type="number" min="1" value="{{ $product->business_min_quantity }}" placeholder="{{ __('ui.minimum_quantity') }}">
                     <input name="inventory" type="number" min="0" value="{{ $product->inventory }}" required>
+                    <input name="expected_inventory" type="hidden" value="{{ $product->inventory }}">
                     <input name="images[]" type="file" accept="image/*" multiple>
                     <span>{{ __('ui.product_status_'.$product->status) }}</span>
                     <button type="submit">{{ __('ui.update') }}</button>

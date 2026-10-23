@@ -198,6 +198,7 @@ return [
     'product_created' => 'Producto creado.',
     'product_image_limit' => 'Un producto puede tener como máximo 8 imágenes.',
     'product_updated' => 'Producto actualizado.',
+    'product_inventory_changed' => 'El inventario cambió mientras editabas. Recarga la página e inténtalo de nuevo.',
     'product_image_removed' => 'Imagen del producto eliminada.',
     'product_variant_created' => 'Variante del producto creada.',
     'question_answered' => 'Pregunta respondida.',
