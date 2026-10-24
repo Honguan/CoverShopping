@@ -57,8 +57,8 @@
         <section class="panel">
             <h2>{{ __('ui.related_products') }}</h2>
             <div class="mini-grid">
-                @foreach($relatedProducts as $product)
-                    @include('catalog.partials.product-card', ['product' => $product])
+                @foreach($relatedProducts as $relatedProduct)
+                    @include('catalog.partials.product-card', ['product' => $relatedProduct])
                 @endforeach
             </div>
         </section>
