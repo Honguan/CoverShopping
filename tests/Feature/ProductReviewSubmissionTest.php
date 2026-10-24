@@ -84,6 +84,19 @@ class ProductReviewSubmissionTest extends TestCase
         $this->assertDatabaseCount('audit_logs', 0);
     }
 
+    public function test_refunded_orders_cannot_be_reviewed(): void
+    {
+        [$buyer, $product, $item] = $this->createPurchase();
+        $item->order->update(['payment_status' => 'refunded']);
+
+        $this->actingAs($buyer)->post(route('reviews.store', $product), [
+            'order_item_id' => $item->id,
+            'rating' => 5,
+        ])->assertForbidden();
+
+        $this->assertDatabaseCount('product_reviews', 0);
+    }
+
     public function test_the_order_item_must_belong_to_the_requested_product(): void
     {
         [$buyer, $product, $item] = $this->createPurchase();
