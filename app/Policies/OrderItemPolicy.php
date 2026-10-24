@@ -18,6 +18,7 @@ class OrderItemPolicy
     public function review(User $user, OrderItem $orderItem): bool
     {
         return $orderItem->order->user_id === $user->id
+            && $orderItem->order->payment_status !== 'refunded'
             && in_array($orderItem->order->fulfillment_status, ['shipped', 'completed'], true);
     }
 }
