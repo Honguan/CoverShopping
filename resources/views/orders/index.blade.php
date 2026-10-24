@@ -47,7 +47,7 @@
                             x {{ $item->quantity }} = ${{ number_format($item->subtotal) }}
                             @if($item->review)
                                 <p>{{ __('ui.review_submitted') }}</p>
-                            @elseif($item->product_id && in_array($order->fulfillment_status, ['shipped', 'completed'], true))
+                            @elseif($item->product_id && $order->payment_status !== 'refunded' && in_array($order->fulfillment_status, ['shipped', 'completed'], true))
                                 <form class="stack" action="{{ route('reviews.store', $item->product_id) }}" method="post">
                                     @csrf
                                     <input type="hidden" name="order_item_id" value="{{ $item->id }}">
