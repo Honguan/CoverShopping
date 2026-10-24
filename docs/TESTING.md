@@ -21,17 +21,9 @@ npm.cmd run build
 
 本機缺 PHP / Composer 時，`composer analyse` 與 `composer test` 需交給 GitHub Actions 或 PHP 8.3 環境執行。
 
-## Issue 修正驗收流程
+## 合併流程
 
-1. 從最新 `origin/main` 建立 `issue/<issue-number>-<short-description>` 分支。
-2. 本機執行與變更直接相關的最小測試，再執行完整驗收命令。
-3. 建立以 `main` 為 base 的 PR；標題包含 Issue 編號，body 使用 `Refs #<issue-number>`。
-4. 等待 GitHub Actions 的 `PR metadata` 與 `Quality` checks 成功後才合併。
-5. 合併後必須等待 `main` 分支的 `Quality` workflow 再次成功。
-6. 更新本機 `main`，確認 merge commit 與 Issue 驗收條件後才關閉 Issue。
-
-`PR metadata` 會檢查分支命名、PR 標題、Issue 是否仍為 open，以及 PR body 不得提前使用自動關閉關鍵字。`Quality` 會對本次變更的 PHP 檔執行 Pint check，並執行前端 build、Larastan、PHPUnit、`git diff --check` 與 Docker smoke test。
-
+建立以 `main` 為 base 的 PR，等待 GitHub Actions 的 `PR metadata`（目前不做任何檢查，僅保留為必要檢查名稱）與 `Quality` 成功後才合併，合併後確認 `main` 的 `Quality` 再次成功。`Quality` 會對本次變更的 PHP 檔執行 Pint check，並執行前端 build、Larastan、PHPUnit、`git diff --check` 與 Docker smoke test。
 `Quality` 另執行 `python3 tests/Support/mysql_healthcheck.py`（Python 3.10+ 與 Docker）。此測試使用 Compose 的實際健康檢查指令，在隔離且無對外 port 的暫存 MySQL 容器中暫停初始化，驗證 socket-only 階段不可就緒、正式 TCP 啟動後才成功，以及錯誤帳密／缺少資料庫會失敗。容器與暫存資料會在測試結束時清除；Windows 可用 `python` 執行。
 
 前端相依套件含開發／建置工具；`Quality` 在 `npm ci` 後執行 `npm audit --audit-level=high`，high／critical 已知弱點會阻止合併。更新時先維持 `package.json` 的既有主版本範圍，驗證乾淨安裝與建置，不以 `--force` 或 overrides 略過相容性。
