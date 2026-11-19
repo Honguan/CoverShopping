@@ -17,6 +17,15 @@ class CustomerOrderController extends Controller
         ]);
     }
 
+    public function showOrder(Order $order)
+    {
+        $this->authorize('view', $order);
+
+        return view('orders.show', [
+            'order' => $order->load(['items', 'returnRequests' => fn ($query) => $query->latest()->latest('id')]),
+        ]);
+    }
+
     public function reorder(Request $request, Order $order, ShoppingCartService $shoppingCartService)
     {
         abort_unless($order->user_id === $request->user()->id, 403);

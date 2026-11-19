@@ -41,6 +41,7 @@
 | DELETE | `/cart/items/{cartItem}` | `cart.items.destroy` | 移除單一購物車項目。 |
 | POST | `/checkout` | `checkout.store` | 建立訂單、扣庫存、套用優惠與運費。 |
 | GET | `/orders` | `orders.index` | 會員訂單列表。 |
+| GET | `/orders/{order}` | `orders.show` | 會員訂單詳情：金額明細、配送、逐項單價與出貨狀態、退貨紀錄；只限訂單擁有者（`OrderPolicy::view`）。 |
 | POST | `/orders/{order}/reorder` | `orders.reorder` | 將可購買商品再次加入購物車。 |
 | POST | `/orders/{order}/cancel` | `orders.cancel` | 取消自己的未付款待處理訂單並回補庫存。 |
 
