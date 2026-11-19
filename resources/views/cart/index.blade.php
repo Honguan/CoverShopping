@@ -87,8 +87,10 @@
                     </label>
                     <a href="{{ route('addresses.index') }}">{{ __('ui.manage_addresses') }}</a>
                     <label>{{ __('ui.shipping_method') }}
-                        <select name="shipping_method_id">
-                            <option value="">{{ __('ui.no_shipping_method_selected') }}</option>
+                        <select name="shipping_method_id" @required($shippingMethods->isNotEmpty())>
+                            @if($shippingMethods->isEmpty())
+                                <option value="">{{ __('ui.no_shipping_method_selected') }}</option>
+                            @endif
                             @foreach($shippingMethods as $shippingMethod)
                                 <option value="{{ $shippingMethod->id }}" @selected($defaultShippingMethod?->id === $shippingMethod->id)>
                                     {{ $shippingMethod->name }} ${{ number_format($shippingMethod->fee) }}

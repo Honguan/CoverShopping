@@ -20,6 +20,7 @@ return [
     'minimum_price' => '最低價格',
     'maximum_price' => '最高價格',
     'latest' => '最新上架',
+    'relevance' => '最相關',
     'price_low_to_high' => '價格低到高',
     'price_high_to_low' => '價格高到低',
     'oldest' => '較早上架',

@@ -179,7 +179,7 @@ class OrderCheckoutServiceTest extends TestCase
         $this->assertSame(0, $coupon->fresh()->used_count);
 
         app(CouponDiscountService::class)->releaseForOrder($second->fresh());
-        $this->assertSame(0, $coupon->fresh()->used_count);
+        $this->assertSame(0, Coupon::findOrFail($coupon->id)->used_count);
     }
 
     public function test_checkout_uses_variant_inventory_and_shipping_method_snapshot(): void

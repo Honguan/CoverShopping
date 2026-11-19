@@ -12,7 +12,7 @@
 ## 商品瀏覽
 
 1. `ProductCatalogController` 透過 `ProductCatalogQuery` 查詢 active 商品；關鍵字在 MySQL database driver 使用 Scout full-text，Meilisearch 直接接收狀態、分類、價格與排序條件，不支援 full-text 的 SQLite 則保留測試／開發 fallback。
-2. 商品列表支援關鍵字、分類、價格與排序。
+2. 商品列表支援關鍵字、分類、價格與排序；有關鍵字時預設「最相關」，排序交給搜尋引擎（SQLite fallback 無相關度，改依最新排序）。
 3. 商品詳情會寫入 `recently_viewed_products`，供推薦區使用。
 4. `ProductRecommendationService` 提供熱門商品、最近瀏覽與相關商品；熱門排行只計入已付款且未取消的訂單，商品 ID 快取 10 分鐘後重新聚合。
 5. 商品圖片上限為 8 張；新檔案先全部寫入，DB transaction 失敗時清除，賣家可刪除圖片並同步移除檔案。
@@ -38,7 +38,7 @@
 
 ## 結帳與訂單
 
-1. `CheckoutController` 呼叫 `OrderCheckoutService::createOrderFromCart`。
+1. `CheckoutController` 呼叫 `OrderCheckoutService::createOrderFromCart`。只要有啟用中的配送方式，`CheckoutCartRequest` 就要求選擇一個啟用中的配送方式，避免以「不選擇」略過運費；完全沒有啟用配送方式時才允許不選。
 2. 結帳在 database transaction 內執行。
 3. 商品與 SKU 會在交易內 `lockForUpdate` 後重新驗證；新增 SKU 後的舊購物車也必須選擇規格。先拒絕任一數量小於 1 的項目，再按商品／SKU 累計重複資料並驗證庫存；不合法時不寫入訂單、庫存或優惠券，也不刪除購物車。
 4. 訂單會保留商品名稱、規格名稱、單價、小計、優惠券、配送方式與收件地址快照；訂單顯示及賣家履約只使用地址快照。

@@ -20,11 +20,15 @@
         <input name="q" value="{{ request('q') }}" placeholder="{{ __('ui.keyword') }}">
         <input name="min_price" type="number" min="0" value="{{ request('min_price') }}" placeholder="{{ __('ui.minimum_price') }}">
         <input name="max_price" type="number" min="0" value="{{ request('max_price') }}" placeholder="{{ __('ui.maximum_price') }}">
+        @php($currentSort = request('sort', filled(request('q')) ? 'relevance' : 'latest'))
         <select name="sort">
-            <option value="latest" @selected(request('sort', 'latest') === 'latest')>{{ __('ui.latest') }}</option>
-            <option value="price_asc" @selected(request('sort') === 'price_asc')>{{ __('ui.price_low_to_high') }}</option>
-            <option value="price_desc" @selected(request('sort') === 'price_desc')>{{ __('ui.price_high_to_low') }}</option>
-            <option value="oldest" @selected(request('sort') === 'oldest')>{{ __('ui.oldest') }}</option>
+            @if(filled(request('q')))
+                <option value="relevance" @selected($currentSort === 'relevance')>{{ __('ui.relevance') }}</option>
+            @endif
+            <option value="latest" @selected($currentSort === 'latest')>{{ __('ui.latest') }}</option>
+            <option value="price_asc" @selected($currentSort === 'price_asc')>{{ __('ui.price_low_to_high') }}</option>
+            <option value="price_desc" @selected($currentSort === 'price_desc')>{{ __('ui.price_high_to_low') }}</option>
+            <option value="oldest" @selected($currentSort === 'oldest')>{{ __('ui.oldest') }}</option>
         </select>
         @if(request('category'))
             <input type="hidden" name="category" value="{{ request('category') }}">

@@ -43,7 +43,7 @@ npm.cmd run build
 
 ## 環境限制
 
-目前部分本機環境可能沒有 PHP / Composer。若無法執行 `composer test` 或 `composer analyse`，需在 GitHub Actions 或具備 PHP 8.3 的環境補跑。
+目前部分本機環境可能沒有 PHP / Composer。若無法執行 `composer test` 或 `composer analyse`，需在 GitHub Actions 或具備 PHP 8.5 的環境補跑。
 
 ## 資料一致性原則
 

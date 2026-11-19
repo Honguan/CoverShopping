@@ -29,7 +29,7 @@ class ProductCatalogQuery
         $categorySlug = (string) $request->string('category');
         $minPrice = $request->integer('min_price');
         $maxPrice = $request->integer('max_price');
-        $sort = (string) $request->string('sort', 'latest');
+        $sort = (string) $request->string('sort', $keyword !== '' ? 'relevance' : 'latest');
 
         if ($keyword !== '' && config('scout.driver') === 'database' && DB::getDriverName() !== 'mysql') {
             $query = Product::query()->active()->with(['primaryImage', 'category', 'variants']);
@@ -68,6 +68,8 @@ class ProductCatalogQuery
                 'price_asc' => $search->orderBy('price'),
                 'price_desc' => $search->orderBy('price', 'desc'),
                 'oldest' => $search->orderBy('created_at'),
+                // Leave the order to the search engine so the best matches come first.
+                'relevance' => $search,
                 default => $search->orderBy('created_at', 'desc'),
             };
 

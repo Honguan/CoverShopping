@@ -19,7 +19,7 @@ Windows 可使用：
 npm.cmd run build
 ```
 
-本機缺 PHP / Composer 時，`composer analyse` 與 `composer test` 需交給 GitHub Actions 或 PHP 8.3 環境執行。
+本機可用 Docker 執行 PHP 8.5 測試，例如 `docker run --rm -v "$PWD:/app" -w /app <含 bcmath、intl、zip 的 php:8.5-cli 映像> php artisan test`。本機缺 PHP / Composer 時，`composer analyse` 與 `composer test` 需交給 GitHub Actions 或 PHP 8.5 環境執行。
 
 ## 合併流程
 
@@ -106,6 +106,7 @@ npm.cmd run build
 - `CouponCreationTest.php`：正規化後的重複優惠碼驗證、正常新增與錯誤型別拒絕。
 - `ProductReviewSubmissionTest.php`：重複評價保留首次內容、audit 一次、權限與訂單頁 eager loading。
 - `ReturnRefundConsistencyTest.php`：兩個退款入口同步、既有不一致狀態補齊、庫存與 audit 冪等、非法轉移回滾。
+- `CommerceRuleHardeningTest.php`：有啟用配送方式時結帳必選啟用中的方式、無配送方式時仍可結帳，以及規格負價差不得超過最低基本價。
 
 CI 的 Docker smoke test 會寫入 `uploads` volume、替換 app 容器，再確認同一檔案仍可由 `/storage/...` 讀取。
 MySQL 工作流會實際並發切換預設地址，驗證會員鎖與唯一索引。

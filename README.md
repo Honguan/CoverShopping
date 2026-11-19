@@ -4,7 +4,7 @@ CoverShopping 是以 Laravel 為核心的 B2C / B2B 電商單體專案，目標�
 
 ## 技術環境
 
-- PHP 8.3+
+- PHP 8.5+
 - Laravel 13
 - Composer 2.8+
 - Node.js 22+
@@ -62,7 +62,7 @@ npm.cmd run build
 git diff --check
 ```
 
-完整 PHP 測試需在具備 PHP 8.3 與 Composer 的環境或 GitHub Actions 執行。測試策略請見 [docs/TESTING.md](docs/TESTING.md)。
+完整 PHP 測試需在具備 PHP 8.5 與 Composer 的環境、Docker 或 GitHub Actions 執行。測試策略請見 [docs/TESTING.md](docs/TESTING.md)。
 
 ## 文件
 
