@@ -41,6 +41,17 @@ class ViewStateConsistencyTest extends TestCase
             ->assertDontSee(route('seller.orders.items.ship', [$unpaid->order, $unpaid]), false);
     }
 
+    public function test_address_form_keeps_input_after_validation_failure(): void
+    {
+        $this->actingAs($this->user('buyer', 'customer'))
+            ->from(route('addresses.index'))
+            ->followingRedirects()
+            ->post(route('addresses.store'), ['recipient_name' => 'Kept Name', 'phone' => '0912000000'])
+            ->assertOk()
+            ->assertSee('value="Kept Name"', false)
+            ->assertSee('value="0912000000"', false);
+    }
+
     private function user(string $account, string $role): User
     {
         return User::create([

@@ -6,8 +6,8 @@
     <form class="panel" action="{{ route('login.store') }}" method="post">
         @csrf
         <h1>{{ __('ui.login_title') }}</h1>
-        <label>{{ __('ui.account') }}<input name="account" value="{{ old('account') }}" required></label>
-        <label>{{ __('ui.password') }}<input name="password" type="password" required></label>
+        <label>{{ __('ui.account') }}<input name="account" value="{{ old('account') }}" autocomplete="username" maxlength="64" required></label>
+        <label>{{ __('ui.password') }}<input name="password" type="password" autocomplete="current-password" required></label>
         <label class="inline"><input name="remember" type="checkbox" value="1"> {{ __('ui.remember_me') }}</label>
         <button type="submit">{{ __('ui.login') }}</button>
         <a href="{{ route('password.request') }}">{{ __('passwords.forgot_title') }}</a>
