@@ -21,6 +21,8 @@ FROM php:8.3-apache
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libicu-dev libzip-dev \
     && docker-php-ext-install bcmath intl pdo_mysql zip \
+    && docker-php-ext-enable opcache \
+    && printf '%s\n' 'opcache.enable=1' 'opcache.validate_timestamps=0' 'opcache.memory_consumption=128' 'opcache.max_accelerated_files=10000' > /usr/local/etc/php/conf.d/zz-opcache.ini \
     && a2enmod rewrite \
     && sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
     && sed -ri -e 's!AllowOverride None!AllowOverride All!g' /etc/apache2/apache2.conf \

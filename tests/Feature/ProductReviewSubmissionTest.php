@@ -93,6 +93,7 @@ class ProductReviewSubmissionTest extends TestCase
             'order_item_id' => $item->id,
             'rating' => 5,
         ])->assertForbidden();
+        $this->get('/orders')->assertOk()->assertDontSee('name="order_item_id"', false);
 
         $this->assertDatabaseCount('product_reviews', 0);
     }

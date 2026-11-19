@@ -8,13 +8,13 @@
     <form class="panel stack" action="{{ route('addresses.store') }}" method="post">
         @csrf
         <h2>{{ __('ui.add_shipping_address') }}</h2>
-        <label>{{ __('ui.recipient_name') }}<input name="recipient_name" required></label>
-        <label>{{ __('ui.phone') }}<input name="phone" required></label>
-        <label>{{ __('ui.postal_code') }}<input name="postal_code"></label>
-        <label>{{ __('ui.city') }}<input name="city" required></label>
-        <label>{{ __('ui.district') }}<input name="district"></label>
-        <label>{{ __('ui.address_line') }}<input name="address_line" required></label>
-        <label class="inline"><input name="is_default" type="checkbox" value="1"> {{ __('ui.set_default_address') }}</label>
+        <label>{{ __('ui.recipient_name') }}<input name="recipient_name" value="{{ old('recipient_name') }}" autocomplete="name" maxlength="80" required></label>
+        <label>{{ __('ui.phone') }}<input name="phone" type="tel" value="{{ old('phone') }}" autocomplete="tel" maxlength="40" required></label>
+        <label>{{ __('ui.postal_code') }}<input name="postal_code" value="{{ old('postal_code') }}" autocomplete="postal-code" maxlength="20"></label>
+        <label>{{ __('ui.city') }}<input name="city" value="{{ old('city') }}" maxlength="80" required></label>
+        <label>{{ __('ui.district') }}<input name="district" value="{{ old('district') }}" maxlength="80"></label>
+        <label>{{ __('ui.address_line') }}<input name="address_line" value="{{ old('address_line') }}" autocomplete="street-address" maxlength="255" required></label>
+        <label class="inline"><input name="is_default" type="checkbox" value="1" @checked(old('is_default'))> {{ __('ui.set_default_address') }}</label>
         <button type="submit">{{ __('ui.add_address') }}</button>
     </form>
 

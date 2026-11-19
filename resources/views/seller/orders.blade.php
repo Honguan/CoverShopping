@@ -16,13 +16,13 @@
                     @endif
                 </div>
                 <span>{{ __('ui.fulfillment_'.$item->shipping_status) }}</span>
-                @if($item->shipping_status !== 'shipped')
+                @can('ship', $item)
                     <form action="{{ route('seller.orders.items.ship', [$item->order, $item]) }}" method="post">
                         @csrf
                         @method('PATCH')
                         <button type="submit">{{ __('ui.mark_shipped') }}</button>
                     </form>
-                @endif
+                @endcan
             </article>
         @endforeach
     </section>
