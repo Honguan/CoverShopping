@@ -20,6 +20,7 @@ return [
     'minimum_price' => '最低価格',
     'maximum_price' => '最高価格',
     'latest' => '新着順',
+    'relevance' => '関連度順',
     'price_low_to_high' => '価格が低い順',
     'price_high_to_low' => '価格が高い順',
     'oldest' => '古い順',

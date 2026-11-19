@@ -52,6 +52,31 @@ class ProductCatalogSearchTest extends TestCase
         }
     }
 
+    public function test_keyword_search_defaults_to_engine_relevance_order(): void
+    {
+        $engine = new CapturingSearchEngine;
+        $manager = app(EngineManager::class);
+        $manager->extend('meilisearch', fn () => $engine);
+        $manager->forgetDrivers();
+        config(['scout.driver' => 'meilisearch']);
+
+        try {
+            app(ProductCatalogQuery::class)->paginate(Request::create('/products', 'GET', ['q' => 'running']));
+
+            $this->assertSame([], $engine->builder->orders);
+        } finally {
+            config(['scout.driver' => 'database']);
+            $manager->forgetDrivers();
+        }
+
+        $this->get(route('catalog.index', ['q' => 'running']))
+            ->assertOk()
+            ->assertSee('<option value="relevance" selected', false);
+        $this->get(route('catalog.index'))
+            ->assertOk()
+            ->assertDontSee('value="relevance"', false);
+    }
+
     public function test_equal_price_products_keep_a_stable_order_across_pages(): void
     {
         $seller = User::create(['name' => 'Seller', 'account' => 'stable-seller', 'password' => 'password', 'role' => 'seller', 'status' => 'active']);

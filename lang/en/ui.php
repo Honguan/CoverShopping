@@ -20,6 +20,7 @@ return [
     'minimum_price' => 'Minimum price',
     'maximum_price' => 'Maximum price',
     'latest' => 'Newest',
+    'relevance' => 'Best match',
     'price_low_to_high' => 'Price: low to high',
     'price_high_to_low' => 'Price: high to low',
     'oldest' => 'Oldest',

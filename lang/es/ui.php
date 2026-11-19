@@ -20,6 +20,7 @@ return [
     'minimum_price' => 'Precio mínimo',
     'maximum_price' => 'Precio máximo',
     'latest' => 'Más recientes',
+    'relevance' => 'Más relevantes',
     'price_low_to_high' => 'Precio: menor a mayor',
     'price_high_to_low' => 'Precio: mayor a menor',
     'oldest' => 'Más antiguos',

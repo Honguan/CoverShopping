@@ -20,6 +20,7 @@ return [
     'minimum_price' => '최저 가격',
     'maximum_price' => '최고 가격',
     'latest' => '최신순',
+    'relevance' => '관련도순',
     'price_low_to_high' => '낮은 가격순',
     'price_high_to_low' => '높은 가격순',
     'oldest' => '오래된 순',
