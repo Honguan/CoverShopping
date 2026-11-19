@@ -105,7 +105,23 @@
                 <button type="submit">{{ __('ui.create_coupon') }}</button>
             </form>
             @foreach($coupons as $coupon)
-                <p>{{ $coupon->code }}：{{ $coupon->name }}，{{ __('ui.used_count', ['count' => $coupon->used_count]) }}</p>
+                <details>
+                    <summary>{{ $coupon->code }}：{{ $coupon->name }}，{{ __('ui.used_count', ['count' => $coupon->used_count]) }}，{{ $coupon->is_active ? __('ui.status_active') : __('ui.status_inactive') }}</summary>
+                    <form class="stack" action="{{ route('admin.coupons.update', $coupon) }}" method="post">
+                        @csrf
+                        @method('PATCH')
+                        <input name="name" value="{{ $coupon->name }}" maxlength="120" aria-label="{{ __('ui.name') }}" required>
+                        <select name="type" aria-label="{{ __('ui.discount_type') }}">
+                            <option value="fixed" @selected($coupon->type === 'fixed')>{{ __('ui.discount_fixed') }}</option>
+                            <option value="percent" @selected($coupon->type === 'percent')>{{ __('ui.discount_percent') }}</option>
+                        </select>
+                        <input name="value" type="number" min="1" value="{{ $coupon->value }}" aria-label="{{ __('ui.discount_value') }}" required>
+                        <input name="minimum_subtotal" type="number" min="0" value="{{ $coupon->minimum_subtotal }}" aria-label="{{ __('ui.minimum_order_amount') }}">
+                        <input name="usage_limit" type="number" min="1" value="{{ $coupon->usage_limit }}" aria-label="{{ __('ui.usage_limit') }}">
+                        <label class="inline"><input name="is_active" type="checkbox" value="1" @checked($coupon->is_active)> {{ __('ui.status_active') }}</label>
+                        <button type="submit">{{ __('ui.update') }}</button>
+                    </form>
+                </details>
             @endforeach
             {{ $coupons->links() }}
         </div>
@@ -138,7 +154,18 @@
                 <button type="submit">{{ __('ui.create_shipping_method') }}</button>
             </form>
             @foreach($shippingMethods as $shippingMethod)
-                <p>{{ $shippingMethod->name }}：${{ number_format($shippingMethod->fee) }}</p>
+                <details>
+                    <summary>{{ $shippingMethod->name }}：${{ number_format($shippingMethod->fee) }}，{{ $shippingMethod->is_active ? __('ui.status_active') : __('ui.status_inactive') }}</summary>
+                    <form class="stack" action="{{ route('admin.shipping_methods.update', $shippingMethod) }}" method="post">
+                        @csrf
+                        @method('PATCH')
+                        <input name="name" value="{{ $shippingMethod->name }}" maxlength="120" aria-label="{{ __('ui.shipping_name') }}" required>
+                        <input name="fee" type="number" min="0" value="{{ $shippingMethod->fee }}" aria-label="{{ __('ui.shipping_fee') }}" required>
+                        <input name="sort_order" type="number" min="0" value="{{ $shippingMethod->sort_order }}" aria-label="{{ __('ui.sort_order') }}">
+                        <label class="inline"><input name="is_active" type="checkbox" value="1" @checked($shippingMethod->is_active)> {{ __('ui.status_active') }}</label>
+                        <button type="submit">{{ __('ui.update') }}</button>
+                    </form>
+                </details>
             @endforeach
             {{ $shippingMethods->links() }}
         </div>

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\InventoryMovement;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -39,6 +40,39 @@ class InventoryAdjustmentService
             ]);
 
             return $lockedProduct;
+        });
+    }
+
+    /**
+     * @param  array{option_name: string, option_value: string, price_delta: int, inventory: int, is_active: bool}  $attributes
+     * @param  int  $expectedInventory  表單載入時的 SKU 庫存；與目前不同代表期間有訂單異動，拒絕覆寫。
+     */
+    public function updateProductVariant(ProductVariant $variant, User $user, array $attributes, int $expectedInventory): ProductVariant
+    {
+        return DB::transaction(function () use ($variant, $user, $attributes, $expectedInventory) {
+            $lockedVariant = ProductVariant::query()->lockForUpdate()->findOrFail($variant->id);
+
+            if ($expectedInventory !== $lockedVariant->inventory) {
+                throw ValidationException::withMessages(['inventory' => __('ui.product_inventory_changed')]);
+            }
+
+            $quantityDelta = $attributes['inventory'] - $lockedVariant->inventory;
+            $lockedVariant->update($attributes);
+
+            if ($quantityDelta !== 0) {
+                InventoryMovement::create([
+                    'product_id' => $lockedVariant->product_id,
+                    'product_variant_id' => $lockedVariant->id,
+                    'user_id' => $user->id,
+                    'reason' => 'seller_adjustment',
+                    'quantity_delta' => $quantityDelta,
+                    'inventory_after' => $attributes['inventory'],
+                    'reference_type' => ProductVariant::class,
+                    'reference_id' => $lockedVariant->id,
+                ]);
+            }
+
+            return $lockedVariant;
         });
     }
 }
