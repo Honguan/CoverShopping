@@ -69,7 +69,7 @@
 ## 商家後台
 
 1. seller 可建立商品，商品預設 `pending` 等待管理員審核。
-2. seller 可建立自己的商品 SKU。
+2. seller 可建立與編輯自己的商品 SKU（SKU 代碼不可改，可停用）；SKU 庫存調整在鎖定後比對 `expected_inventory`，不一致時拒絕，成功時寫入含 `product_variant_id` 的 `inventory_movements`。
 3. seller 可回覆自己商品的問答，並通知提問會員。
 4. seller 只能出貨自己的已付款待出貨 order item；全部出貨後訂單狀態改為 `completed`。
 
@@ -77,7 +77,7 @@
 
 1. admin 可更新會員狀態與角色。
 2. admin 審核企業資料後會同步會員 `account_type`。
-3. admin 可審核商品、更新付款狀態、建立優惠券與配送方式。
+3. admin 可審核商品、更新付款狀態、建立與編輯／停用優惠券和配送方式（優惠碼不可改）。
 4. 付款狀態改為 `paid` 且訂單仍為 `pending` 時，履約狀態改為 `processing`。
 5. admin 依退貨狀態轉換更新訂單 `return_status`；首次標為 `received` 時會在 transaction 內回補商品或 SKU 庫存並寫入庫存帳。
 6. 退貨申請會在 transaction 內鎖定並重新驗證訂單；資料庫限制每張訂單只能有一筆申請，且重複的 `received` 更新為 no-op，庫存回補以時間戳保證只執行一次。

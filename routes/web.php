@@ -70,6 +70,7 @@ Route::middleware(['auth', 'role:seller,admin'])->prefix('seller')->name('seller
     Route::patch('/products/{product}', [SellerDashboardController::class, 'updateProductInfo'])->name('products.update');
     Route::delete('/products/{product}/images/{productImage}', [SellerDashboardController::class, 'deleteProductImage'])->name('products.images.destroy');
     Route::post('/products/{product}/variants', [SellerDashboardController::class, 'createProductVariant'])->name('products.variants.store');
+    Route::patch('/products/{product}/variants/{variant}', [SellerDashboardController::class, 'updateProductVariant'])->scopeBindings()->name('products.variants.update');
     Route::get('/orders/export', [SellerDashboardController::class, 'exportSellerOrders'])->name('orders.export');
     Route::get('/orders', [SellerDashboardController::class, 'showSellerOrders'])->name('orders.index');
     Route::patch('/orders/{order}/items/{orderItem}/ship', [SellerDashboardController::class, 'markOrderItemShipped'])->name('orders.items.ship');
@@ -83,6 +84,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/products/{product}/status', [AdminDashboardController::class, 'changeProductStatus'])->name('products.status');
     Route::patch('/orders/{order}/payment', [AdminDashboardController::class, 'changeOrderPaymentStatus'])->name('orders.payment');
     Route::post('/coupons', [AdminDashboardController::class, 'createCoupon'])->name('coupons.store');
+    Route::patch('/coupons/{coupon}', [AdminDashboardController::class, 'updateCoupon'])->name('coupons.update');
     Route::post('/shipping-methods', [AdminDashboardController::class, 'createShippingMethod'])->name('shipping_methods.store');
+    Route::patch('/shipping-methods/{shippingMethod}', [AdminDashboardController::class, 'updateShippingMethod'])->name('shipping_methods.update');
     Route::patch('/returns/{returnRequest}', [AdminDashboardController::class, 'changeReturnStatus'])->name('returns.status');
 });

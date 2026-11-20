@@ -76,6 +76,7 @@
 | PATCH | `/seller/products/{product}` | `seller.products.update` | 更新自己的商品。 |
 | DELETE | `/seller/products/{product}/images/{productImage}` | `seller.products.images.destroy` | 刪除自己的商品圖片並同步移除檔案。 |
 | POST | `/seller/products/{product}/variants` | `seller.products.variants.store` | 建立商品 SKU。 |
+| PATCH | `/seller/products/{product}/variants/{variant}` | `seller.products.variants.update` | 更新 SKU 規格、價差、庫存與啟用狀態；SKU 代碼不可改，須屬於該商品，庫存以 `expected_inventory` 防止覆寫期間訂單異動，並寫入 `inventory_movements`。 |
 | GET | `/seller/orders/export` | `seller.orders.export` | 匯出自己的訂單明細 CSV，包含 B2B 採購單號。 |
 | GET | `/seller/orders` | `seller.orders.index` | 商家訂單明細。 |
 | PATCH | `/seller/orders/{order}/items/{orderItem}/ship` | `seller.orders.items.ship` | 出貨自己的訂單明細。 |
@@ -93,5 +94,7 @@
 | PATCH | `/admin/products/{product}/status` | `admin.products.status` | 審核商品狀態。 |
 | PATCH | `/admin/orders/{order}/payment` | `admin.orders.payment` | 依合法狀態機更新付款狀態；失敗付款會取消訂單並回補庫存。 |
 | POST | `/admin/coupons` | `admin.coupons.store` | 建立優惠券。 |
+| PATCH | `/admin/coupons/{coupon}` | `admin.coupons.update` | 更新優惠券內容與啟用狀態；優惠碼不可改。 |
 | POST | `/admin/shipping-methods` | `admin.shipping_methods.store` | 建立配送方式。 |
+| PATCH | `/admin/shipping-methods/{shippingMethod}` | `admin.shipping_methods.update` | 更新配送方式名稱、運費、排序與啟用狀態；停用後結帳不可再選。 |
 | PATCH | `/admin/returns/{returnRequest}` | `admin.returns.status` | 更新退貨狀態。 |

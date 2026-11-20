@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CreateCouponRequest;
 use App\Http\Requests\CreateShippingMethodRequest;
 use App\Http\Requests\ReviewBusinessProfileRequest;
+use App\Http\Requests\UpdateCouponRequest;
 use App\Http\Requests\UpdateOrderPaymentRequest;
 use App\Http\Requests\UpdateProductStatusRequest;
 use App\Http\Requests\UpdateReturnStatusRequest;
@@ -114,6 +115,30 @@ class AdminDashboardController extends Controller
         $auditLogService->writeLog('admin.shipping_method.created', $shippingMethod, $data, $request);
 
         return redirect()->route('admin.dashboard')->with('status', __('ui.shipping_method_created'));
+    }
+
+    public function updateCoupon(UpdateCouponRequest $request, Coupon $coupon, AuditLogService $auditLogService)
+    {
+        $data = $request->validated();
+        $data['minimum_subtotal'] = $data['minimum_subtotal'] ?? 0;
+        $data['is_active'] = $request->boolean('is_active');
+
+        $coupon->update($data);
+        $auditLogService->writeLog('admin.coupon.updated', $coupon, $data, $request);
+
+        return redirect()->route('admin.dashboard')->with('status', __('ui.coupon_updated'));
+    }
+
+    public function updateShippingMethod(CreateShippingMethodRequest $request, ShippingMethod $shippingMethod, AuditLogService $auditLogService)
+    {
+        $data = $request->validated();
+        $data['sort_order'] = $data['sort_order'] ?? 0;
+        $data['is_active'] = $request->boolean('is_active');
+
+        $shippingMethod->update($data);
+        $auditLogService->writeLog('admin.shipping_method.updated', $shippingMethod, $data, $request);
+
+        return redirect()->route('admin.dashboard')->with('status', __('ui.shipping_method_updated'));
     }
 
     public function changeReturnStatus(UpdateReturnStatusRequest $request, ReturnRequest $returnRequest, ReturnRequestService $returnRequestService)
