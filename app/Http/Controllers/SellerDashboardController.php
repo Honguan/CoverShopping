@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AnswerProductQuestionRequest;
 use App\Http\Requests\CreateProductRequest;
 use App\Http\Requests\CreateProductVariantRequest;
+use App\Http\Requests\UpdateProductVariantRequest;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductQuestion;
+use App\Models\ProductVariant;
 use App\Services\AuditLogService;
 use App\Services\InventoryAdjustmentService;
 use App\Services\SellerOrderShipmentService;
@@ -178,6 +180,25 @@ class SellerDashboardController extends Controller
         $auditLogService->writeLog('seller.product_variant.created', $variant, $data, $request);
 
         return redirect()->route('seller.products.index')->with('status', __('ui.product_variant_created'));
+    }
+
+    public function updateProductVariant(UpdateProductVariantRequest $request, Product $product, ProductVariant $variant, AuditLogService $auditLogService, InventoryAdjustmentService $inventoryAdjustmentService)
+    {
+        $this->authorize('update', $product);
+
+        $data = $request->validated();
+        $attributes = [
+            'option_name' => $data['option_name'],
+            'option_value' => $data['option_value'],
+            'price_delta' => $data['price_delta'] ?? 0,
+            'inventory' => $data['inventory'],
+            'is_active' => $request->boolean('is_active'),
+        ];
+        $variant = $inventoryAdjustmentService->updateProductVariant($variant, $request->user(), $attributes, $data['expected_inventory']);
+
+        $auditLogService->writeLog('seller.product_variant.updated', $variant, $attributes, $request);
+
+        return redirect()->route('seller.products.index')->with('status', __('ui.product_variant_updated'));
     }
 
     public function answerProductQuestion(AnswerProductQuestionRequest $request, ProductQuestion $productQuestion, AuditLogService $auditLogService)

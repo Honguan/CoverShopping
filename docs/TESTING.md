@@ -107,6 +107,7 @@ npm.cmd run build
 - `ProductReviewSubmissionTest.php`：重複評價保留首次內容、audit 一次、權限與訂單頁 eager loading。
 - `ReturnRefundConsistencyTest.php`：兩個退款入口同步、既有不一致狀態補齊、庫存與 audit 冪等、非法轉移回滾。
 - `CommerceRuleHardeningTest.php`：有啟用配送方式時結帳必選啟用中的方式、無配送方式時仍可結帳，以及規格負價差不得超過最低基本價。
+- `BackOfficeEditingTest.php`：管理員編輯／停用優惠券（優惠碼不可改）與配送方式（停用後結帳不可選）、非管理員被拒；賣家編輯自己 SKU 並記錄庫存異動，過期庫存、跨商品與他人 SKU 被拒。
 
 CI 的 Docker smoke test 會寫入 `uploads` volume、替換 app 容器，再確認同一檔案仍可由 `/storage/...` 讀取。
 MySQL 工作流會實際並發切換預設地址，驗證會員鎖與唯一索引。

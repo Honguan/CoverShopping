@@ -66,7 +66,20 @@
                     <button type="submit">{{ __('ui.add_variant') }}</button>
                 </form>
                 @foreach($product->variants as $variant)
-                    <p>{{ $variant->sku }} / {{ $variant->displayName() }} / {{ __('ui.remaining_stock', ['quantity' => $variant->inventory]) }}</p>
+                    <details>
+                        <summary>{{ $variant->sku }} / {{ $variant->displayName() }} / {{ __('ui.remaining_stock', ['quantity' => $variant->inventory]) }} / {{ $variant->is_active ? __('ui.status_active') : __('ui.status_inactive') }}</summary>
+                        <form class="row" action="{{ route('seller.products.variants.update', [$product, $variant]) }}" method="post">
+                            @csrf
+                            @method('PATCH')
+                            <input name="option_name" value="{{ $variant->option_name }}" maxlength="80" aria-label="{{ __('ui.option_name') }}" required>
+                            <input name="option_value" value="{{ $variant->option_value }}" maxlength="120" aria-label="{{ __('ui.option_value') }}" required>
+                            <input name="price_delta" type="number" value="{{ $variant->price_delta }}" aria-label="{{ __('ui.price_delta') }}">
+                            <input name="inventory" type="number" min="0" value="{{ $variant->inventory }}" aria-label="{{ __('ui.variant_inventory') }}" required>
+                            <input name="expected_inventory" type="hidden" value="{{ $variant->inventory }}">
+                            <label class="inline"><input name="is_active" type="checkbox" value="1" @checked($variant->is_active)> {{ __('ui.status_active') }}</label>
+                            <button type="submit">{{ __('ui.update') }}</button>
+                        </form>
+                    </details>
                 @endforeach
             </article>
         @endforeach
