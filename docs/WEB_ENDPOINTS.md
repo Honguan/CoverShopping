@@ -92,7 +92,7 @@
 
 | Method | Path | Route name | 說明 |
 | --- | --- | --- | --- |
-| GET | `/admin/dashboard` | `admin.dashboard` | 七組管理清單各自每頁 10 筆；使用 `users_page`、`products_page`、`orders_page`、`coupons_page`、`shipping_methods_page`、`returns_page`、`business_profiles_page` 獨立頁碼。 |
+| GET | `/admin/dashboard` | `admin.dashboard` | 八組管理清單各自每頁 10 筆；使用 `users_page`、`products_page`、`orders_page`、`coupons_page`、`shipping_methods_page`、`categories_page`、`returns_page`、`business_profiles_page` 獨立頁碼。 |
 | PATCH | `/admin/users/{user}/status` | `admin.users.status` | 更新會員狀態或角色；管理員不得停權或降級自己的帳號（回傳驗證錯誤）。 |
 | PATCH | `/admin/business-profiles/{businessProfile}` | `admin.business_profiles.status` | 審核企業資料。 |
 | PATCH | `/admin/products/{product}/status` | `admin.products.status` | 審核商品狀態。 |
@@ -101,4 +101,6 @@
 | PATCH | `/admin/coupons/{coupon}` | `admin.coupons.update` | 更新優惠券內容與啟用狀態；優惠碼不可改。 |
 | POST | `/admin/shipping-methods` | `admin.shipping_methods.store` | 建立配送方式。 |
 | PATCH | `/admin/shipping-methods/{shippingMethod}` | `admin.shipping_methods.update` | 更新配送方式名稱、運費、排序與啟用狀態；停用後結帳不可再選。 |
+| POST | `/admin/categories` | `admin.categories.store` | 建立分類；`slug` 必須唯一且只含英數、`-`、`_`。 |
+| PATCH | `/admin/categories/{category}` | `admin.categories.update` | 更新分類名稱、`slug` 與啟用狀態；儲存後立即清除商品目錄的分類快取，停用分類不再出現在目錄篩選與賣家選單。 |
 | PATCH | `/admin/returns/{returnRequest}` | `admin.returns.status` | 更新退貨狀態。 |

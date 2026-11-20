@@ -28,6 +28,14 @@
         <label>{{ __('ui.business_price') }}<input name="business_price" type="number" min="0"></label>
         <label>{{ __('ui.minimum_quantity') }}<input name="business_min_quantity" type="number" min="1" value="1"></label>
         <label>{{ __('ui.stock') }}<input name="inventory" type="number" min="0" required></label>
+        <label>{{ __('ui.category') }}
+            <select name="category_id">
+                <option value="">-</option>
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                @endforeach
+            </select>
+        </label>
         <label>{{ __('ui.images') }}<input name="images[]" type="file" accept="image/*" multiple></label>
         <button type="submit">{{ __('ui.submit_for_review') }}</button>
     </form>
@@ -44,6 +52,12 @@
                     <input name="business_min_quantity" type="number" min="1" value="{{ $product->business_min_quantity }}" placeholder="{{ __('ui.minimum_quantity') }}">
                     <input name="inventory" type="number" min="0" value="{{ $product->inventory }}" required>
                     <input name="expected_inventory" type="hidden" value="{{ $product->inventory }}">
+                    <select name="category_id" aria-label="{{ __('ui.category') }}">
+                        <option value="">-</option>
+                        @foreach($product->category && ! $product->category->is_active ? $categories->concat([$product->category]) : $categories as $category)
+                            <option value="{{ $category->id }}" @selected($category->id === $product->category_id)>{{ $category->name }}</option>
+                        @endforeach
+                    </select>
                     <input name="images[]" type="file" accept="image/*" multiple>
                     <span>{{ __('ui.product_status_'.$product->status) }}</span>
                     <button type="submit">{{ __('ui.update') }}</button>

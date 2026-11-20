@@ -17,7 +17,6 @@ class ProductCatalogController extends Controller
 
         return view('catalog.index', [
             'products' => $productCatalogQuery->paginate($request),
-            // ponytail: categories may be stale for 10 minutes; add event-driven invalidation with category administration.
             'categories' => Cache::remember(
                 'catalog.active-categories',
                 now()->addMinutes(10),

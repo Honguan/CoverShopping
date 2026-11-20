@@ -169,5 +169,29 @@
             @endforeach
             {{ $shippingMethods->links() }}
         </div>
+        <div class="panel">
+            <h2>{{ __('ui.category') }}</h2>
+            <form class="stack" action="{{ route('admin.categories.store') }}" method="post">
+                @csrf
+                <input name="name" maxlength="120" placeholder="{{ __('ui.name') }}" required>
+                <input name="slug" maxlength="140" pattern="[A-Za-z0-9_\-]+" placeholder="{{ __('ui.category_slug') }}" required>
+                <label class="inline"><input name="is_active" type="checkbox" value="1" checked> {{ __('ui.status_active') }}</label>
+                <button type="submit">{{ __('ui.create_category') }}</button>
+            </form>
+            @foreach($categories as $category)
+                <details>
+                    <summary>{{ $category->name }}（{{ $category->slug }}），{{ $category->is_active ? __('ui.status_active') : __('ui.status_inactive') }}</summary>
+                    <form class="stack" action="{{ route('admin.categories.update', $category) }}" method="post">
+                        @csrf
+                        @method('PATCH')
+                        <input name="name" value="{{ $category->name }}" maxlength="120" aria-label="{{ __('ui.name') }}" required>
+                        <input name="slug" value="{{ $category->slug }}" maxlength="140" pattern="[A-Za-z0-9_\-]+" aria-label="{{ __('ui.category_slug') }}" required>
+                        <label class="inline"><input name="is_active" type="checkbox" value="1" @checked($category->is_active)> {{ __('ui.status_active') }}</label>
+                        <button type="submit">{{ __('ui.update') }}</button>
+                    </form>
+                </details>
+            @endforeach
+            {{ $categories->links() }}
+        </div>
     </section>
 @endsection

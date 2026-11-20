@@ -92,5 +92,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/coupons/{coupon}', [AdminDashboardController::class, 'updateCoupon'])->name('coupons.update');
     Route::post('/shipping-methods', [AdminDashboardController::class, 'createShippingMethod'])->name('shipping_methods.store');
     Route::patch('/shipping-methods/{shippingMethod}', [AdminDashboardController::class, 'updateShippingMethod'])->name('shipping_methods.update');
+    Route::post('/categories', [AdminDashboardController::class, 'createCategory'])->name('categories.store');
+    Route::patch('/categories/{category}', [AdminDashboardController::class, 'updateCategory'])->name('categories.update');
     Route::patch('/returns/{returnRequest}', [AdminDashboardController::class, 'changeReturnStatus'])->name('returns.status');
 });
