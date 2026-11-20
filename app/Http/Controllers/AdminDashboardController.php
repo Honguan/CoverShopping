@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CreateCouponRequest;
 use App\Http\Requests\CreateShippingMethodRequest;
 use App\Http\Requests\ReviewBusinessProfileRequest;
+use App\Http\Requests\SaveCategoryRequest;
 use App\Http\Requests\UpdateCouponRequest;
 use App\Http\Requests\UpdateOrderPaymentRequest;
 use App\Http\Requests\UpdateProductStatusRequest;
 use App\Http\Requests\UpdateReturnStatusRequest;
 use App\Http\Requests\UpdateUserStatusRequest;
 use App\Models\BusinessProfile;
+use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Notification;
 use App\Models\Order;
@@ -33,6 +35,7 @@ class AdminDashboardController extends Controller
             'orders' => Order::latest()->orderByDesc('id')->paginate(10, ['*'], 'orders_page')->withQueryString(),
             'coupons' => Coupon::latest()->orderByDesc('id')->paginate(10, ['*'], 'coupons_page')->withQueryString(),
             'shippingMethods' => ShippingMethod::orderBy('sort_order')->latest()->orderByDesc('id')->paginate(10, ['*'], 'shipping_methods_page')->withQueryString(),
+            'categories' => Category::orderBy('name')->orderBy('id')->paginate(10, ['*'], 'categories_page')->withQueryString(),
             'returnRequests' => ReturnRequest::with(['order.user'])->latest()->orderByDesc('id')->paginate(10, ['*'], 'returns_page')->withQueryString(),
             'businessProfiles' => BusinessProfile::latest()->orderByDesc('id')->paginate(10, ['*'], 'business_profiles_page')->withQueryString(),
         ]);
@@ -139,6 +142,28 @@ class AdminDashboardController extends Controller
         $auditLogService->writeLog('admin.shipping_method.updated', $shippingMethod, $data, $request);
 
         return redirect()->route('admin.dashboard')->with('status', __('ui.shipping_method_updated'));
+    }
+
+    public function createCategory(SaveCategoryRequest $request, AuditLogService $auditLogService)
+    {
+        $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active', true);
+
+        $category = Category::create($data);
+        $auditLogService->writeLog('admin.category.created', $category, $data, $request);
+
+        return redirect()->route('admin.dashboard')->with('status', __('ui.category_created'));
+    }
+
+    public function updateCategory(SaveCategoryRequest $request, Category $category, AuditLogService $auditLogService)
+    {
+        $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active');
+
+        $category->update($data);
+        $auditLogService->writeLog('admin.category.updated', $category, $data, $request);
+
+        return redirect()->route('admin.dashboard')->with('status', __('ui.category_updated'));
     }
 
     public function changeReturnStatus(UpdateReturnStatusRequest $request, ReturnRequest $returnRequest, ReturnRequestService $returnRequestService)
