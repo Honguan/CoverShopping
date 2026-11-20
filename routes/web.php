@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\BusinessAccountController;
@@ -48,6 +49,9 @@ Route::get('/orders', [CustomerOrderController::class, 'showCustomerOrders'])->m
 Route::get('/orders/{order}', [CustomerOrderController::class, 'showOrder'])->middleware('auth')->name('orders.show');
 Route::post('/orders/{order}/reorder', [CustomerOrderController::class, 'reorder'])->middleware('auth')->name('orders.reorder');
 Route::post('/orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->middleware('auth')->name('orders.cancel');
+Route::get('/account', [AccountController::class, 'showAccount'])->middleware('auth')->name('account.edit');
+Route::patch('/account', [AccountController::class, 'updateProfile'])->middleware('auth')->name('account.update');
+Route::put('/account/password', [AccountController::class, 'updatePassword'])->middleware(['auth', 'throttle:5,1'])->name('account.password');
 Route::get('/addresses', [AddressController::class, 'showAddresses'])->middleware('auth')->name('addresses.index');
 Route::post('/addresses', [AddressController::class, 'storeAddress'])->middleware('auth')->name('addresses.store');
 Route::patch('/addresses/{address}', [AddressController::class, 'updateAddress'])->middleware('auth')->name('addresses.update');
@@ -60,6 +64,7 @@ Route::post('/products/{product}/reviews', [ProductReviewController::class, 'cre
 Route::post('/products/{product}/questions', [ProductQuestionController::class, 'askProductQuestion'])->middleware(['auth', 'throttle:product-question'])->name('questions.store');
 Route::post('/orders/{order}/returns', [ReturnRequestController::class, 'requestOrderReturn'])->middleware('auth')->name('returns.store');
 Route::get('/notifications', [UserNotificationController::class, 'showNotifications'])->middleware('auth')->name('notifications.index');
+Route::patch('/notifications/read-all', [UserNotificationController::class, 'markAllNotificationsRead'])->middleware('auth')->name('notifications.read_all');
 Route::patch('/notifications/{notification}/read', [UserNotificationController::class, 'markNotificationRead'])->middleware('auth')->name('notifications.read');
 Route::get('/business-profile', [BusinessAccountController::class, 'showBusinessProfileForm'])->middleware('auth')->name('business_profile.edit');
 Route::post('/business-profile', [BusinessAccountController::class, 'submitBusinessProfile'])->middleware('auth')->name('business_profile.store');
