@@ -10,6 +10,7 @@
                 <div class="row">
                     <div>
                         <h2>{{ $order->number }}</h2>
+                        <a href="{{ route('orders.show', $order) }}">{{ __('ui.view_order_details') }}</a>
                         <p>{{ strtoupper($order->sales_channel) }} / {{ __('ui.order_total') }} ${{ number_format($order->total) }} / {{ __('ui.payment') }} {{ __('ui.payment_' . $order->payment_status) }} / {{ __('ui.fulfillment') }} {{ __('ui.fulfillment_' . $order->fulfillment_status) }}</p>
                         @if($order->purchase_order_number)
                             <p>{{ __('ui.purchase_order_number') }}: {{ $order->purchase_order_number }}</p>
