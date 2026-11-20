@@ -49,6 +49,9 @@
 
 | Method | Path | Route name | 說明 |
 | --- | --- | --- | --- |
+| GET | `/account` | `account.edit` | 會員帳號設定：個人資料與變更密碼。 |
+| PATCH | `/account` | `account.update` | 更新姓名、email（不可與他人重複）與生日；帳號與角色不可改。 |
+| PUT | `/account/password` | `account.password` | 驗證目前密碼後變更密碼，每分鐘 5 次；目前 Session 保持登入，其他裝置的 Session 與記住我登入失效。 |
 | GET | `/addresses` | `addresses.index` | 地址簿。 |
 | POST | `/addresses` | `addresses.store` | 新增地址，可設為預設。 |
 | PATCH | `/addresses/{address}` | `addresses.update` | 編輯自己的既有地址；保留預設狀態及歷史訂單地址快照。 |
@@ -61,6 +64,7 @@
 | POST | `/products/{product}/questions` | `questions.store` | 對商品提問；每位會員每分鐘最多 5 次，超過回傳 429。 |
 | POST | `/orders/{order}/returns` | `returns.store` | 對已出貨或完成訂單申請退貨。 |
 | GET | `/notifications` | `notifications.index` | 會員通知列表。 |
+| PATCH | `/notifications/read-all` | `notifications.read_all` | 將自己所有未讀通知標為已讀，已讀通知保留原讀取時間。 |
 | PATCH | `/notifications/{notification}/read` | `notifications.read` | 標記自己的通知為已讀，保留首次讀取時間；已讀通知可從列表重新開啟。 |
 | GET | `/business-profile` | `business_profile.edit` | 企業資料頁。 |
 | POST | `/business-profile` | `business_profile.store` | 送出 B2B 企業審核資料。 |

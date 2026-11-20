@@ -4,6 +4,13 @@
 
 @section('content')
     <h1>{{ __('ui.notification_center') }}</h1>
+    @if($notifications->contains(fn ($notification) => ! $notification->read_at))
+        <form action="{{ route('notifications.read_all') }}" method="post">
+            @csrf
+            @method('PATCH')
+            <button type="submit">{{ __('ui.mark_all_notifications_read') }}</button>
+        </form>
+    @endif
     <section class="list">
         @forelse($notifications as $notification)
             <article class="row">

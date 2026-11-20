@@ -14,6 +14,13 @@ class UserNotificationController extends Controller
         ]);
     }
 
+    public function markAllNotificationsRead(Request $request)
+    {
+        Notification::where('user_id', $request->user()->id)->whereNull('read_at')->update(['read_at' => now()]);
+
+        return redirect()->route('notifications.index')->with('status', __('ui.notifications_marked_read'));
+    }
+
     public function markNotificationRead(Request $request, Notification $notification)
     {
         $this->authorize('view', $notification);
