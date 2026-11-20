@@ -4,7 +4,7 @@ CoverShopping 是以 Laravel 為核心的 B2C / B2B 電商單體專案，目標�
 
 ## 技術環境
 
-- PHP 8.5+
+- PHP 8.5+（正式映像與 CI 使用 PHP 8.6）
 - Laravel 13
 - Composer 2.8+
 - Node.js 22+

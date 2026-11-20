@@ -9,12 +9,12 @@ COPY resources ./resources
 COPY vite.config.js ./
 RUN npm run build
 
-FROM php:8.5-cli AS dependencies
+FROM php:8.6-cli AS dependencies
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git unzip libicu-dev libzip-dev \
-    && docker-php-ext-install bcmath intl zip \
+    && apt-get install -y --no-install-recommends git unzip libicu-dev libonig-dev libzip-dev \
+    && docker-php-ext-install bcmath intl mbstring zip \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -22,11 +22,11 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --optimize-autoloader
 
-FROM php:8.5-apache
+FROM php:8.6-apache
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libicu-dev libzip-dev \
-    && docker-php-ext-install bcmath intl pdo_mysql zip \
+    && apt-get install -y --no-install-recommends libicu-dev libonig-dev libzip-dev \
+    && docker-php-ext-install bcmath intl mbstring pdo_mysql zip \
     && printf '%s\n' 'opcache.enable=1' 'opcache.validate_timestamps=0' 'opcache.memory_consumption=128' 'opcache.max_accelerated_files=10000' > /usr/local/etc/php/conf.d/zz-opcache.ini \
     && a2enmod rewrite \
     && sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
