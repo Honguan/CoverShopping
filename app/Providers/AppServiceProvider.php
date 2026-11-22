@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Pagination\Paginator;
@@ -21,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::defaultView('pagination');
+        // Surface N+1 queries in development and tests; production stays lenient.
+        Model::preventLazyLoading(! $this->app->isProduction());
 
         $resetUrl = fn (User $user, string $token): string => rtrim(config('app.url'), '/').route('password.reset', [
             'token' => $token,
