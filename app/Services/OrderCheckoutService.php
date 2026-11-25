@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShippingMethod;
 use App\Models\User;
+use App\Notifications\OrderStatusMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -186,6 +187,7 @@ class OrderCheckoutService
             }
 
             CartItem::whereKey($cartItems->modelKeys())->delete();
+            $user->notify(new OrderStatusMail($order, 'placed'));
 
             return $order->load('items');
         }, 3);

@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Notifications\OrderStatusMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -77,6 +78,7 @@ class OrderCancellationService
             $this->couponDiscountService->releaseForOrder($order);
             $order->update(['fulfillment_status' => 'cancelled']);
             $this->auditLogService->writeLog('order.cancelled', $order, ['number' => $order->number], $request);
+            $order->user?->notify(new OrderStatusMail($order, 'cancelled'));
 
             return $order->refresh();
         }, 3);

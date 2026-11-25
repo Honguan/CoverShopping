@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ReturnRequest;
 use App\Models\User;
+use App\Notifications\OrderStatusMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -113,6 +114,7 @@ class ReturnRequestService
             $returnRequest->update($returnUpdates);
             $order->update(['return_status' => $status]);
             $this->auditLogService->writeLog('admin.return.updated', $returnRequest, ['status' => $status], $request);
+            $order->user?->notify(new OrderStatusMail($order, 'return_'.$status));
 
             return $returnRequest->refresh();
         }, 3);
