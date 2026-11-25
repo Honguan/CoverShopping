@@ -6,6 +6,9 @@ document.addEventListener('submit', (event) => {
     }
 });
 
+// Payment hand-off page: post the signed fields to the gateway straight away (the button stays as a fallback).
+document.querySelector('form[data-auto-submit]')?.submit();
+
 document.querySelectorAll('[data-variant-selector]').forEach((selector) => {
     selector.addEventListener('change', () => {
         const inventory = Number(selector.selectedOptions[0].dataset.inventory);

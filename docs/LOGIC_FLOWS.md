@@ -45,6 +45,7 @@
 5. 建立訂單後會扣庫存、寫入 `inventory_movements`，並清除購物車項目。
 6. 付款只能由 unpaid 轉為 paid 或 failed；paid 會進入 processing，failed 會取消訂單並恰好回補一次庫存。未出貨的 paid 訂單可作廢退款並回補一次；已收貨退貨的兩個退款入口都同步付款、訂單退貨與退貨申請狀態，不再回補庫存；既有付款已退款但退貨仍為 received 的資料可由同一路徑補齊。
 7. 會員只可取消自己的未付款待處理訂單；取消時以 transaction 鎖定訂單與庫存並寫入回補紀錄。
+8. 線上付款：`PAYMENT_GATEWAY=stripe` 或 `ecpay` 時，訂單頁對擁有者的未付款待處理訂單顯示「立即付款」。付款狀態只由金流的伺服器通知（Stripe webhook、綠界 ReturnURL）確認，會員瀏覽器返回不會改變狀態。`OrderPaymentService::confirmGatewayPayment` 鎖定訂單後核對金額與狀態：相符才改為 paid／processing 並記錄 `payment_gateway`、`payment_reference`、寫 audit log 與寄付款通知；重複通知不重複處理；金額不符或訂單已取消時不套用，改記 `payment.gateway.unmatched` 供管理員人工退款。綠界每次付款產生新的 `MerchantTradeNo`，訂單以 `CustomField1` 對應，因此可重試付款。退款仍由管理員在金流後台執行後，於本系統後台更新狀態。
 
 ## 價格與促銷
 

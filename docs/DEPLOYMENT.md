@@ -33,6 +33,15 @@ SMTP 可直接接上常見郵件服務，不需額外套件，例如 Gmail／Goo
 
 MySQL 的 healthcheck 必須使用應用程式帳密，以 TCP 連線至目標資料庫並執行 `SELECT 1`。初始化期間的暫時伺服器只開放 Unix socket，不能用 localhost 的 `mysqladmin ping` 當作就緒判斷；帳密錯誤或資料庫不存在時也必須保持 unhealthy。
 
+### 線上付款
+
+`PAYMENT_GATEWAY` 預設 `manual`（管理員在後台更新付款狀態）。啟用線上付款時，`APP_URL` 必須是金流可連線的 HTTPS 網址，並重新部署以重建設定快取。
+
+- Stripe：設定 `PAYMENT_GATEWAY=stripe`、`STRIPE_SECRET`（`sk_live_…`／測試用 `sk_test_…`）與 `STRIPE_CURRENCY`（預設 `twd`）。在 Stripe Dashboard 新增 webhook 端點 `https://<網域>/payments/stripe/webhook`，訂閱 `checkout.session.completed` 與 `checkout.session.async_payment_succeeded`，將簽章密鑰填入 `STRIPE_WEBHOOK_SECRET`。可用付款方式（信用卡、Apple Pay、Google Pay 等）在 Stripe Dashboard 啟用。
+- 綠界 ECPay：設定 `PAYMENT_GATEWAY=ecpay`、`ECPAY_MERCHANT_ID`、`ECPAY_HASH_KEY`、`ECPAY_HASH_IV`；測試環境使用 `ECPAY_MODE=stage` 與綠界公開的測試商店資料，正式上線改為 `production`。付款結果由 `https://<網域>/payments/ecpay/notify` 接收，會員可選擇信用卡、ATM、超商代碼／條碼等方式；ATM 與超商在實際繳費後才會通知付款成功。
+
+金額不符或訂單已取消的付款通知不會套用，請在 audit log 搜尋 `payment.gateway.unmatched` 並至金流後台退款。
+
 ### 佇列與訂單通知信
 
 訂單通知信經由佇列寄送。Compose 的 `queue` 服務以 `www-data` 執行 `php artisan queue:work --tries=3 --backoff=60`，與 `app` 共用映像與環境（`QUEUE_CONNECTION=redis`）；寄送失敗會重試 3 次，最終失敗寫入 `failed_jobs`，可用 `php artisan queue:retry all` 重送。更新程式後須重啟 `queue` 服務才會載入新程式碼。非 Compose 部署請以 Supervisor 或 systemd 常駐執行 `queue:work`。

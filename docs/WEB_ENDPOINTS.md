@@ -43,6 +43,9 @@
 | GET | `/orders` | `orders.index` | 會員訂單列表。 |
 | GET | `/orders/{order}` | `orders.show` | 會員訂單詳情：金額明細、配送、逐項單價與出貨狀態、退貨紀錄；只限訂單擁有者（`OrderPolicy::view`）。 |
 | POST | `/orders/{order}/reorder` | `orders.reorder` | 將可購買商品再次加入購物車。 |
+| POST | `/orders/{order}/pay` | `orders.pay` | 線上付款（`PAYMENT_GATEWAY` 為 `stripe` 或 `ecpay` 時）；限擁有者的未付款待處理訂單，每分鐘 10 次。Stripe 轉址至 Checkout，ECPay 回傳自動送出的簽章表單。 |
+| POST | `/payments/stripe/webhook` | `payments.stripe.webhook` | Stripe webhook；驗證 `Stripe-Signature`（5 分鐘內），`checkout.session.completed`／`async_payment_succeeded` 且已付款才確認；簽章錯誤回 400。免 CSRF。 |
+| POST | `/payments/ecpay/notify` | `payments.ecpay.notify` | 綠界 ReturnURL；驗證 CheckMacValue 與 MerchantID，`RtnCode=1` 才確認，正式環境忽略模擬付款；成功回 `1|OK`，驗章失敗回 400。免 CSRF。 |
 | POST | `/orders/{order}/cancel` | `orders.cancel` | 取消自己的未付款待處理訂單並回補庫存。 |
 
 ## Account / Engagement

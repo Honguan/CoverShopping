@@ -12,6 +12,11 @@ class OrderPolicy
         return $order->user_id === $user->id;
     }
 
+    public function pay(User $user, Order $order): bool
+    {
+        return config('payment.gateway') !== 'manual' && $this->cancel($user, $order);
+    }
+
     public function cancel(User $user, Order $order): bool
     {
         return $order->user_id === $user->id
