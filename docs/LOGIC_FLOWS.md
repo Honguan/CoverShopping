@@ -12,7 +12,7 @@
 ## 商品瀏覽
 
 1. `ProductCatalogController` 透過 `ProductCatalogQuery` 查詢 active 商品；關鍵字在 MySQL database driver 使用 Scout full-text，Meilisearch 直接接收狀態、分類、價格與排序條件，不支援 full-text 的 SQLite 則保留測試／開發 fallback。
-2. 商品列表支援關鍵字、分類、價格與排序；有關鍵字時預設「最相關」，排序交給搜尋引擎（SQLite fallback 無相關度，改依最新排序）。
+2. 商品列表支援關鍵字、分類、價格與排序；關鍵字完全符合 SKU 時不經搜尋引擎，直接找出該商品；分類篩選包含其子分類，停用的上層分類會連同子分類一起從目錄隱藏；有關鍵字時預設「最相關」，排序交給搜尋引擎（SQLite fallback 無相關度，改依最新排序）。
 3. 商品詳情會寫入 `recently_viewed_products`，供推薦區使用。
 4. `ProductRecommendationService` 提供熱門商品、最近瀏覽與相關商品；熱門排行只計入已付款且未取消的訂單，商品 ID 快取 10 分鐘後重新聚合。
 5. 商品圖片上限為 8 張；新檔案先全部寫入，DB transaction 失敗時清除，賣家可刪除圖片並同步移除檔案。
@@ -50,7 +50,7 @@
 
 1. `ProductPricingService` 判斷 B2C / B2B 價格。
 2. 企業價格只在會員 `account_type=b2b` 且 business profile 為 `approved` 時可用。
-3. `CouponDiscountService` 驗證優惠券狀態、時間、使用上限、最低金額與重複使用；訂單取消、付款失敗或出貨前整單退款時由 `releaseForOrder` 在同一交易內歸還次數與使用紀錄。
+3. `CouponDiscountService` 驗證優惠券狀態、時間、使用上限、最低金額與重複使用；訂單取消、付款失敗、出貨前整單退款，或整單退貨完成退款時由 `releaseForOrder` 在同一交易內歸還次數與使用紀錄。
 4. `PromotionService` 計算滿額折扣、免運門檻與剩餘免運金額。
 5. 新建優惠碼在唯一驗證前統一轉為大寫，避免驗證與儲存代碼不同。
 

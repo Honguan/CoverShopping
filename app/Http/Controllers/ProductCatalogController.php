@@ -20,7 +20,7 @@ class ProductCatalogController extends Controller
             'categories' => Cache::remember(
                 'catalog.active-categories',
                 now()->addMinutes(10),
-                fn () => Category::where('is_active', true)->orderBy('name')->get(),
+                fn () => Category::activeTree(),
             ),
             'popularProducts' => $recommendations->popularProducts(),
             'recentlyViewedProducts' => $recommendations->recentlyViewed($user?->id, $user ? null : $request->session()->getId()),
