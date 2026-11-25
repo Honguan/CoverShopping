@@ -52,6 +52,10 @@ class OrderPaymentService
 
             if ($isFailed || $isVoided) {
                 $this->restoreInventory($admin, $order, $isFailed ? 'payment_failed' : 'payment_refunded');
+            }
+
+            // Whole-order outcomes (failed, voided, fully returned and refunded) give the coupon use back; stock for returns came back on receipt.
+            if ($isFailed || $isVoided || $isReturned) {
                 $this->couponDiscountService->releaseForOrder($order);
             }
 

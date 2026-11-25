@@ -42,7 +42,7 @@ class SellerDashboardController extends Controller
                 ->orderBy('inventory')
                 ->limit(10)
                 ->get(),
-            'categories' => Category::where('is_active', true)->orderBy('name')->get(),
+            'categories' => Category::activeTree(),
             'questions' => ProductQuestion::whereHas('product', fn ($query) => $query->where('seller_id', $sellerId))
                 ->with(['product', 'user', 'answers.user'])
                 ->latest()

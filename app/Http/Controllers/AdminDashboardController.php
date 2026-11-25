@@ -36,6 +36,7 @@ class AdminDashboardController extends Controller
             'coupons' => Coupon::latest()->orderByDesc('id')->paginate(10, ['*'], 'coupons_page')->withQueryString(),
             'shippingMethods' => ShippingMethod::orderBy('sort_order')->latest()->orderByDesc('id')->paginate(10, ['*'], 'shipping_methods_page')->withQueryString(),
             'categories' => Category::orderBy('name')->orderBy('id')->paginate(10, ['*'], 'categories_page')->withQueryString(),
+            'parentCategories' => Category::whereNull('parent_id')->orderBy('name')->orderBy('id')->get(),
             'returnRequests' => ReturnRequest::with(['order.user'])->latest()->orderByDesc('id')->paginate(10, ['*'], 'returns_page')->withQueryString(),
             'businessProfiles' => BusinessProfile::latest()->orderByDesc('id')->paginate(10, ['*'], 'business_profiles_page')->withQueryString(),
         ]);
@@ -147,6 +148,7 @@ class AdminDashboardController extends Controller
     public function createCategory(SaveCategoryRequest $request, AuditLogService $auditLogService)
     {
         $data = $request->validated();
+        $data['parent_id'] = $data['parent_id'] ?? null;
         $data['is_active'] = $request->boolean('is_active', true);
 
         $category = Category::create($data);
@@ -158,6 +160,7 @@ class AdminDashboardController extends Controller
     public function updateCategory(SaveCategoryRequest $request, Category $category, AuditLogService $auditLogService)
     {
         $data = $request->validated();
+        $data['parent_id'] = $data['parent_id'] ?? null;
         $data['is_active'] = $request->boolean('is_active');
 
         $category->update($data);

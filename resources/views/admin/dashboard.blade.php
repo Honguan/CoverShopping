@@ -175,6 +175,12 @@
                 @csrf
                 <input name="name" maxlength="120" placeholder="{{ __('ui.name') }}" required>
                 <input name="slug" maxlength="140" pattern="[A-Za-z0-9_\-]+" placeholder="{{ __('ui.category_slug') }}" required>
+                <select name="parent_id" aria-label="{{ __('ui.parent_category') }}">
+                    <option value="">{{ __('ui.top_level_category') }}</option>
+                    @foreach($parentCategories as $parent)
+                        <option value="{{ $parent->id }}">{{ $parent->name }}</option>
+                    @endforeach
+                </select>
                 <label class="inline"><input name="is_active" type="checkbox" value="1" checked> {{ __('ui.status_active') }}</label>
                 <button type="submit">{{ __('ui.create_category') }}</button>
             </form>
@@ -186,6 +192,12 @@
                         @method('PATCH')
                         <input name="name" value="{{ $category->name }}" maxlength="120" aria-label="{{ __('ui.name') }}" required>
                         <input name="slug" value="{{ $category->slug }}" maxlength="140" pattern="[A-Za-z0-9_\-]+" aria-label="{{ __('ui.category_slug') }}" required>
+                        <select name="parent_id" aria-label="{{ __('ui.parent_category') }}">
+                            <option value="">{{ __('ui.top_level_category') }}</option>
+                            @foreach($parentCategories->where('id', '!=', $category->id) as $parent)
+                                <option value="{{ $parent->id }}" @selected($parent->id === $category->parent_id)>{{ $parent->name }}</option>
+                            @endforeach
+                        </select>
                         <label class="inline"><input name="is_active" type="checkbox" value="1" @checked($category->is_active)> {{ __('ui.status_active') }}</label>
                         <button type="submit">{{ __('ui.update') }}</button>
                     </form>

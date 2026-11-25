@@ -4,6 +4,7 @@ namespace App\Queries;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
@@ -30,6 +31,19 @@ class ProductCatalogQuery
         $minPrice = $request->integer('min_price');
         $maxPrice = $request->integer('max_price');
         $sort = (string) $request->string('sort', $keyword !== '' ? 'relevance' : 'latest');
+        $categoryIds = $this->categoryIds($categorySlug);
+
+        // An exact SKU (variant code) jumps straight to its product, whatever the search engine indexes.
+        $skuProductIds = $keyword === '' ? collect() : ProductVariant::where('sku', $keyword)->pluck('product_id');
+
+        if ($skuProductIds->isNotEmpty()) {
+            $query = Product::query()->active()->with(['primaryImage', 'category', 'variants'])->whereKey($skuProductIds);
+            $this->applyCategoryFilter($query, $categoryIds);
+            $this->applyPriceFilter($query, $minPrice, $maxPrice);
+            $this->applySort($query, $sort);
+
+            return $query->paginate($perPage)->withQueryString();
+        }
 
         if ($keyword !== '' && config('scout.driver') === 'database' && DB::getDriverName() !== 'mysql') {
             $query = Product::query()->active()->with(['primaryImage', 'category', 'variants']);
@@ -37,7 +51,7 @@ class ProductCatalogQuery
                 $builder->where('name', 'like', "%{$keyword}%")
                     ->orWhere('description', 'like', "%{$keyword}%");
             });
-            $this->applyCategoryFilter($query, $categorySlug);
+            $this->applyCategoryFilter($query, $categoryIds);
             $this->applyPriceFilter($query, $minPrice, $maxPrice);
             $this->applySort($query, $sort);
 
@@ -45,15 +59,12 @@ class ProductCatalogQuery
         }
 
         if ($keyword !== '') {
-            $categoryId = $categorySlug === ''
-                ? null
-                : (Category::query()->where('slug', $categorySlug)->value('id') ?? -1);
             $search = Product::search($keyword)
                 ->where('status', 'active')
-                ->query(fn ($query) => $this->applySearchHydrationFilters($query, $categoryId, $minPrice, $maxPrice));
+                ->query(fn ($query) => $this->applySearchHydrationFilters($query, $categoryIds, $minPrice, $maxPrice));
 
-            if ($categoryId !== null) {
-                $search->where('category_id', $categoryId);
+            if ($categoryIds !== null) {
+                $search->whereIn('category_id', $categoryIds);
             }
 
             if ($minPrice > 0) {
@@ -78,30 +89,49 @@ class ProductCatalogQuery
 
         $query = Product::query()->active()->with(['primaryImage', 'category', 'variants']);
 
-        $this->applyCategoryFilter($query, $categorySlug);
+        $this->applyCategoryFilter($query, $categoryIds);
         $this->applyPriceFilter($query, $minPrice, $maxPrice);
         $this->applySort($query, $sort);
 
         return $query->paginate($perPage)->withQueryString();
     }
 
-    private function applySearchHydrationFilters($query, mixed $categoryId, int $minPrice, int $maxPrice)
+    /**
+     * The chosen category plus its subcategories; null when no category is chosen, [-1] when the slug is unknown.
+     *
+     * @return list<int>|null
+     */
+    private function categoryIds(string $categorySlug): ?array
+    {
+        if ($categorySlug === '') {
+            return null;
+        }
+
+        $categoryId = Category::query()->where('slug', $categorySlug)->value('id');
+
+        if ($categoryId === null) {
+            return [-1];
+        }
+
+        return [$categoryId, ...Category::query()->where('parent_id', $categoryId)->pluck('id')->all()];
+    }
+
+    /** @param list<int>|null $categoryIds */
+    private function applySearchHydrationFilters($query, ?array $categoryIds, int $minPrice, int $maxPrice)
     {
         $query->active()->with(['primaryImage', 'category', 'variants']);
-
-        if ($categoryId !== null) {
-            $query->where('category_id', $categoryId);
-        }
+        $this->applyCategoryFilter($query, $categoryIds);
 
         $this->applyPriceFilter($query, $minPrice, $maxPrice);
 
         return $query;
     }
 
-    private function applyCategoryFilter($query, string $categorySlug): void
+    /** @param list<int>|null $categoryIds */
+    private function applyCategoryFilter($query, ?array $categoryIds): void
     {
-        if ($categorySlug !== '') {
-            $query->whereHas('category', fn ($builder) => $builder->where('slug', $categorySlug));
+        if ($categoryIds !== null) {
+            $query->whereIn('category_id', $categoryIds);
         }
     }
 
