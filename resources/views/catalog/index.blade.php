@@ -11,7 +11,7 @@
         <div class="chips">
             <a href="{{ route('catalog.index', request()->except('category')) }}">{{ __('ui.all_categories') }}</a>
             @foreach($categories as $category)
-                <a href="{{ route('catalog.index', array_merge(request()->query(), ['category' => $category->slug])) }}">{{ $category->name }}</a>
+                <a href="{{ route('catalog.index', array_merge(request()->query(), ['category' => $category->slug])) }}">{{ $category->parent_id ? '└ ' : '' }}{{ $category->name }}</a>
             @endforeach
         </div>
     </section>

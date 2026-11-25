@@ -32,7 +32,7 @@
             <select name="category_id">
                 <option value="">-</option>
                 @foreach($categories as $category)
-                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                    <option value="{{ $category->id }}">{{ $category->parent_id ? '└ ' : '' }}{{ $category->name }}</option>
                 @endforeach
             </select>
         </label>
@@ -55,7 +55,7 @@
                     <select name="category_id" aria-label="{{ __('ui.category') }}">
                         <option value="">-</option>
                         @foreach($product->category && ! $product->category->is_active ? $categories->concat([$product->category]) : $categories as $category)
-                            <option value="{{ $category->id }}" @selected($category->id === $product->category_id)>{{ $category->name }}</option>
+                            <option value="{{ $category->id }}" @selected($category->id === $product->category_id)>{{ $category->parent_id ? '└ ' : '' }}{{ $category->name }}</option>
                         @endforeach
                     </select>
                     <input name="images[]" type="file" accept="image/*" multiple>
