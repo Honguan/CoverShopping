@@ -13,7 +13,7 @@
 
 | Method | Path | Route name | 說明 |
 | --- | --- | --- | --- |
-| GET | `/` | `catalog.index` | 商品列表、分類、熱門商品、最近瀏覽。 |
+| GET | `/` | `catalog.index` | 商品列表、分類、熱門商品、最近瀏覽。`q` 完全符合某個 SKU 時直接列出該商品；`category` 為上層分類時一併列出子分類商品。 |
 | GET | `/products/{product}` | `catalog.show` | 商品詳情、多圖、SKU、相關商品，以及各 10 筆分頁的評價與問答；頁碼參數為 `reviews_page`、`questions_page`。 |
 
 ## Auth
@@ -104,6 +104,6 @@
 | PATCH | `/admin/coupons/{coupon}` | `admin.coupons.update` | 更新優惠券內容與啟用狀態；優惠碼不可改。 |
 | POST | `/admin/shipping-methods` | `admin.shipping_methods.store` | 建立配送方式。 |
 | PATCH | `/admin/shipping-methods/{shippingMethod}` | `admin.shipping_methods.update` | 更新配送方式名稱、運費、排序與啟用狀態；停用後結帳不可再選。 |
-| POST | `/admin/categories` | `admin.categories.store` | 建立分類；`slug` 必須唯一且只含英數、`-`、`_`。 |
-| PATCH | `/admin/categories/{category}` | `admin.categories.update` | 更新分類名稱、`slug` 與啟用狀態；儲存後立即清除商品目錄的分類快取，停用分類不再出現在目錄篩選與賣家選單。 |
+| POST | `/admin/categories` | `admin.categories.store` | 建立分類；`slug` 必須唯一且只含英數、`-`、`_`；`parent_id` 可選，只能指定最上層分類（最多兩層）。 |
+| PATCH | `/admin/categories/{category}` | `admin.categories.update` | 更新分類名稱、`slug`、上層分類與啟用狀態；已有子分類者必須維持最上層；儲存後立即清除商品目錄的分類快取，停用分類不再出現在目錄篩選與賣家選單。 |
 | PATCH | `/admin/returns/{returnRequest}` | `admin.returns.status` | 更新退貨狀態。 |

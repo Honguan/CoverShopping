@@ -112,6 +112,7 @@ npm.cmd run build
 - `OrderDetailPageTest.php`：擁有者看到金額明細與退貨紀錄、他人 403／訪客導向登入、已付款訂單不顯示取消。
 - `PaymentGatewayTest.php`：綠界 CheckMacValue 符合官方範例、付款按鈕只對擁有者的未付款訂單顯示、綠界簽章表單與 CSP、付款通知只套用一次、竄改／金額不符／未付款／正式環境模擬付款不套用；Stripe 建立 Checkout Session 參數、金流故障返回訂單頁、webhook 簽章與時效驗證。
 - `OrderEmailNotificationTest.php`：下單、付款、出貨、退貨核准／收到／退款依序各寄一封，取消與付款失敗各自寄送，不寄給賣家與管理員；信件主旨、金額與訂單連結正確，未登記 email 的會員不寄送。
+- `CatalogSkuAndSubcategoryTest.php`：SKU 完全符合直接找到商品（未上架不顯示）、上層分類包含子分類商品、分類最多兩層、整單退貨退款後歸還優惠券。
 - `CategoryManagementTest.php`：管理員建立／停用分類後目錄立即反映、`slug` 唯一與格式驗證、非管理員被拒；賣家只看到啟用分類並可指定商品分類。
 - `AccountSettingsTest.php`：訪客導向登入、個人資料更新且帳號／角色不可改、email 重複拒絕、變更密碼需目前密碼並保留目前 Session、其他裝置 Session 失效、全部標為已讀只影響自己的未讀通知。
 - `BackOfficeEditingTest.php`：管理員編輯／停用優惠券（優惠碼不可改）與配送方式（停用後結帳不可選）、非管理員被拒；賣家編輯自己 SKU 並記錄庫存異動，過期庫存、跨商品與他人 SKU 被拒。

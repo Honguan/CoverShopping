@@ -39,10 +39,11 @@ class ProductCatalogSearchTest extends TestCase
             $this->assertInstanceOf(Builder::class, $engine->builder);
             $this->assertSame([
                 ['field' => 'status', 'operator' => '=', 'value' => 'active'],
-                ['field' => 'category_id', 'operator' => '=', 'value' => $category->id],
                 ['field' => 'price', 'operator' => '>=', 'value' => 100],
                 ['field' => 'price', 'operator' => '<=', 'value' => 500],
             ], $engine->builder->wheres);
+            // The category filter covers the category and its subcategories.
+            $this->assertSame(['category_id' => [$category->id]], $engine->builder->whereIns);
             $this->assertSame([['column' => 'price', 'direction' => 'desc']], $engine->builder->orders);
             $this->assertNotNull($engine->builder->queryCallback);
             $this->assertContains('price', config('scout.meilisearch.index-settings.'.Product::class.'.filterableAttributes'));
