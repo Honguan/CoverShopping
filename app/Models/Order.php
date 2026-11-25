@@ -25,6 +25,8 @@ class Order extends Model
         'shipping_fee',
         'total',
         'payment_status',
+        'payment_gateway',
+        'payment_reference',
         'fulfillment_status',
         'return_status',
     ];

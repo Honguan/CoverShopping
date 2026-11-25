@@ -8,6 +8,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CustomerOrderController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductCatalogController;
 use App\Http\Controllers\ProductFavoriteController;
 use App\Http\Controllers\ProductQuestionController;
@@ -48,6 +49,9 @@ Route::post('/checkout', [CheckoutController::class, 'createOrderFromCart'])->mi
 Route::get('/orders', [CustomerOrderController::class, 'showCustomerOrders'])->middleware('auth')->name('orders.index');
 Route::get('/orders/{order}', [CustomerOrderController::class, 'showOrder'])->middleware('auth')->name('orders.show');
 Route::post('/orders/{order}/reorder', [CustomerOrderController::class, 'reorder'])->middleware('auth')->name('orders.reorder');
+Route::post('/orders/{order}/pay', [PaymentController::class, 'pay'])->middleware(['auth', 'throttle:10,1'])->name('orders.pay');
+Route::post('/payments/stripe/webhook', [PaymentController::class, 'stripeWebhook'])->name('payments.stripe.webhook');
+Route::post('/payments/ecpay/notify', [PaymentController::class, 'ecpayNotify'])->name('payments.ecpay.notify');
 Route::post('/orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->middleware('auth')->name('orders.cancel');
 Route::get('/account', [AccountController::class, 'showAccount'])->middleware('auth')->name('account.edit');
 Route::patch('/account', [AccountController::class, 'updateProfile'])->middleware('auth')->name('account.update');

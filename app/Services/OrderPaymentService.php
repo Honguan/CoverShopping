@@ -92,6 +92,44 @@ class OrderPaymentService
         }, 3);
     }
 
+    /**
+     * Marks an order paid from a verified gateway notification. Repeated notifications are no-ops.
+     * A payment that no longer fits the order (wrong amount, already cancelled) is recorded for an admin to refund, never applied.
+     */
+    public function confirmGatewayPayment(int $orderId, string $gateway, string $reference, ?int $amount): bool
+    {
+        return DB::transaction(function () use ($orderId, $gateway, $reference, $amount) {
+            $order = Order::query()->lockForUpdate()->find($orderId);
+
+            if (! $order) {
+                return false;
+            }
+
+            if ($order->payment_status === 'paid' && $order->payment_gateway === $gateway && $order->payment_reference === $reference) {
+                return true;
+            }
+
+            $payload = ['gateway' => $gateway, 'reference' => $reference, 'amount' => $amount];
+
+            if ($amount !== $order->total || $order->payment_status !== 'unpaid' || $order->fulfillment_status !== 'pending') {
+                $this->auditLogService->writeLog('payment.gateway.unmatched', $order, $payload);
+
+                return false;
+            }
+
+            $order->update([
+                'payment_status' => 'paid',
+                'fulfillment_status' => 'processing',
+                'payment_gateway' => $gateway,
+                'payment_reference' => $reference,
+            ]);
+            $this->auditLogService->writeLog('payment.gateway.paid', $order, $payload);
+            $order->user?->notify(new OrderStatusMail($order, 'paid'));
+
+            return true;
+        }, 3);
+    }
+
     private function restoreInventory(User $admin, Order $order, string $reason): void
     {
         $products = Product::whereKey($order->items->pluck('product_id')->filter()->unique())

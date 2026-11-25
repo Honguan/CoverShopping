@@ -33,6 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
             SecurityHeadersMiddleware::class,
         ]);
 
+        // Gateway callbacks are authenticated by their signatures instead of a session token.
+        $middleware->validateCsrfTokens(except: ['payments/stripe/webhook', 'payments/ecpay/notify']);
+
         $middleware->alias([
             'role' => RoleMiddleware::class,
         ]);

@@ -29,6 +29,13 @@
                 @csrf
                 <button type="submit">{{ __('ui.reorder') }}</button>
             </form>
+            @can('pay', $order)
+                <form action="{{ route('orders.pay', $order) }}" method="post">
+                    @csrf
+                    <button type="submit">{{ __('ui.pay_now') }}</button>
+                </form>
+                <p>{{ __('ui.payment_pending_confirmation') }}</p>
+            @endcan
             @can('cancel', $order)
                 <form action="{{ route('orders.cancel', $order) }}" method="post">
                     @csrf
