@@ -5,15 +5,14 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Notifications\OrderStatusMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class SellerOrderShipmentService
 {
-    public function __construct(private AuditLogService $auditLogService)
-    {
-    }
+    public function __construct(private AuditLogService $auditLogService) {}
 
     public function markItemShipped(User $seller, Order $order, OrderItem $orderItem, ?Request $request = null): OrderItem
     {
@@ -33,6 +32,11 @@ class SellerOrderShipmentService
             $order->update([
                 'fulfillment_status' => $statuses->every(fn ($status) => $status === 'shipped') ? 'completed' : 'partially_shipped',
             ]);
+
+            // One email per order, when the whole order has shipped.
+            if ($order->fulfillment_status === 'completed') {
+                $order->user?->notify(new OrderStatusMail($order, 'shipped'));
+            }
 
             $this->auditLogService->writeLog('seller.order_item.shipped', $orderItem, ['order' => $order->number], $request);
 

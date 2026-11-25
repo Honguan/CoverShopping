@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Notifications\OrderStatusMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -80,6 +81,11 @@ class OrderPaymentService
 
             if ($paymentChanged) {
                 $this->auditLogService->writeLog('admin.order.payment_updated', $order, ['payment_status' => $status], $request);
+                $order->user?->notify(new OrderStatusMail($order, match (true) {
+                    $isPaid => 'paid',
+                    $isFailed => 'payment_failed',
+                    default => 'refunded',
+                }));
             }
 
             return $order->refresh();

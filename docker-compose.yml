@@ -21,6 +21,14 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SESSION_SECURE_COOKIE: "true"
+      MAIL_MAILER: ${MAIL_MAILER:-log}
+      MAIL_SCHEME: ${MAIL_SCHEME:-}
+      MAIL_HOST: ${MAIL_HOST:-127.0.0.1}
+      MAIL_PORT: ${MAIL_PORT:-2525}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-hello@example.com}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-CoverShopping}
     ports:
       - "${APP_PORT:-127.0.0.1:8080}:80"
     depends_on:
@@ -43,6 +51,18 @@ services:
   scheduler:
     build: .
     command: ["su", "-s", "/bin/sh", "www-data", "-c", "exec php artisan schedule:work"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 訂單通知信等佇列工作；與 scheduler 相同以 www-data 執行。
+  queue:
+    build: .
+    command: ["su", "-s", "/bin/sh", "www-data", "-c", "exec php artisan queue:work --tries=3 --backoff=60"]
     environment: *app-environment
     depends_on:
       db:

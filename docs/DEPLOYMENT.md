@@ -15,6 +15,8 @@
 
 正式寄信請使用 `MAIL_MAILER=smtp`，設定 `MAIL_SCHEME`、`MAIL_HOST`、`MAIL_PORT`、`MAIL_USERNAME`、`MAIL_PASSWORD`、`MAIL_FROM_ADDRESS` 與 `MAIL_FROM_NAME`。常見 STARTTLS 使用 `MAIL_SCHEME=smtp`／587，隱式 TLS 使用 `MAIL_SCHEME=smtps`／465；以實際郵件服務設定為準。更新設定後重新部署以重建設定快取，並使用測試帳號確認收信與連結來源。
 
+SMTP 可直接接上常見郵件服務，不需額外套件，例如 Gmail／Google Workspace（`smtp.gmail.com`，587，需應用程式密碼）、Amazon SES（`email-smtp.<region>.amazonaws.com`，587）、Mailgun（`smtp.mailgun.org`，587）、SendGrid（`smtp.sendgrid.net`，587，帳號為 `apikey`）、Postmark（`smtp.postmarkapp.com`，587）、Resend（`smtp.resend.com`，465，`MAIL_SCHEME=smtps`）。寄件地址網域須在郵件服務完成 SPF／DKIM 驗證。Compose 會把 `MAIL_*` 傳入 `app`、`scheduler` 與 `queue`，未設定時預設為 `log`。
+
 目前復原郵件同步寄送；寄送失敗時須檢查郵件服務與應用程式日誌。未登記 email 的既有帳號不能使用郵件復原，註冊 email 仍維持選填。自動測試驗證通知內容與 token 流程，不代表正式 SMTP 已完成收信驗證。
 
 新登入與註冊會記錄 Session 密碼雜湊；重設密碼後，舊登入會在下一次請求登出。部署前已存在、尚未記錄雜湊的 Session 會在第一次請求初始化，無法保證因部署前的密碼變更而立即失效；若維運要求撤銷這些舊 Session，須依實際 Session driver 安排登出切換。
@@ -30,6 +32,10 @@
 部署時先等待 `/health/live`，再由單一工作程序執行 migration，最後等待 `/health/ready` 成功。Compose 的 `app` healthcheck 使用 readiness；migration 前回傳 503 是預期行為。CI 會自動驗證 migration 前失敗、migration 後成功與 cache/session 依賴失敗情境。
 
 MySQL 的 healthcheck 必須使用應用程式帳密，以 TCP 連線至目標資料庫並執行 `SELECT 1`。初始化期間的暫時伺服器只開放 Unix socket，不能用 localhost 的 `mysqladmin ping` 當作就緒判斷；帳密錯誤或資料庫不存在時也必須保持 unhealthy。
+
+### 佇列與訂單通知信
+
+訂單通知信經由佇列寄送。Compose 的 `queue` 服務以 `www-data` 執行 `php artisan queue:work --tries=3 --backoff=60`，與 `app` 共用映像與環境（`QUEUE_CONNECTION=redis`）；寄送失敗會重試 3 次，最終失敗寫入 `failed_jobs`，可用 `php artisan queue:retry all` 重送。更新程式後須重啟 `queue` 服務才會載入新程式碼。非 Compose 部署請以 Supervisor 或 systemd 常駐執行 `queue:work`。
 
 ### 排程
 
